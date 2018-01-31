@@ -1,0 +1,25 @@
+{
+  "name": "@bhoos/socket",
+  "version": "0.1.0",
+  "description": "Bhoos WebSocket library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhoos/socket.git"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bhoos/socket/issues"
+  },
+  "homepage": "https://github.com/bhoos/socket#readme",
+  "devDependencies": {
+    "babel-eslint": "^8.2.1",
+    "eslint": "^4.16.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  }
+}
