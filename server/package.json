@@ -1,6 +1,6 @@
 {
   "name": "socket.red",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Websocket server",
   "main": "src/server.js",
   "scripts": {
