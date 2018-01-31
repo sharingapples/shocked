@@ -1,0 +1,17 @@
+{
+  "name": "socket.red-client",
+  "version": "0.1.0",
+  "description": "Socket Client",
+  "main": "__dist__/index.js",
+  "files": [
+    "__dist__"
+  ],
+  "scripts": {
+    "test": "../node_modules/jest/bin/jest.js",
+    "clean": "../node_modules/rimraf __dist__",
+    "build": "../node_modules/babel-cli/bin/babel.js --out-dir __dist__ src",
+    "prepare": "npm run lint && npm run test && npm run clean && npm run build"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT"
+}
