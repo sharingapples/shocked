@@ -47,4 +47,5 @@ module.exports = function createRPC(timeout, connect) {
   };
 
   return rpc;
-}
+};
+

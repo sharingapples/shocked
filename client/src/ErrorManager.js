@@ -29,4 +29,4 @@ module.exports = function createErrorManager(emit, connect, retryInterval = 3000
       }
     },
   };
-}
+};
