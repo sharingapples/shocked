@@ -112,6 +112,10 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
           console.error(err);
         }
       });
+
+      if (session.onStart) {
+        session.onStart();
+      }
     });
   });
 };
