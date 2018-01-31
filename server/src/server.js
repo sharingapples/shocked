@@ -6,8 +6,24 @@ function beat() {
   this.isAlive = true;
 }
 
-module.exports = function start(server, createSession, pulseRate = 0) {
-  const options = (typeof server === 'number') ? ({ port: server }) : server;
+module.exports = function start(server, createSession, pulseRate = 30000) {
+  const options = (typeof server === 'number') ? ({ port: server }) : ({ server });
+
+  // Add a client verfication method
+  options.verifyClient = (info, cb) => {
+    try {
+      const session = createSession(info.req.url);
+      if (session === null) {
+        cb(false, 401, 'Unauthorized access');
+      } else {
+        // eslint-disable-next-line no-param-reassign
+        info.req.session = session;
+        cb(true);
+      }
+    } catch (err) {
+      cb(false, 500, err.message);
+    }
+  };
 
   return new Promise((resolve, reject) => {
     const wss = new WebSocket.Server(options, (err) => {
@@ -39,7 +55,15 @@ module.exports = function start(server, createSession, pulseRate = 0) {
     });
 
     wss.on('connection', (ws, req) => {
-      const session = createSession(req.url);
+      // Get the session created by verifyClient above
+      const { session } = req;
+      // If a session could not be established close the socket with a error message
+      // Highly unlikely error
+      if (session === null) {
+        // ws.emit('error', 'Could not start a session');
+        ws.close();
+        return;
+      }
 
       session.dispatch = (action) => {
         ws.send(JSON.stringify([0, action]));
