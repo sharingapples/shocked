@@ -65,10 +65,12 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         return;
       }
 
+      // Add method to dispatch actions on remote clients
       session.dispatch = (action) => {
         ws.send(JSON.stringify([0, action]));
       };
 
+      // Add method to emit events on remote clients
       session.emit = (event, data) => {
         ws.send(JSON.stringify([-1, event, data]));
       };
