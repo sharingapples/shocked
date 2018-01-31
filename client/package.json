@@ -14,5 +14,8 @@
     "prepare": "npm run lint && npm run test && npm run clean && npm run build"
   },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "socket.red": "^0.1.2"
+  }
 }
