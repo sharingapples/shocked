@@ -78,6 +78,7 @@ module.exports = function start(server, createSession, pulseRate = 0) {
             fn.apply(session, args);
           }
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.error(err);
         }
       });
