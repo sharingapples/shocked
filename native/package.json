@@ -2,9 +2,16 @@
   "name": "socket.red-native",
   "version": "0.1.0",
   "description": "Socket.red client for react-native",
-  "main": "index.js",
+  "main": "__dist__/index.js",
+  "files": [
+    "__dist__"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "../node_modules/jest/bin/jest.js",
+    "lint": "../node_modules/eslint/bin/eslint.js src",
+    "clean": "../node_modules/rimraf/bin.js __dist__",
+    "build": "../node_modules/babel-cli/bin/babel.js --out-dir __dist__ src",
+    "prepare": "npm run lint && npm run test && npm run clean && npm run build"
   },
   "dependencies": {
     "socket.red-client": "^0.1.0"
