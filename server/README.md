@@ -1,6 +1,6 @@
 # socket.red
 A websocket server for executing your apis, dispatching redux actions on clients
-and emitting events on server side
+and emitting events from server.
 
 # Installation
 > `$ npm install --save socket.red`
@@ -52,11 +52,12 @@ class ServerApi {
 
 const allSessions = {};
 
+// This is how you start the server
 startServer(8080, function createSession(url) {
   // You can throw an error here, to reject the connection
   const user = identify(url);
 
-  const session = {s
+  const session = {
     onClose: () => {
       // Cleanup stuff to do when the remote connection closes
       delete allSessions[user.id];
