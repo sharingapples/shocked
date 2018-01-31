@@ -73,6 +73,11 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         ws.send(JSON.stringify([-1, event, data]));
       };
 
+      // Allow server side to close the session as well
+      session.close = () => {
+        ws.close();
+      };
+
       if (pulseRate) {
         ws.isAlive = true;    // eslint-disable-line no-param-reassign
         ws.on('pong', beat);
