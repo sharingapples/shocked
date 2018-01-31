@@ -62,15 +62,19 @@ module.exports = function start(server, createSession, pulseRate = 0) {
           }
 
           const [code, name, args] = msg;
-          const fn = session[name];
+          const fn = session.api[name];
           if (code > 0) {
-            try {
-              const res = await fn.apply(session, args);
-              ws.send(JSON.stringify([code, true, res]));
-            } catch (err) {
-              ws.send(JSON.stringify([code, false, err.message]));
+            if (!fn) {
+              ws.send(JSON.stringify([code, false, `Unknown api '${name}'`]));
+            } else {
+              try {
+                const res = await fn.apply(session, args);
+                ws.send(JSON.stringify([code, true, res]));
+              } catch (err) {
+                ws.send(JSON.stringify([code, false, err.message]));
+              }
             }
-          } else {
+          } else if (code === 0) {
             fn.apply(session, args);
           }
         } catch (err) {
