@@ -82,8 +82,17 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         ws.isAlive = true;    // eslint-disable-line no-param-reassign
         ws.on('pong', beat);
       }
+      if (session.onClose) {
+        ws.on('close', () => session.onClose());
+      }
 
-      ws.on('close', () => session.end());
+      // In case of any error, close the socket
+      ws.on('error', (err) => {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        ws.close();
+      });
+
       ws.on('message', async (data) => {
         try {
           const msg = JSON.parse(data);
