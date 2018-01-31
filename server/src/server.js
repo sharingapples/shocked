@@ -50,6 +50,7 @@ module.exports = function start(server, createSession, pulseRate = 0) {
       };
 
       if (pulseRate) {
+        ws.isAlive = true;    // eslint-disable-line no-param-reassign
         ws.on('pong', beat);
       }
 
