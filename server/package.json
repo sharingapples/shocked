@@ -1,11 +1,18 @@
 {
-  "name": "@bhoos/socket-server",
+  "name": "socket.red",
   "version": "0.1.0",
   "description": "Websocket server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhoos/socket.git"
+  },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^4.0.0"
+  }
 }
