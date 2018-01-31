@@ -1,5 +1,6 @@
 {
   "name": "@bhoos/socket",
+  "private": true,
   "version": "0.1.0",
   "description": "Bhoos WebSocket library",
   "main": "index.js",
