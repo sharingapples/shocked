@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "test": "../node_modules/jest/bin/jest.js",
-    "clean": "../node_modules/rimraf __dist__",
+    "lint": "../node_modules/eslint/bin/eslint.js src",
+    "clean": "../node_modules/rimraf/bin.js __dist__",
     "build": "../node_modules/babel-cli/bin/babel.js --out-dir __dist__ src",
     "prepare": "npm run lint && npm run test && npm run clean && npm run build"
   },
