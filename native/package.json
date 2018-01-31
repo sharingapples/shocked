@@ -20,5 +20,8 @@
     "react-native": ">=0.40.0"
   },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "react-native": "^0.52.2"
+  }
 }
