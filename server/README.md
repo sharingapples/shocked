@@ -62,14 +62,18 @@ startServer(8080, function createSession(url) {
       // Cleanup stuff to do when the remote connection closes
       delete allSessions[user.id];
     },
-    api: new ServerApi(session), // Provide the api
-    onStart: () => {
+    
+    // A callback invoked as soon as a session is started. Return the
+    // api that needs to be available from this server
+    onStart: (sess) => { /* sess === session */
       // Store the session for using later
       allSessions[user.id] = session;
       // An entry point for the session startup, you can use the session
       // object here iwth dispatch and emit methods
       session.emit('hi', 'A new session has started'); // Send an event to the client
       session.dispatch({ type: 'ACTION_TYPE', payload: 'Your action data' });
+
+      return new ServerApi(session);
     },
 
     // Add any other properties to the session as you need

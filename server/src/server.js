@@ -80,10 +80,13 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         ws.close();
       };
 
+      const api = session.onStart(session);
+
       if (pulseRate) {
         ws.isAlive = true;    // eslint-disable-line no-param-reassign
         ws.on('pong', beat);
       }
+
       if (session.onClose) {
         ws.on('close', () => session.onClose());
       }
@@ -103,30 +106,26 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
           }
 
           const [code, name, args] = msg;
-          const fn = session.api[name];
+          const fn = api[name];
           if (code > 0) {
             if (!fn) {
               ws.send(JSON.stringify([code, false, `Unknown api '${name}'`]));
             } else {
               try {
-                const res = await fn.apply(session.api, args);
+                const res = await fn.apply(api, args);
                 ws.send(JSON.stringify([code, true, res]));
               } catch (err) {
                 ws.send(JSON.stringify([code, false, err.message]));
               }
             }
           } else if (code === 0) {
-            fn.apply(session.api, args);
+            fn.apply(api, args);
           }
         } catch (err) {
           // eslint-disable-next-line no-console
           console.error(err);
         }
       });
-
-      if (session.onStart) {
-        session.onStart();
-      }
     });
   });
 };

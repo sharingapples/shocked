@@ -6,14 +6,19 @@ const port = 8001;
 
 describe('WebSocket Server Specification', () => {
   let stop = null;
+  const api = {
+    fn1: jest.fn(),
+    sum: (a, b) => a + b,
+    err: (msg) => {
+      throw new Error(msg);
+    },
+  };
   const session = {
     onClose: () => {},
-    api: {
-      fn1: jest.fn(),
-      sum: (a, b) => a + b,
-      err: (msg) => {
-        throw new Error(msg);
-      },
+    onStart: () => {
+      session.emit('eee', 'John');
+      session.dispatch({ type: 'ACTION', payload: 'Doe' });
+      return api;
     },
   };
 
@@ -24,11 +29,6 @@ describe('WebSocket Server Specification', () => {
       }
 
       session.url = url;
-
-      session.onStart = () => {
-        session.emit('eee', 'John');
-        session.dispatch({ type: 'ACTION', payload: 'Doe' });
-      };
 
       return session;
     });
@@ -77,7 +77,7 @@ describe('WebSocket Server Specification', () => {
         expect(typeof session.dispatch).toBe('function');
         expect(typeof session.emit).toBe('function');
 
-        expect(session.api.fn1.mock.calls.length).toBe(1);
+        expect(api.fn1.mock.calls.length).toBe(1);
         const messages = socket.onmessage.mock.calls.map(c => JSON.parse(c[0].data));
         messages.sort((a, b) => a[0] - b[0]);
         expect(messages.length).toBe(6);
