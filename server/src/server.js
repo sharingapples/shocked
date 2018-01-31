@@ -98,14 +98,14 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
               ws.send(JSON.stringify([code, false, `Unknown api '${name}'`]));
             } else {
               try {
-                const res = await fn.apply(session, args);
+                const res = await fn.apply(session.api, args);
                 ws.send(JSON.stringify([code, true, res]));
               } catch (err) {
                 ws.send(JSON.stringify([code, false, err.message]));
               }
             }
           } else if (code === 0) {
-            fn.apply(session, args);
+            fn.apply(session.api, args);
           }
         } catch (err) {
           // eslint-disable-next-line no-console
