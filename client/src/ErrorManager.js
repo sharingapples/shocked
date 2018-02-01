@@ -13,6 +13,7 @@ module.exports = function createErrorManager(emit, connect, retryInterval = 3000
     set: (code, message, interval = retryInterval) => {
       if (errorTimer) {
         clearTimeout(errorTimer);
+        errorTimer = null;
       }
       error = { code, message };
       emit(error);
@@ -25,8 +26,8 @@ module.exports = function createErrorManager(emit, connect, retryInterval = 3000
       if (errorTimer) {
         clearTimeout(errorTimer);
         errorTimer = null;
-        error = null;
       }
+      error = null;
     },
   };
 };
