@@ -79,7 +79,7 @@ module.exports = function createSocket(
 
       // As soon as a socket closes, try to connect again
       // if there wasn't any error
-      if (!errorManager.get()) {
+      if (errorManager.get() === null) {
         connect();
       }
     };
