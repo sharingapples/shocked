@@ -95,7 +95,6 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
       ws.on('error', (err) => {
         // eslint-disable-next-line no-console
         console.error(err);
-        ws.close();
       });
 
       ws.on('message', async (data) => {
