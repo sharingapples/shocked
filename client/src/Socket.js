@@ -112,7 +112,7 @@ module.exports = function createSocket(
             dispatch(msg[1]);
           } else if (code === -1) {
             // Got a event to trigger
-            eventManager.emit(msg[1], msg[2]);
+            eventManager.emit(EVENT_EVENT, msg[1], msg[2]);
           }
         }
       } catch (err) {
