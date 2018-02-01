@@ -110,11 +110,19 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
             if (!fn) {
               ws.send(JSON.stringify([code, false, `Unknown api '${name}'`]));
             } else {
+              let success = true;
+              let result = null;
               try {
-                const res = await fn.apply(api, args);
-                ws.send(JSON.stringify([code, true, res]));
+                result = await fn.apply(api, args);
               } catch (err) {
-                ws.send(JSON.stringify([code, false, err.message]));
+                success = false;
+                result = err.message;
+              }
+
+              if (ws.readyState === ws.OPEN) {
+                // There is a possiblity that while waiting for the api to complete,
+                // The socket has been closed
+                ws.send(JSON.stringify([code, success, result]));
               }
             }
           } else if (code === 0) {
