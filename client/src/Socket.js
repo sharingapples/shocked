@@ -118,6 +118,8 @@ module.exports = function createSocket(
           }
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
         // Ignore any error
       }
     };
@@ -130,6 +132,8 @@ module.exports = function createSocket(
     },
 
     freeze: () => {
+      // Set an error, so that the reconnection doesn't happen automatically
+      // Also make sure there is not timer set for the error retry
       errorManager.set(0, 'Freezing', 0);
       if (socket !== null) {
         socket.close();
