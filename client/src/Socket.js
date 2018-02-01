@@ -100,12 +100,14 @@ module.exports = function createSocket(
         if (Array.isArray(msg)) {
           const code = msg[0];
           if (code > 0) {
-            const error = msg[1];
+            const success = msg[1];
             const result = msg[2];
-            if (error) {
-              rpc.reject(code, result);
-            } else {
+            if (success === true) {
               rpc.resolve(code, result);
+            } else if (success === false) {
+              rpc.reject(code, new Error(result));
+            } else {
+              rpc.reject(code, new Error(`Invalid response ${success}`));
             }
           } else if (code === 0) {
             // Got a action to dispatch
