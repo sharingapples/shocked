@@ -91,7 +91,9 @@ describe('Check client socket specification', () => {
   it('must work', async () => new Promise((resolve) => {
     const dispatch = jest.fn();
 
-    const socket = createSocket(dispatch, {}, WebSocket);
+    const socket = createSocket(dispatch, {
+      disconnectConnectDebounce: 10,
+    }, WebSocket);
     const api = connectApi(ServerApi, socket);
     const events = jest.fn();
 
@@ -140,5 +142,30 @@ describe('Check client socket specification', () => {
     socket.open(`ws://localhost:${port}/100`);
   }));
 
-  // TODO: Add cases to test freeze/unfreeze
+  it('checks freeze and unfreeze along with debounce', async () => {
+    const socket = createSocket(jest.fn(), {
+      disconnectConnectDebounce: 20,
+    }, WebSocket);
+
+    const connects = jest.fn();
+    const disconnects = jest.fn();
+    socket.on('connect', connects);
+    socket.on('disconnect', disconnects);
+
+    socket.open(`ws://localhost:${port}/3`);
+    await wait(10);
+    socket.freeze();
+    await wait(10);
+    socket.unfreeze();  // Reconnect within debounce
+    await wait(10);
+
+    socket.freeze();
+    await wait(100);     // Reconnect after debounce
+    socket.unfreeze();
+    await wait(50);
+    socket.close();     // Finally close the socket
+    await wait(5);      // should not debounce on the final close
+    expect(connects.mock.calls.length).toBe(2);
+    expect(disconnects.mock.calls.length).toBe(2);
+  });
 });

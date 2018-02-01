@@ -23,8 +23,13 @@ The default module to create a socket object.
    You can provide the following options:  
    **errorRetryInterval** (default 3000): The number of milliseconds to wait
    before reconnecting in case of an error on socket.  
-   **responseTimeoutInterval** (default 3000)  The number of milliseconds within
-   which a response is expected when a rpc call is made.
+   **responseTimeoutInterval** (default 3000): The number of milliseconds within
+   which a response is expected when a rpc call is made.  
+   **disconnectConnectDebouce** (default 0): A debounce to avoid getting
+   disconnect/connect event pair, in cases when a connect happens immediately
+   after disconnect. A value of 0 disables it. You should keep a tad above your
+   average latency if you plan on using it. This should be helpful on getting
+   rid of unwanted app state changes during disconnection and reconnection.
 3. WebSocket  
    A WebSocket implementation on client. It is not required in HTML5 supported
    browsers. You might need a polyfill in other environments

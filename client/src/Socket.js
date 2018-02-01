@@ -21,7 +21,11 @@ module.exports = function createSocket(
   WebSocketImpl = WebSocket,
   Network = DefaultNetwork
 ) {
-  const { errorRetryInterval = 3000, responseTimeoutInterval = 3000 } = options;
+  const {
+    errorRetryInterval = 3000,
+    responseTimeoutInterval = 3000,
+    disconnectConnectDebounce = 0,
+  } = options;
 
   const eventManager = createEventManager([
     EVENT_CONNECT, EVENT_DISCONNECT, EVENT_MESSAGE, EVENT_ERROR, EVENT_EVENT,
@@ -65,7 +69,7 @@ module.exports = function createSocket(
     socket = new WebSocketImpl(currentUrl);
     socket.onopen = () => {
       connected = true;
-      eventManager.emit(EVENT_CONNECT);
+      eventManager.delayEmit(0, EVENT_CONNECT);
     };
 
     socket.onclose = () => {
@@ -74,7 +78,10 @@ module.exports = function createSocket(
       socket = null;
       if (connected) {
         connected = false;
-        eventManager.emit(EVENT_DISCONNECT);
+
+        // Do not include a debounce if its the final close
+        const delay = currentUrl === null ? 0 : disconnectConnectDebounce;
+        eventManager.delayEmit(delay, EVENT_DISCONNECT);
       }
 
       // As soon as a socket closes, try to connect again
