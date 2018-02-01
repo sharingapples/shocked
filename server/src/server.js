@@ -77,7 +77,7 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
 
       // Allow server side to close the session as well
       session.close = () => {
-        ws.close();
+        setImmediate(() => ws.close());
       };
 
       const api = session.onStart(session);
