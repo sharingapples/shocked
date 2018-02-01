@@ -67,11 +67,18 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
 
       // Add method to dispatch actions on remote clients
       session.dispatch = (action) => {
+        if (ws.readyState !== ws.OPEN) {
+          throw new Error('Session is not available');
+        }
         ws.send(JSON.stringify([0, action]));
       };
 
       // Add method to emit events on remote clients
       session.emit = (event, data) => {
+        if (ws.readyState !== ws.OPEN) {
+          throw new Error('Session is not available');
+        }
+
         ws.send(JSON.stringify([-1, event, data]));
       };
 
