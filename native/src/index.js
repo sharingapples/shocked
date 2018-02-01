@@ -1,8 +1,10 @@
 /* global WebSocket */
-import createSocket from 'socket.red-client';
+import createSocket, { connectApi } from 'socket.red-client';
 import { NetInfo, AppState } from 'react-native';
 
 const EVENT = 'connectionChange';
+
+export { connectApi };
 
 export default function createNativeSocket(dispatch, options) {
   let handler = null;
