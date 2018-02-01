@@ -3,10 +3,11 @@ const createEventManager = require('./EventManager');
 const createRPC = require('./RPC');
 const createErrorManager = require('./ErrorManager');
 
-const EVENT_OPEN = 'open';
-const EVENT_CLOSE = 'close';
+const EVENT_CONNECT = 'connect';
+const EVENT_DISCONNECT = 'disconnect';
 const EVENT_ERROR = 'error';
 const EVENT_MESSAGE = 'message';
+const EVENT_EVENT = 'event';
 
 const DefaultNetwork = {
   isConnected: () => true,
@@ -23,7 +24,7 @@ module.exports = function createSocket(
   const { errorRetryInterval = 3000, responseTimeoutInterval = 3000 } = options;
 
   const eventManager = createEventManager([
-    EVENT_OPEN, EVENT_CLOSE, EVENT_MESSAGE, EVENT_ERROR,
+    EVENT_CONNECT, EVENT_DISCONNECT, EVENT_MESSAGE, EVENT_ERROR, EVENT_EVENT,
   ]);
 
   const fnConnect = () => connect(); // eslint-disable-line no-use-before-define
@@ -64,7 +65,7 @@ module.exports = function createSocket(
     socket = new WebSocketImpl(currentUrl);
     socket.onopen = () => {
       connected = true;
-      eventManager.emit(EVENT_OPEN);
+      eventManager.emit(EVENT_CONNECT);
     };
 
     socket.onclose = () => {
@@ -73,7 +74,7 @@ module.exports = function createSocket(
       socket = null;
       if (connected) {
         connected = false;
-        eventManager.emit(EVENT_CLOSE);
+        eventManager.emit(EVENT_DISCONNECT);
       }
 
       // As soon as a socket closes, try to connect again
