@@ -7,7 +7,7 @@ module.exports = function createEventManager(events) {
       if (list === undefined) {
         throw new Error(`Unknown Event ${event}`);
       }
-      listeners.push(listener);
+      list.push(listener);
       return function remove() {
         const idx = list.findIndex(l => l === listener);
         if (idx >= 0) {
