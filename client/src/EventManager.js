@@ -16,10 +16,9 @@ module.exports = function createEventManager(events) {
       };
     },
 
-    emit: (event, data) => {
+    emit: (event, ...args) => {
       const list = listeners[event];
-      list.forEach(l => l(data));
+      list.forEach((l) => { l(...args); });
     },
-
   };
 };
