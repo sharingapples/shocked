@@ -1,6 +1,6 @@
 {
   "name": "socket.red-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Socket.red client for react-native",
   "main": "__dist__/index.js",
   "files": [
