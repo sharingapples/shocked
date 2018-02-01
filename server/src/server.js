@@ -12,7 +12,7 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
   // Add a client verfication method
   options.verifyClient = async (info, cb) => {
     try {
-      const session = await createSession(info.req.url);
+      const session = await createSession(info.req.url, info.req, info);
       if (session === null) {
         cb(false, 401, 'Unauthorized access');
       } else {
