@@ -1,8 +1,6 @@
 const createSocket = require('./Socket');
 const connectApi = require('./connectApi');
 
-exports.default = createSocket;
-module.exports = {
-  createSocket,
-  connectApi,
-};
+createSocket.connectApi = connectApi;
+createSocket.default = createSocket;
+module.exports = createSocket;
