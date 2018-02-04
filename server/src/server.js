@@ -59,7 +59,7 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
       const { session } = req;
       // If a session could not be established close the socket with a error message
       // Highly unlikely error
-      if (session === null) {
+      if (!session) {
         // ws.emit('error', 'Could not start a session');
         ws.close();
         return;
@@ -87,7 +87,15 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         setImmediate(() => ws.close());
       };
 
-      const api = session.onStart(session);
+      let api = null;
+      try {
+        api = session.onStart(session);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        ws.close();
+        return;
+      }
 
       if (pulseRate) {
         ws.isAlive = true;    // eslint-disable-line no-param-reassign
