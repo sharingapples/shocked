@@ -1,12 +1,12 @@
 {
   "name": "socket.red",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Websocket server",
   "main": "src/server.js",
   "scripts": {
     "test": "../node_modules/jest/bin/jest.js",
     "lint": "../node_modules/eslint/bin/eslint.js src",
-    "prepare": "npm run lint && npm run test"
+    "prepublishOnly": "npm run lint && npm run test"
   },
   "repository": {
     "type": "git",
