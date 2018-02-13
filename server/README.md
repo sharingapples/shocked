@@ -59,7 +59,6 @@ startServer(8080, function createSession(url) {
 
   const session = {
     onClose: () => {
-      // Cleanup stuff to do when the remote connection closes
       delete allSessions[user.id];
     },
     
@@ -68,6 +67,12 @@ startServer(8080, function createSession(url) {
     onStart: (sess) => { /* sess === session */
       // Store the session for using later
       allSessions[user.id] = session;
+
+      // Cleanup stuff to do when the remote connection closes
+      session.addCloseListener(() => {
+        delete allSessions[user.id];
+      });
+
       // An entry point for the session startup, you can use the session
       // object here iwth dispatch and emit methods
       session.emit('hi', 'A new session has started'); // Send an event to the client
