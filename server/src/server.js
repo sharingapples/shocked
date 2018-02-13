@@ -87,6 +87,10 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
         setImmediate(() => ws.close());
       };
 
+      session.addCloseListener = (listener) => {
+        ws.on('close', listener);
+      };
+
       let api = null;
       try {
         api = session.onStart(session);
@@ -100,10 +104,6 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
       if (pulseRate) {
         ws.isAlive = true;    // eslint-disable-line no-param-reassign
         ws.on('pong', beat);
-      }
-
-      if (session.onClose) {
-        ws.on('close', () => session.onClose());
       }
 
       // In case of any error, close the socket
