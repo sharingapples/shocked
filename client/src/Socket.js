@@ -15,11 +15,17 @@ const DefaultNetwork = {
   clear: () => {},
 };
 
+const DefaultValidator = url => url;
+
 module.exports = function createSocket(
   dispatch,
   options = {},
   WebSocketImpl = WebSocket,
-  Network = DefaultNetwork
+  Network = DefaultNetwork,
+  // A validator function, to check if the given url is valid. It could be used to
+  // validate a session. Since the HTTP status codes are not propogated back to
+  // the clients properly, an ajax call should be made to validate the url
+  validator = DefaultValidator
 ) {
   const {
     errorRetryInterval = 3000,
@@ -43,18 +49,25 @@ module.exports = function createSocket(
   let socket = null;
   let currentUrl = null;
   let connected = false;
-
+  let connecting = false; // Avoid multiple connection attempts
   async function connect() {
+    if (connecting) {
+      return;
+    }
+    connecting = true;
+
     // if there is an existing connection, close it
     // It will trigger an auto connect
     if (socket !== null) {
       socket.close();
       socket = null;
+      connecting = false;
       return;
     }
 
     // Only connect if we have a url to connect to
     if (currentUrl === null) {
+      connecting = false;
       return;
     }
 
@@ -62,6 +75,16 @@ module.exports = function createSocket(
     if (!await Network.isConnected()) {
       // Add a handler to reconnect as soon as the network is available
       Network.onConnected(connect);
+      connecting = false;
+      return;
+    }
+
+    // Make sure the currentUrl is valid before opening the socket
+    let validationResult = null;
+    try {
+      validationResult = await validator(currentUrl);
+    } catch (err) {
+      connecting = false;
       return;
     }
 
@@ -69,10 +92,10 @@ module.exports = function createSocket(
     socket = new WebSocketImpl(currentUrl);
     socket.onopen = () => {
       connected = true;
-      eventManager.delayEmit(0, EVENT_CONNECT);
+      eventManager.delayEmit(0, EVENT_CONNECT, validationResult);
     };
 
-    socket.onclose = () => {
+    socket.onclose = (e) => {
       // As soon as a socket is closed, reject any pending rpcs
       rpc.reject(null, { message: 'Connection is closed' });
       socket = null;
@@ -81,7 +104,7 @@ module.exports = function createSocket(
 
         // Do not include a debounce if its the final close
         const delay = currentUrl === null ? 0 : disconnectConnectDebounce;
-        eventManager.delayEmit(delay, EVENT_DISCONNECT);
+        eventManager.delayEmit(delay, EVENT_DISCONNECT, e);
       }
 
       // As soon as a socket closes, try to connect again
@@ -92,11 +115,10 @@ module.exports = function createSocket(
     };
 
     socket.onerror = (e) => {
-      const res = /.*bad response code .*([0-9]{3}).*/.exec(e.message);
-      if (res) {
-        errorManager.set(parseInt(res[1], 10), e.message);
+      if (connected) {
+        errorManager.setGenericError(e);
       } else {
-        errorManager.set(-1, `Socket Error - ${e.message}`);
+        errorManager.setConnectError(e);
       }
       rpc.reject(null, errorManager.get());
     };
@@ -130,6 +152,8 @@ module.exports = function createSocket(
         // Ignore any error
       }
     };
+
+    connecting = false;
   }
 
   return {
@@ -141,7 +165,7 @@ module.exports = function createSocket(
     freeze: () => {
       // Set an error, so that the reconnection doesn't happen automatically
       // Also make sure there is not timer set for the error retry
-      errorManager.set(0, 'Freezing', 0);
+      errorManager.setFrozenError();
       if (socket !== null) {
         socket.close();
         socket = null;
