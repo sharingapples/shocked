@@ -94,6 +94,10 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
       let api = null;
       try {
         api = session.onStart(session);
+        // The api should be created synchronously, can't allow a Promise or a non object
+        if (api === null || api instanceof Promise || typeof api !== 'object') {
+          throw new Error('The api provided for a session should be a object. You cannot return a promise here.');
+        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
