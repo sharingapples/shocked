@@ -1,6 +1,6 @@
 {
   "name": "socket.red-client",
-  "version": "0.1.2",
+  "version": "0.1.5",
   "description": "Socket Client",
   "main": "__dist__/index.js",
   "files": [
