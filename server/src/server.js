@@ -67,19 +67,29 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
 
       // Add method to dispatch actions on remote clients
       session.dispatch = (action) => {
-        if (ws.readyState !== ws.OPEN) {
-          throw new Error('Session is not available');
+        // Only if the session is open are we able to dispatch
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify([0, action]));
+          return;
         }
-        ws.send(JSON.stringify([0, action]));
+
+        if (ws.readyState === ws.CLOSED) {
+          // eslint-disable-next-line no-console
+          console.error('One of your session is already closed and can\'t dispatch. Did you forget to clear the session on your app using addCloseListener!!');
+        }
       };
 
       // Add method to emit events on remote clients
       session.emit = (event, data) => {
-        if (ws.readyState !== ws.OPEN) {
-          throw new Error('Session is not available');
+        // Only if the session is open we are able to emit
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify([-1, event, data]));
         }
 
-        ws.send(JSON.stringify([-1, event, data]));
+        if (ws.readyState === ws.CLOSED) {
+          // eslint-disable-next-line no-console
+          console.error('One of your session is already closed and can\'t emit. Did you forget to clear the session on your app using addCloseListener!!');
+        }
       };
 
       // Allow server side to close the session as well
@@ -134,6 +144,9 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
               try {
                 result = await fn.apply(api, args);
               } catch (err) {
+                // eslint-disable-next-line no-console
+                // Log the error message for verbosity
+                console.error(err);
                 success = false;
                 result = err.message;
               }
