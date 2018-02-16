@@ -1,8 +1,19 @@
 /* global XMLHttpRequest */
 const ValidationError = require('./ValidationError');
 
-const XHRValidator = url => new Promise((resolve, reject) => {
+function fixUrl(url) {
+  if (url.startsWith('ws:')) {
+    return `http:${url.substr(3)}`;
+  } else if (url.startsWith('wss:')) {
+    return `https:${url.substr(4)}`;
+  }
+  return url;
+}
+
+const XHRValidator = wsUrl => new Promise((resolve, reject) => {
   const xhr = new XMLHttpRequest();
+  const url = fixUrl(wsUrl);
+
   xhr.open('GET', url);
   xhr.setRequestHeader('Accept', 'application/json');
   xhr.onreadystatechange = () => {
