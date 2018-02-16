@@ -31,8 +31,9 @@ module.exports = function createErrorManager(emit, connect, retryInterval = 3000
     setConnectError: (error, interval) => {
       setError(CONNECT, error, interval);
     },
-    setValidationError: (error, interval) => {
-      setError(VALIDATION, error, interval);
+    setValidationError: (error) => {
+      // Should not attempt a reconnect in case of a validation error
+      setError(VALIDATION, error, 0);
     },
     setGenericError: (error, interval) => {
       setError(GENERIC, error, interval);
