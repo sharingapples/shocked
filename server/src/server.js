@@ -144,8 +144,8 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
               try {
                 result = await fn.apply(api, args);
               } catch (err) {
-                // eslint-disable-next-line no-console
                 // Log the error message for verbosity
+                // eslint-disable-next-line no-console
                 console.error(err);
                 success = false;
                 result = err.message;
