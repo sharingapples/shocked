@@ -1,4 +1,5 @@
 /* global XMLHttpRequest */
+const ValidationError = require('./ValidationError');
 
 const XHRValidator = url => new Promise((resolve, reject) => {
   const xhr = new XMLHttpRequest();
@@ -9,7 +10,7 @@ const XHRValidator = url => new Promise((resolve, reject) => {
       if (xhr.status === 200) {
         resolve(JSON.parse(xhr.responseText));
       } else if (xhr.status === 401) {
-        reject(new Error('Unauthorized access/Invalid session'));
+        reject(new ValidationError('Unauthorized access/Invalid session'));
       } else {
         reject(new Error(`Could not validate ${url}. Got ${xhr.status}-${xhr.statusText}`));
       }

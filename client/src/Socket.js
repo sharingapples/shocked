@@ -2,6 +2,7 @@
 const createEventManager = require('./EventManager');
 const createRPC = require('./RPC');
 const createErrorManager = require('./ErrorManager');
+const ValidationError = require('./ValidationError');
 
 const EVENT_CONNECT = 'connect';
 const EVENT_DISCONNECT = 'disconnect';
@@ -84,6 +85,11 @@ module.exports = function createSocket(
     try {
       validationResult = await validator(currentUrl);
     } catch (err) {
+      if (err instanceof ValidationError) {
+        errorManager.setValidationError(err);
+      } else {
+        errorManager.setConnectError(err);
+      }
       connecting = false;
       return;
     }

@@ -1,6 +1,6 @@
 /* global fetch, WebSocket */
 import { NetInfo, AppState } from 'react-native';
-import createSocket, { connectApi } from 'socket.red-client';
+import createSocket, { connectApi, ValidationError } from 'socket.red-client';
 
 const EVENT = 'connectionChange';
 
@@ -13,7 +13,7 @@ const NativeValidator = async (url) => {
     });
 
     if (response.status === 401) {
-      throw new Error('Unauthorized access/Invalid session');
+      throw new ValidationError('Unauthorized access/Invalid session');
     } else if (response.status === 200) {
       return response.json();
     } else {
@@ -70,4 +70,5 @@ export default function createNativeSocket(dispatch, options) {
 
 export {
   connectApi,
+  ValidationError,
 };
