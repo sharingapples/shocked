@@ -1,6 +1,6 @@
 {
   "name": "socket.red-client",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Socket Client",
   "main": "__dist__/index.js",
   "files": [
@@ -20,6 +20,7 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "devDependencies": {
+    "babel-preset-react-native": "^4.0.0",
     "socket.red": "^0.1.6",
     "ws": "^4.0.0"
   }
