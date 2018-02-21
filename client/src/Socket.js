@@ -98,6 +98,7 @@ export default function createSocket(
     socket = new WebSocketImpl(currentUrl);
     socket.onopen = () => {
       connected = true;
+      errorManager.clear();
       eventManager.delayEmit(0, EVENT_CONNECT, validationResult);
     };
 
