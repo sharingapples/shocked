@@ -1,5 +1,5 @@
 /* global XMLHttpRequest */
-const ValidationError = require('./ValidationError');
+import ValidationError from './ValidationError';
 
 function fixUrl(url) {
   if (url.startsWith('ws:')) {
@@ -31,4 +31,4 @@ const XHRValidator = wsUrl => new Promise((resolve, reject) => {
   xhr.send();
 });
 
-module.exports = XHRValidator;
+export default XHRValidator;

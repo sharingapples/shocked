@@ -9,7 +9,7 @@
  * @param {*} socket The socket on which the commands need to be
  *                   sent.
  */
-module.exports = function connectApi(Class, socket) {
+export default function connectApi(Class, socket) {
   function recurse(P, api) {
     if (P.prototype === undefined) {
       return api;
@@ -36,4 +36,4 @@ module.exports = function connectApi(Class, socket) {
   }
 
   return recurse(Class, {});
-};
+}

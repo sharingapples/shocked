@@ -1,8 +1,8 @@
 /* global WebSocket */
-const createEventManager = require('./EventManager');
-const createRPC = require('./RPC');
-const createErrorManager = require('./ErrorManager');
-const ValidationError = require('./ValidationError');
+import createEventManager from './EventManager';
+import createRPC from './RPC';
+import createErrorManager from './ErrorManager';
+import ValidationError from './ValidationError';
 
 const EVENT_CONNECT = 'connect';
 const EVENT_DISCONNECT = 'disconnect';
@@ -18,7 +18,7 @@ const DefaultNetwork = {
 
 const DefaultValidator = url => url;
 
-module.exports = function createSocket(
+export default function createSocket(
   dispatch,
   options = {},
   WebSocketImpl = WebSocket,
@@ -209,4 +209,4 @@ module.exports = function createSocket(
       return promise;
     },
   };
-};
+}

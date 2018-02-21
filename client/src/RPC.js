@@ -1,4 +1,4 @@
-module.exports = function createRPC(timeout, connect) {
+export default function createRPC(timeout, connect) {
   let rpcId = 0;
   const rpcs = {};
 
@@ -47,5 +47,4 @@ module.exports = function createRPC(timeout, connect) {
   };
 
   return rpc;
-};
-
+}

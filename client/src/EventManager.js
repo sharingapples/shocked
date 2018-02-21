@@ -1,4 +1,4 @@
-module.exports = function createEventManager(events) {
+export default function createEventManager(events) {
   const listeners = events.reduce((res, event) => Object.assign(res, { [event]: [] }), {});
 
   let delayedEmit = null;
@@ -44,4 +44,4 @@ module.exports = function createEventManager(events) {
   };
 
   return manager;
-};
+}

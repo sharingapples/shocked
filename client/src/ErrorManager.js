@@ -3,7 +3,7 @@ const VALIDATION = 'VALIDATION';
 const FROZEN = 'FROZEN';
 const GENERIC = 'GENERIC';
 
-module.exports = function createErrorManager(emit, connect, retryInterval = 3000) {
+export default function createErrorManager(emit, connect, retryInterval = 3000) {
   let errorTimer = null;
   let currentError = null;
 
@@ -49,4 +49,4 @@ module.exports = function createErrorManager(emit, connect, retryInterval = 3000
       currentError = null;
     },
   };
-};
+}

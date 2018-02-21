@@ -1,11 +1,15 @@
-const createSocket = require('./Socket');
-const connectApi = require('./connectApi');
-const XHRValidator = require('./XHRValidator');
-const ValidationError = require('./ValidationError');
+// The regenerator-runtime needs to be included for the async/await to work
+import 'regenerator-runtime/runtime';
 
-createSocket.connectApi = connectApi;
-createSocket.default = createSocket;
-createSocket.XHRValidator = XHRValidator;
-createSocket.ValidationError = ValidationError;
+import createSocket from './Socket';
+import connectApi from './connectApi';
+import XHRValidator from './XHRValidator';
+import ValidationError from './ValidationError';
 
-module.exports = createSocket;
+export {
+  connectApi,
+  XHRValidator,
+  ValidationError,
+};
+
+export default createSocket;

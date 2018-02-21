@@ -20,8 +20,12 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "devDependencies": {
-    "babel-preset-react-native": "^4.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1",
     "socket.red": "^0.1.6",
     "ws": "^4.0.0"
+  },
+  "dependencies": {
+    "regenerator-runtime": "^0.11.1"
   }
 }
