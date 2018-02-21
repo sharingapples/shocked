@@ -25,34 +25,20 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
     }
   };
 
-  return new Promise((resolve, reject) => {
-    const wss = new WebSocket.Server(options, (err) => {
-      if (err) {
-        return reject(err);
-      }
+  return new Promise((resolve) => {
+    const wss = new WebSocket.Server(options);
 
-      function keepAlive() {
-        wss.clients.forEach((ws) => {
-          if (!ws.isAlive) {
-            return ws.terminate();
-          }
-
-          // eslint-disable-next-line no-param-reassign
-          ws.isAlive = false;
-          return ws.ping(noop);
-        });
-      }
-
-      const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
-
-      return resolve(() => {
-        if (heartBeat) {
-          clearInterval(heartBeat);
+    function keepAlive() {
+      wss.clients.forEach((ws) => {
+        if (!ws.isAlive) {
+          return ws.terminate();
         }
-        wss.clients.forEach(ws => ws.close());
-        wss.close();
+
+        // eslint-disable-next-line no-param-reassign
+        ws.isAlive = false;
+        return ws.ping(noop);
       });
-    });
+    }
 
     wss.on('connection', (ws, req) => {
       // Get the session created by verifyClient above
@@ -165,6 +151,17 @@ module.exports = function start(server, createSession, pulseRate = 30000) {
           console.error(err);
         }
       });
+    });
+
+    const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
+
+    // Return a method to stop clean up
+    return resolve(() => {
+      if (heartBeat) {
+        clearInterval(heartBeat);
+      }
+      wss.clients.forEach(ws => ws.close());
+      wss.close();
     });
   });
 };
