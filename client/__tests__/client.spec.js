@@ -1,8 +1,7 @@
+import createSocket, { connectApi } from '../src';
+
 const startServer = require('socket.red');
 const WebSocket = require('ws');
-
-const createSocket = require('../src/Socket');
-const connectApi = require('../src/connectApi');
 
 const port = 8001;
 
