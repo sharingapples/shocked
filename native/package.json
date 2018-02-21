@@ -1,6 +1,6 @@
 {
   "name": "socket.red-native",
-  "version": "0.1.11",
+  "version": "0.1.14",
   "description": "Socket.red client for react-native",
   "main": "__dist__/index.js",
   "files": [
@@ -18,7 +18,7 @@
     "url": "git+https://github.com/bhoos/socket/tree/master/native"
   },
   "dependencies": {
-    "socket.red-client": "^0.1.4"
+    "socket.red-client": "^0.1.14"
   },
   "peerDependencies": {
     "react-native": ">=0.40.0"
