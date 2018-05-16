@@ -4,7 +4,7 @@
   "description": "Websocket server",
   "main": "cjs/index.js",
   "scripts": {
-    "test": "../node_modules/.bin/jest",
+    "test": "../../node_modules/.bin/jest",
     "lint": "../../node_modules/.bin/eslint src",
     "build": "../../node_modules/.bin/babel src -d cjs",
     "prepublishOnly": "npm run lint && npm run test && npm run build"
