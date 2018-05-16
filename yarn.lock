@@ -5237,7 +5237,7 @@ regenerator-runtime@^0.10.5:
   version "0.10.5"
   resolved "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.10.5.tgz#336c3efc1220adcedda2c9fab67b5a7955a33658"
 
-regenerator-runtime@^0.11.0, regenerator-runtime@^0.11.1:
+regenerator-runtime@^0.11.0:
   version "0.11.1"
   resolved "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.11.1.tgz#be05ad7f9bf7d22e056f9726cee5017fbf19e2e9"
 
@@ -5662,12 +5662,6 @@ sntp@2.x.x:
   resolved "https://registry.npmjs.org/sntp/-/sntp-2.1.0.tgz#2c6cec14fedc2222739caf9b5c3d85d1cc5a2cc8"
   dependencies:
     hoek "4.x.x"
-
-socket.red-client@^0.1.14:
-  version "0.1.14"
-  resolved "https://registry.npmjs.org/socket.red-client/-/socket.red-client-0.1.14.tgz#ae22765b480a05eccd4a627647f9b981b7c61504"
-  dependencies:
-    regenerator-runtime "^0.11.1"
 
 socket.red@^0.1.6:
   version "0.1.11"
