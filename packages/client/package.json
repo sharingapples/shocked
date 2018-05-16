@@ -1,16 +1,16 @@
 {
-  "name": "socket.red-client",
-  "version": "0.1.14",
+  "name": "redsock-client",
+  "version": "0.1.0",
   "description": "Socket Client",
-  "main": "__dist__/index.js",
+  "main": "cjs/index.js",
   "files": [
-    "__dist__"
+    "cjs"
   ],
   "scripts": {
-    "test": "../node_modules/jest/bin/jest.js",
-    "lint": "../node_modules/eslint/bin/eslint.js src",
-    "clean": "../node_modules/rimraf/bin.js __dist__",
-    "build": "../node_modules/babel-cli/bin/babel.js --out-dir __dist__ src",
+    "test": "../../node_modules/.bin/jest",
+    "lint": "../../node_modules/.bin/eslint src",
+    "clean": "../../node_modules/.bin/rimraf cjs",
+    "build": "../../node_modules/.bin/babel src -d cjs",
     "prepare": "npm run lint && npm run test && npm run clean && npm run build"
   },
   "repository": {
@@ -24,8 +24,5 @@
     "babel-preset-stage-3": "^6.24.1",
     "socket.red": "^0.1.6",
     "ws": "^4.0.0"
-  },
-  "dependencies": {
-    "regenerator-runtime": "^0.11.1"
   }
 }
