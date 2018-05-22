@@ -1,67 +1,24 @@
-const channels = {};
+import encodeAction from './_encodeAction';
+import encodeEvent from './_encodeEvent';
 
-// TODO: Sort the sessions by session id, so its easier to search for a session
 class Channel {
-  constructor(name) {
-    this.name = name;
-    this.sessions = [];
+  constructor(id) {
+    this.id = id;
   }
 
-  getSessions() {
-    return this.sessions;
+  dispatch(action) {
+    return Channel.provider.publish(this.id, encodeAction(action));
   }
 
-  add(session, onRemove) {
-    this.sessions.push({
-      session,
-      onRemove,
-    });
-
-    // Remove session when closing
-    session.onClose(() => this.remove(session));
-  }
-
-  remove(session) {
-    const idx = this.sessions.findIndex(s => s.session === session);
-    if (idx >= 0) {
-      const { onRemove } = this.sessions[idx];
-      if (onRemove) {
-        onRemove();
-      }
-
-      this.sessions.splice(idx, 1);
-    }
-
-    // If there aren't any more session available on the channel, clear
-    if (this.sessions.length === 0) {
-      delete channels[this.name];
-    }
-  }
-
-  dispatch(action, exclude) {
-    this.sessions.forEach(({ session }) => {
-      if (session !== exclude) {
-        session.dispatch(action);
-      }
-    });
-  }
-
-  emit(event, data, exclude) {
-    this.sessions.forEach(({ session }) => {
-      if (session !== exclude) {
-        session.emit(event, data);
-      }
-    });
+  emit(event, data) {
+    return Channel.provider.publish(this.id, encodeEvent(event, data));
   }
 }
 
-Channel.get = (name) => {
-  if (channels[name]) {
-    return channels[name];
-  }
+Channel.subscribe = (id, session) => Channel.provider.subscribe(this.id, session);
 
-  channels[name] = new Channel(name);
-  return channels[name];
+Channel.setProvider = (provider) => {
+  Channel.provider = provider;
 };
 
 export default Channel;

@@ -1,6 +1,11 @@
 import uuid from 'uuid/v4';
-import { executeApi } from './binder';
+import WebSocket from 'ws';
+
+import { findApi } from './binder';
 import Channel from './Channel';
+
+import encodeAction from './_encodeAction';
+import encodeEvent from './_encodeEvent';
 
 class Session {
   constructor(req, params) {
@@ -13,6 +18,59 @@ class Session {
     this.cleanUps = {};
     this.scopes = {};
     this.closeListeners = [];
+
+    this.proxy = null;
+  }
+
+  clearProxy(scope) {
+    if (this.proxy[scope]) {
+      const proxy = this.proxy[scope];
+      delete this.proxy[scope];
+      proxy.close();
+    }
+  }
+
+  async setupProxy(scope, url) {
+    if (this.proxy[scope]) {
+      throw new Error(`A proxy is already setup at ${scope}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const proxy = new WebSocket(url);
+      proxy.on('close', () => {
+        if (!this.proxy[scope]) {
+          // The proxy has already been disassociated, no need to do anything
+          return;
+        }
+
+        // If the proxy disconnects, close the session as well
+        // Since this is a very rare case scenario, may occur when
+        // the target group scales down or up
+        this.close();
+      });
+
+      proxy.on('connect', () => {
+        // Proxy connection established, we can resolve the proxy
+        if (!done) {
+          done = true;
+          this.proxy[scope] = proxy;
+          resolve(proxy);
+        }
+      });
+
+      proxy.on('error', () => {
+        if (!done) {
+          done = true;
+          reject(proxy);
+        }
+      });
+
+      // Forward any message received back to the client
+      proxy.on('message', (data) => {
+        this.ws.send(data);
+      });
+    });
   }
 
   activate(ws) {
@@ -34,9 +92,28 @@ class Session {
         }
 
         const [code, name, args] = p;
-        const res = executeApi(this, name, args);
-        if (code > 0) {
-          ws.send(JSON.stringify([code, res]));
+        const [scope, api] = name.split('/', 2);
+
+        // Check if there is a proxy setup for the given scope
+        const fn = findApi(scope, api);
+        if (!fn) {
+          // In case there isn't any api declared, see if we have a proxy
+          // for a given scope
+          const proxy = this.proxy[scope];
+          if (proxy) {
+            proxy.send(data);
+          } else {
+            throw new Error(`Unknown api call ${name}`);
+          }
+        } else {
+          try {
+            const res = fn.apply({ session: this, scope }, args);
+            if (code > 0) {
+              ws.send(JSON.stringify([code, true, res]));
+            }
+          } catch (err) {
+            ws.send(JSON.stringify([code, false, err]));
+          }
         }
       } catch (e) {
         console.error(e);
@@ -49,15 +126,11 @@ class Session {
   }
 
   dispatch(action) {
-    if (this.ws.readyState === this.ws.OPEN) {
-      this.ws.send(JSON.stringify([0, action]));
-    }
+    this.send(encodeAction(action));
   }
 
   emit(event, data) {
-    if (this.ws.readyState === this.ws.OPEN) {
-      this.ws.send(JSON.stringify([-1, event, data]));
-    }
+    this.send(encodeEvent(event, data));
   }
 
   scope(name, scoping) {
@@ -70,10 +143,19 @@ class Session {
     return scope;
   }
 
+  send(message) {
+    if (this.ws.readyState === this.ws.OPEN) {
+      this.ws.send(message);
+    }
+  }
+
+  subscribe(channelId) {
+    return Channel.subscribe(channelId, this);
+  }
+
   // eslint-disable-next-line class-methods-use-this
-  channel(name) {
-    // See if there is already a channel with the given name
-    return Channel.get(name);
+  channel(id) {
+    return new Channel(id);
   }
 
   set(name, value, onClear) {

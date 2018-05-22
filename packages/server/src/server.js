@@ -1,7 +1,9 @@
+import WebSocket from 'ws';
 import UrlPattern from 'url-pattern';
 import Session from './Session';
+import Channel from './Channel';
 
-const WebSocket = require('ws');
+import createDefaultProvider from './defaultChannelProvider';
 
 function noop() { }
 
@@ -10,7 +12,11 @@ function beat() {
 }
 
 export default function start(options, validateSession, pulseRate = 30000) {
-  const { url, ...other } = options;
+  const { url, channelProvider, ...other } = options;
+
+  // Use the channel provider
+  Channel.setProvider(channelProvider || createDefaultProvider);
+
   const urlPattern = url ? new UrlPattern(options.url) : null;
 
   const wsOptions = {
@@ -36,7 +42,6 @@ export default function start(options, validateSession, pulseRate = 30000) {
   };
 
   const wss = new WebSocket.Server(wsOptions);
-  console.log(`Started websocket server at ${options.port}`);
 
   wss.on('connection', (ws, req) => {
     // Get the session created by verifyClient above
