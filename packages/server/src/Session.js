@@ -1,7 +1,7 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
 
-import { findApi } from './binder';
+import { findApi } from './scoping';
 import Channel from './Channel';
 
 import encodeAction from './_encodeAction';
