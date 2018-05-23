@@ -1,6 +1,6 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
-import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT } from 'redsock-common';
+import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL } from 'redsock-common';
 import { findScope } from './scoping';
 import Channel from './Channel';
 
@@ -31,7 +31,12 @@ class Session {
   }
 
   async setupProxy(scopeId, url) {
-    if (this.proxy[scopeId]) {
+    const scope = this.scopes[scopeId];
+    if (!scope) {
+      throw new Error(`Unknown scope ${scopeId}`);
+    }
+
+    if (scope.proxy) {
       throw new Error(`A proxy is already setup at ${scopeId}`);
     }
 
@@ -39,13 +44,13 @@ class Session {
       let done = false;
       const proxy = new WebSocket(url);
       proxy.on('close', () => {
-        if (!this.proxy[scopeId]) {
+        if (!scope.proxy) {
           // The proxy has already been disassociated, no need to do anything
           return;
         }
 
         // Remove proxy for this scope
-        delete this.proxy[scopeId];
+        scope.proxy = null;
 
         // If the proxy disconnects, close the session as well
         // Since this is a very rare case scenario, may occur when
@@ -57,7 +62,7 @@ class Session {
         // Proxy connection established, we can resolve the proxy
         if (!done) {
           done = true;
-          this.proxy[scopeId] = proxy;
+          scope.proxy = proxy;
           resolve(proxy);
         }
       });
@@ -112,6 +117,10 @@ class Session {
 
       const fn = scope.apis[api];
       if (!fn) {
+        // In case there is proxy available for this scope, then use proxy
+        if (scope.proxy) {
+          return scope.proxy.send(PKT_RPC_REQUEST(tracker, scopeId, api, args));
+        }
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scopeId}/${api}`));
       }
 
@@ -130,8 +139,11 @@ class Session {
         throw new Error(`Unknown scope ${scopeId}`);
       }
 
-      const fn = scope[api];
+      const fn = scope.apis[api];
       if (!fn) {
+        if (scope.proxy) {
+          return scope.proxy.send(PKT_CALL(scopeId, api, args));
+        }
         throw new Error(`Unknown api ${scopeId}/${api}`);
       }
 
