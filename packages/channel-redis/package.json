@@ -1,6 +1,6 @@
 {
   "name": "redsock-channel-redis",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Redis based channel for redsock",
   "main": "cjs/index.js",
   "scripts": {
