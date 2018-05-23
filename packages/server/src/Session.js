@@ -148,7 +148,7 @@ class Session {
       }
 
       // Finally execute the method
-      fn.apply(apiInstance, args);
+      return fn.apply(apiInstance, args);
     };
 
     ws.on('close', () => {
