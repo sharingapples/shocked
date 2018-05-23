@@ -16,7 +16,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
   const { url, channelProvider, ...other } = options;
 
   // Use the channel provider
-  Channel.setProvider(channelProvider || createDefaultProvider);
+  Channel.setProvider(channelProvider || createDefaultProvider());
 
   const urlPattern = url ? new UrlPattern(options.url) : null;
 
