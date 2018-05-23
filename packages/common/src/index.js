@@ -16,8 +16,8 @@ const METHOD_MAPS = {
   [TYPE_CALL]: 'onCall',
 };
 
-export function PKT_RPC_REQUEST(tracker, name, args) {
-  return JSON.stringify([TYPE_RPC_REQUEST, tracker, name, args]);
+export function PKT_RPC_REQUEST(tracker, scope, api, args) {
+  return JSON.stringify([TYPE_RPC_REQUEST, tracker, scope, api, args]);
 }
 
 export function PKT_RPC_RESPONSE(tracker, success, result) {
@@ -40,8 +40,8 @@ export function PKT_SCOPE_RESPONSE(tracker, success, result) {
   return JSON.stringify([TYPE_SCOPE_RESPONSE, tracker, success, result]);
 }
 
-export function PKT_CALL(name, args) {
-  return JSON.stringify([TYPE_CALL, name, args]);
+export function PKT_CALL(scope, api, args) {
+  return JSON.stringify([TYPE_CALL, scope, api, args]);
 }
 
 export function createParser() {
