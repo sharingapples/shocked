@@ -11,7 +11,7 @@ function connect(url, store, Socket = global.WebSocket) {
 
   let connected = false;
   let rpcs = {};
-  let scopes = {};
+  let scopeCalls = {};
   const listeners = {};
   const pending = [];
 
@@ -48,8 +48,8 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   parser.onScopeResponse = (tracker, success, result) => {
-    const [resolve, reject, manifest] = scopes[tracker];
-    delete scopes[tracker];
+    const [resolve, reject, scopeId, manifest] = scopeCalls[tracker];
+    delete scopeCalls[tracker];
     if (!success) {
       reject(result);
     } else {
@@ -111,7 +111,7 @@ function connect(url, store, Socket = global.WebSocket) {
 
     scope: (name, manifest = null) => new Promise((resolve, reject) => {
       scopeSerial += 1;
-      scopes[scopeSerial] = [resolve, reject, manifest];
+      scopeCalls[scopeSerial] = [resolve, reject, name, manifest];
 
       const pkt = PKT_SCOPE_REQUEST(scopeSerial, name, !manifest);
       if (!connected) {
@@ -177,9 +177,9 @@ function connect(url, store, Socket = global.WebSocket) {
 
 
     // Reject all rpcs and scopes with termination error
-    const rejections = Object.values(rpcs).concat(Object.values(scopes));
+    const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
     rpcs = {};
-    scopes = {};
+    scopeCalls = {};
     rejections.forEach(([, reject]) => {
       reject(new Error('Connection terminated'));
     });
@@ -189,9 +189,9 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   socket.onerror = (e) => {
-    const rejections = Object.values(rpcs).concat(Object.values(scopes));
+    const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
     rpcs = {};
-    scopes = {};
+    scopeCalls = {};
 
     // Clear all pending tasks, as they will be rejected from below
     pending.length = 0;
