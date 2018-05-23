@@ -104,14 +104,15 @@ class Session {
     };
 
     parser.onRpcRequest = async (tracker, scopeId, api, args) => {
+      const apiInstance = { session: this, scope: scopeId };
       const scope = this.scopes[scopeId];
       if (!scope) {
-        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api scope ${scope}`));
+        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api scope ${scopeId}`));
       }
 
       const fn = scope[api];
       if (!fn) {
-        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scope}/${api}`));
+        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scopeId}/${api}`));
       }
 
       try {
