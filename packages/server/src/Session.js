@@ -110,7 +110,7 @@ class Session {
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api scope ${scopeId}`));
       }
 
-      const fn = scope[api];
+      const fn = scope.apis[api];
       if (!fn) {
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scopeId}/${api}`));
       }
