@@ -1,8 +1,15 @@
 import { start } from 'redsock';
+import createRedisProvider from 'redsock-channel-redis';
+
 import { PORT } from '../common';
+
+
 import './api';
 
-start({ port: PORT, url: '/demo/:id/:name' }, (session) => {
+const url = '/demo/:id/:name';
+const channelProvider = createRedisProvider();
+
+start({ port: PORT, url, channelProvider }, (session) => {
   const user = session.params;
   console.log(`Creating session for ${user.name}/${user.id}`);
 
