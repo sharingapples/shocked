@@ -151,7 +151,12 @@ class Session {
   }
 
   subscribe(channelId) {
-    return Channel.subscribe(channelId, this);
+    const unsubscribe = Channel.subscribe(channelId, this);
+    const remover = this.onClose(unsubscribe);
+    return () => {
+      remover();
+      unsubscribe();
+    };
   }
 
   // eslint-disable-next-line class-methods-use-this
