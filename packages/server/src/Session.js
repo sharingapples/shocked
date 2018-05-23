@@ -205,8 +205,9 @@ class Session {
   }
 
   set(name, value, onClear) {
+    // If there is a previous value, clear that first
     if (this.values[name]) {
-      throw new Error(`Session already has a value at ${name}`);
+      this.clear(name);
     }
 
     this.values[name] = value;
