@@ -53,12 +53,12 @@ function connect(url, store, Socket = global.WebSocket) {
     if (!success) {
       reject(result);
     } else {
-      const apis = Object.keys(result || manifest);
+      const apis = result || manifest.apis;
       resolve(apis.reduce((res, api) => {
         // eslint-disable-next-line no-use-before-define
         res[api] = (...args) => client.rpc(scopeId, api, ...args);
         return res;
-      }), {});
+      }, {}));
     }
   };
 
