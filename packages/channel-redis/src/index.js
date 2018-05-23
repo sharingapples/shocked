@@ -1,19 +1,37 @@
 import redis from 'redis';
 
 export default function createProvider(redisOptions) {
-  const client = redis.createClient(redisOptions);
+  let pubClient = null;
+  let subClient = null;
 
   const channels = {};
 
-  client.on('message', (channel, message) => {
-    const list = channels[channel];
-    if (list) {
-      // Forward message to all the subscribed sessions
-      list.forEach((session) => {
-        session.send(message);
-      });
+  function getPubClient() {
+    if (pubClient !== null) {
+      return pubClient;
     }
-  });
+
+    pubClient = redis.createClient(redisOptions);
+    return pubClient;
+  }
+
+  function getSubClient() {
+    if (subClient !== null) {
+      return subClient;
+    }
+
+    subClient = redis.createClient(redisOptions);
+    subClient.on('message', (channel, message) => {
+      const list = channels[channel];
+      if (list) {
+        // Forward message to all the subscribed sessions
+        list.forEach((session) => {
+          session.send(message);
+        });
+      }
+    });
+    return subClient;
+  }
 
   return {
     // TODO: In case the session is already subscribed return false
@@ -21,7 +39,7 @@ export default function createProvider(redisOptions) {
       const list = channels[channelId];
       if (!list) {
         // Subscribe to the given channel
-        client.subscribe(channelId);
+        getSubClient().subscribe(channelId);
         channels[channelId] = [session];
       } else {
         list.push(session);
@@ -44,13 +62,13 @@ export default function createProvider(redisOptions) {
       // Cleanup
       if (list.length === 0) {
         delete channels[channelId];
-        client.unsubscribe(channelId);
+        getSubClient().unsubscribe(channelId);
       }
       return true;
     },
 
     publish: (channelId, message) => {
-      client.publish(channelId, message);
+      getPubClient().publish(channelId, message);
     },
   };
 }
