@@ -4,7 +4,10 @@
   "description": "A common package for client and server packages",
   "main": "cjs/index.js",
   "scripts": {
-    "build": "../../node_modules/.bin/babel src -d cjs"
+    "lint": "../../node_modules/.bin/eslint src",
+    "clean": "../../node_modules/.bin/rimraf cjs",
+    "build": "../../node_modules/.bin/babel src -d cjs",
+    "prepare": "npm run lint && npm run test && npm run clean && npm run build"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT"
