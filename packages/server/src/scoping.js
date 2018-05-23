@@ -13,7 +13,16 @@ export function createScope(name, initFn) {
   scopes[name] = scope;
 
   return (api, apiName) => {
-    scope.apis[apiName || api.name] = api;
+    const apiId = apiName || api.name;
+    if (!apiId) {
+      throw new Error(`Invalid api name under ${name} scope`);
+    }
+
+    if (scope.apis[apiId]) {
+      throw new Error(`Can't define multiple apis with the same id ${name}/${apiId}`);
+    }
+
+    scope.apis[apiId] = api;
   };
 }
 
