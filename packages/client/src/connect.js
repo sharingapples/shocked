@@ -1,11 +1,17 @@
+import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'redsock-common';
+
 const noop = () => {};
 
 function connect(url, store, Socket = global.WebSocket) {
+  const parser = createParser();
+
   let socket = new Socket(url);
   let serial = 0;
+  let scopeSerial = 0;
 
   let connected = false;
   let rpcs = {};
+  let scopes = {};
   const listeners = {};
   const pending = [];
 
@@ -16,17 +22,45 @@ function connect(url, store, Socket = global.WebSocket) {
     }
   }
 
-  function deferCall(sn, name, args) {
-    const c = [sn, name, args];
-    pending.push(c);
+  function deferSend(pkt) {
+    pending.push(pkt);
     return () => {
-      const idx = pending.indexOf(c);
+      const idx = pending.indexOf(pkt);
       if (idx >= 0) {
         pending.splice(idx, 1);
       }
     };
   }
 
+  parser.onEvent = fire;
+  parser.onAction = (action) => {
+    store.dispatch(action);
+  };
+
+  parser.onRpcResponse = (tracker, success, result) => {
+    const [resolve, reject] = rpcs[tracker];
+    delete rpcs[tracker];
+    if (success) {
+      resolve(result);
+    } else {
+      reject(result);
+    }
+  };
+
+  parser.onScopeResponse = (tracker, success, result) => {
+    const [resolve, reject, manifest] = scopes[tracker];
+    delete scopes[tracker];
+    if (!success) {
+      reject(result);
+    } else {
+      const apis = Object.keys(result || manifest);
+      resolve(apis.reduce((res, api) => {
+        // eslint-disable-next-line no-use-before-define
+        res[api] = (...args) => client.rpc(api, ...args);
+        return res;
+      }), {});
+    }
+  };
 
   const client = {
     isConnected: () => connected,
@@ -52,26 +86,40 @@ function connect(url, store, Socket = global.WebSocket) {
     },
 
     call: (api, ...args) => {
+      const pkt = PKT_CALL(api, args);
       if (!connected) {
         // Add to pending tasks
-        return deferCall(0, api, args);
+        return deferSend(pkt);
       }
 
       // Send the request, its not an rpc, so need to keep track
-      socket.send(JSON.stringify([0, api, args]));
+      socket.send(pkt);
       return noop;
     },
 
     rpc: (api, ...args) => new Promise((resolve, reject) => {
       serial += 1;
       rpcs[serial] = [resolve, reject];
-
+      const pkt = PKT_RPC_REQUEST(serial, api, args);
       if (!connected) {
-        return deferCall(serial, api, args);
+        return deferSend(pkt);
       }
 
-      socket.send(JSON.stringify([serial, api, args]));
+      socket.send(pkt);
       return noop();
+    }),
+
+    scope: (name, manifest = null) => new Promise((resolve, reject) => {
+      scopeSerial += 1;
+      scopes[scopeSerial] = [resolve, reject, manifest];
+
+      const pkt = PKT_SCOPE_REQUEST(scopeSerial, name, !manifest);
+      if (!connected) {
+        return deferSend(pkt);
+      }
+
+      socket.send(pkt);
+      return noop;
     }),
   };
 
@@ -79,13 +127,15 @@ function connect(url, store, Socket = global.WebSocket) {
     connected = true;
 
     // Execute all the pending calls
-    pending.forEach(p => socket.send(JSON.stringify(p)));
+    pending.forEach(p => socket.send(p));
+    pending.length = 0;
 
     // Trigger the connect event
     fire('connect');
   };
 
   socket.onmessage = (e) => {
+    parser.parse(e.data);
     try {
       const o = JSON.parse(e.data);
       if (!Array.isArray(o)) {
@@ -123,9 +173,13 @@ function connect(url, store, Socket = global.WebSocket) {
     // Clear all pending, as they will be rejected from below
     pending.length = 0;
 
-    // Reject all rpcs with termination error
-    const rejections = Object.values(rpcs);
+    // Reject all scope calls with termination error
+
+
+    // Reject all rpcs and scopes with termination error
+    const rejections = Object.values(rpcs).concat(Object.values(scopes));
     rpcs = {};
+    scopes = {};
     rejections.forEach(([, reject]) => {
       reject(new Error('Connection terminated'));
     });
@@ -135,8 +189,9 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   socket.onerror = (e) => {
-    const rejections = Object.values(rpcs);
+    const rejections = Object.values(rpcs).concat(Object.values(scopes));
     rpcs = {};
+    scopes = {};
 
     // Clear all pending tasks, as they will be rejected from below
     pending.length = 0;

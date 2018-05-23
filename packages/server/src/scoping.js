@@ -17,11 +17,7 @@ export function createScope(name, initFn) {
   };
 }
 
-export function findApi(scopeId, name) {
-  const scope = scopes[scopeId];
-  if (!scope) {
-    throw new Error(`Unknown scope ${scope}`);
-  }
-
-  return scope.apis[name];
+export function findScope(scopeId) {
+  return scopes[scopeId];
 }
+

@@ -1,11 +1,8 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
-
-import { findApi } from './scoping';
+import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT } from 'redsock-common';
+import { findScope } from './scoping';
 import Channel from './Channel';
-
-import encodeAction from './_encodeAction';
-import encodeEvent from './_encodeEvent';
 
 class Session {
   constructor(req, params) {
@@ -82,49 +79,79 @@ class Session {
   activate(ws) {
     this.ws = ws;
 
+    const parser = createParser();
+    parser.onScopeRequest = (tracker, scopeId, manifest) => {
+      let scope = this.scopes[scopeId];
+
+      if (!scope) {
+        scope = findScope(scopeId);
+        if (!scope) {
+          return this.send(PKT_SCOPE_RESPONSE(tracker, false, `Unknown scope ${scopeId}`));
+        }
+
+        // Store the scope on the session
+        this.scopes[scopeId] = scope;
+
+        // Initialize the scope for this session
+        scope.init(this);
+      }
+
+      if (manifest) {
+        return this.send(PKT_SCOPE_RESPONSE(tracker, true, Object.keys(scope.apis)));
+      }
+
+      return this.send(PKT_SCOPE_RESPONSE(tracker, true, null));
+    };
+
+    parser.onRpcRequest = async (tracker, scopeId, api, args) => {
+      const scope = this.scopes[scopeId];
+      if (!scope) {
+        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api scope ${scope}`));
+      }
+
+      const fn = scope[api];
+      if (!fn) {
+        return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scope}/${api}`));
+      }
+
+      try {
+        const res = await fn.apply(this, args);
+        return this.send(PKT_RPC_RESPONSE(tracker, true, res));
+      } catch (err) {
+        return this.send(PKT_RPC_RESPONSE(tracker, false, err));
+      }
+    };
+
+    parser.onCall = (scopeId, api, args) => {
+      const scope = this.scopes[scopeId];
+      if (!scope) {
+        throw new Error(`Unknown scope ${scopeId}`);
+      }
+
+      const fn = scope[api];
+      if (!fn) {
+        throw new Error(`Unknown api ${scopeId}/${api}`);
+      }
+
+      // Finally execute the method
+      fn.apply(this, args);
+    };
+
     ws.on('close', () => {
+      // Remove all subscriptions
+      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
+
+      // Trigger all the close listeners
       this.closeListeners.forEach(c => c());
 
+      // Perform all cleanups
       Object.keys(this.cleanUps).forEach((k) => {
         this.cleanUps[k]();
       });
     });
 
     ws.on('message', (data) => {
-      try {
-        const p = JSON.parse(data);
-        if (!Array.isArray(p)) {
-          throw new Error(`Syntax error ${data}`);
-        }
-
-        const [code, name, args] = p;
-        const [scope, api] = name.split('/', 2);
-
-        // Check if there is a proxy setup for the given scope
-        const fn = findApi(scope, api);
-        if (!fn) {
-          // In case there isn't any api declared, see if we have a proxy
-          // for a given scope
-          const proxy = this.proxy[scope];
-          if (proxy) {
-            proxy.send(data);
-          } else {
-            throw new Error(`Unknown api call ${name}`);
-          }
-        } else {
-          try {
-            const res = fn.apply({ session: this, scope }, args);
-            if (code > 0) {
-              ws.send(JSON.stringify([code, true, res]));
-            }
-          } catch (err) {
-            ws.send(JSON.stringify([code, false, err]));
-          }
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      }
+      parser.parse(data);
     });
   }
 
@@ -133,11 +160,11 @@ class Session {
   }
 
   dispatch(action) {
-    this.send(encodeAction(action));
+    this.send(PKT_ACTION(action));
   }
 
   emit(event, data) {
-    this.send(encodeEvent(event, data));
+    this.send(PKT_EVENT(event, data));
   }
 
   scope(name, scoping) {

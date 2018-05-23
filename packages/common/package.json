@@ -1,0 +1,11 @@
+{
+  "name": "redsock-common",
+  "version": "0.2.1",
+  "description": "A common package for client and server packages",
+  "main": "cjs/index.js",
+  "scripts": {
+    "build": "../../node_modules/.bin/babel src -d cjs"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT"
+}
