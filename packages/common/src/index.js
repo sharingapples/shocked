@@ -78,4 +78,6 @@ export function createParser() {
       }
     },
   };
+
+  return parser;
 }
