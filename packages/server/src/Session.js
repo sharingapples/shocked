@@ -116,7 +116,7 @@ class Session {
       }
 
       try {
-        const res = await fn.apply(this, args);
+        const res = await fn.apply(apiInstance, args);
         return this.send(PKT_RPC_RESPONSE(tracker, true, res));
       } catch (err) {
         return this.send(PKT_RPC_RESPONSE(tracker, false, err));
@@ -124,6 +124,7 @@ class Session {
     };
 
     parser.onCall = (scopeId, api, args) => {
+      const apiInstance = { session: this, scope: scopeId };
       const scope = this.scopes[scopeId];
       if (!scope) {
         throw new Error(`Unknown scope ${scopeId}`);
@@ -135,7 +136,7 @@ class Session {
       }
 
       // Finally execute the method
-      fn.apply(this, args);
+      fn.apply(apiInstance, args);
     };
 
     ws.on('close', () => {
