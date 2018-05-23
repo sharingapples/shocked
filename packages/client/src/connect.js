@@ -12,6 +12,8 @@ function connect(url, store, Socket = global.WebSocket) {
   let connected = false;
   let rpcs = {};
   let scopeCalls = {};
+  let scopeManifests = {};
+
   const listeners = {};
   const pending = [];
 
@@ -54,11 +56,16 @@ function connect(url, store, Socket = global.WebSocket) {
       reject(result);
     } else {
       const apis = result || manifest.apis;
-      resolve(apis.reduce((res, api) => {
+      const scopedApi = apis.reduce((res, api) => {
         // eslint-disable-next-line no-use-before-define
         res[api] = (...args) => client.rpc(scopeId, api, ...args);
         return res;
-      }, {}));
+      }, {});
+
+      // Store the scoped api for easy retrieval later
+      scopeManifests[scopeId] = scopedApi;
+
+      resolve(scopedApi);
     }
   };
 
@@ -110,6 +117,11 @@ function connect(url, store, Socket = global.WebSocket) {
     }),
 
     scope: (name, manifest = null) => new Promise((resolve, reject) => {
+      // If the scope has already been manifested, return immediately
+      if (scopeManifests[name]) {
+        return resolve(scopeManifests[name]);
+      }
+
       scopeSerial += 1;
       scopeCalls[scopeSerial] = [resolve, reject, name, manifest];
 
@@ -151,6 +163,9 @@ function connect(url, store, Socket = global.WebSocket) {
     rejections.forEach(([, reject]) => {
       reject(new Error('Connection terminated'));
     });
+
+    // Clear all scope manifests
+    scopeManifests = {};
 
     // Fire the close event on client
     fire('disconnect');
