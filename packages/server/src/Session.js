@@ -203,12 +203,13 @@ class Session {
     delete this.values[name];
   }
 
-  onClose(listener) {
+  addCloseListener(listener) {
     this.closeListeners.push(listener);
-    return () => {
-      const idx = this.closeListeners.indexOf(listener);
-      this.closeListeners.splice(idx, 1);
-    };
+  }
+
+  removeCloseListener(listener) {
+    const idx = this.closeListeners.indexOf(listener);
+    this.closeListeners.splice(idx, 1);
   }
 }
 
