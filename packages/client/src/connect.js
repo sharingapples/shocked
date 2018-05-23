@@ -56,7 +56,7 @@ function connect(url, store, Socket = global.WebSocket) {
       const apis = Object.keys(result || manifest);
       resolve(apis.reduce((res, api) => {
         // eslint-disable-next-line no-use-before-define
-        res[api] = (...args) => client.rpc(api, ...args);
+        res[api] = (...args) => client.rpc(scopeId, api, ...args);
         return res;
       }), {});
     }
@@ -85,8 +85,8 @@ function connect(url, store, Socket = global.WebSocket) {
       };
     },
 
-    call: (api, ...args) => {
-      const pkt = PKT_CALL(api, args);
+    call: (scope, api, ...args) => {
+      const pkt = PKT_CALL(scope, api, args);
       if (!connected) {
         // Add to pending tasks
         return deferSend(pkt);
@@ -97,10 +97,10 @@ function connect(url, store, Socket = global.WebSocket) {
       return noop;
     },
 
-    rpc: (api, ...args) => new Promise((resolve, reject) => {
+    rpc: (scope, api, ...args) => new Promise((resolve, reject) => {
       serial += 1;
       rpcs[serial] = [resolve, reject];
-      const pkt = PKT_RPC_REQUEST(serial, api, args);
+      const pkt = PKT_RPC_REQUEST(serial, scope, api, args);
       if (!connected) {
         return deferSend(pkt);
       }
