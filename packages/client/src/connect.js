@@ -136,35 +136,6 @@ function connect(url, store, Socket = global.WebSocket) {
 
   socket.onmessage = (e) => {
     parser.parse(e.data);
-    try {
-      const o = JSON.parse(e.data);
-      if (!Array.isArray(o)) {
-        throw new Error('Unexpected message type');
-      }
-
-      const [code, data, args] = o;
-      if (code === 0) { // Dispatch event
-        store.dispatch(data);
-      } else if (code < 0) { // Got an emitted event
-        fire(data, args);
-      } else if (code > 0) {
-        // Looks like rpc callback response
-        const r = rpcs[code];
-        if (r) {
-          const [resolve, reject] = r;
-          delete rpcs[code];
-
-          if (data === false) {
-            reject(args);
-          } else {
-            resolve(args);
-          }
-        }
-      }
-    } catch (err) {
-      console.log('Error processing message', e.data);
-      console.error(err);
-    }
   };
 
   socket.onclose = () => {
@@ -172,9 +143,6 @@ function connect(url, store, Socket = global.WebSocket) {
 
     // Clear all pending, as they will be rejected from below
     pending.length = 0;
-
-    // Reject all scope calls with termination error
-
 
     // Reject all rpcs and scopes with termination error
     const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
