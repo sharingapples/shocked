@@ -18,31 +18,37 @@ class Session {
     this.cleanUps = {};
     this.scopes = {};
     this.closeListeners = [];
+    this.subscriptions = [];
+
+    this.scopes = {};
 
     this.proxy = null;
   }
 
-  clearProxy(scope) {
-    if (this.proxy[scope]) {
-      const proxy = this.proxy[scope];
-      delete this.proxy[scope];
+  clearProxy(scopeId) {
+    if (this.proxy[scopeId]) {
+      const proxy = this.proxy[scopeId];
+      delete this.proxy[scopeId];
       proxy.close();
     }
   }
 
-  async setupProxy(scope, url) {
-    if (this.proxy[scope]) {
-      throw new Error(`A proxy is already setup at ${scope}`);
+  async setupProxy(scopeId, url) {
+    if (this.proxy[scopeId]) {
+      throw new Error(`A proxy is already setup at ${scopeId}`);
     }
 
     return new Promise((resolve, reject) => {
       let done = false;
       const proxy = new WebSocket(url);
       proxy.on('close', () => {
-        if (!this.proxy[scope]) {
+        if (!this.proxy[scopeId]) {
           // The proxy has already been disassociated, no need to do anything
           return;
         }
+
+        // Remove proxy for this scope
+        delete this.proxy[scopeId];
 
         // If the proxy disconnects, close the session as well
         // Since this is a very rare case scenario, may occur when
@@ -54,7 +60,7 @@ class Session {
         // Proxy connection established, we can resolve the proxy
         if (!done) {
           done = true;
-          this.proxy[scope] = proxy;
+          this.proxy[scopeId] = proxy;
           resolve(proxy);
         }
       });
