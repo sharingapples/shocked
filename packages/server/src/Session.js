@@ -157,12 +157,18 @@ class Session {
   }
 
   subscribe(channelId) {
-    const unsubscribe = Channel.subscribe(channelId, this);
-    const remover = this.onClose(unsubscribe);
-    return () => {
-      remover();
-      unsubscribe();
-    };
+    if (Channel.subscribe(channelId, this)) {
+      this.subscriptions.push(channelId);
+    }
+  }
+
+  unsubscribe(channelId) {
+    if (Channel.unsubscribe(channelId, this)) {
+      const idx = this.subscriptions.indexOf(channelId);
+      if (idx >= 0) {
+        this.subscriptions.splice(idx);
+      }
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
