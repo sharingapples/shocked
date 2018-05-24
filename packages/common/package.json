@@ -1,6 +1,6 @@
 {
   "name": "shocked-common",
-  "version": "0.2.2",
+  "version": "0.2.7",
   "description": "A common package for client and server packages",
   "main": "cjs/index.js",
   "scripts": {
