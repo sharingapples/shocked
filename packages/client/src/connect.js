@@ -9,7 +9,6 @@ function connect(url, store, Socket = global.WebSocket) {
   let serial = 0;
   let scopeSerial = 0;
 
-  let connected = false;
   let rpcs = {};
   let scopeCalls = {};
   let scopeManifests = {};
@@ -70,10 +69,9 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   const client = {
-    isConnected: () => connected,
+    isConnected: () => socket.readyState === Socket.OPEN,
 
     close: () => {
-      connected = false;
       socket.close();
       socket = null;
     },
@@ -94,7 +92,7 @@ function connect(url, store, Socket = global.WebSocket) {
 
     call: (scope, api, ...args) => {
       const pkt = PKT_CALL(scope, api, args);
-      if (!connected) {
+      if (socket.readyState !== Socket.OPEN) {
         // Add to pending tasks
         return deferSend(pkt);
       }
@@ -108,7 +106,7 @@ function connect(url, store, Socket = global.WebSocket) {
       serial += 1;
       rpcs[serial] = [resolve, reject];
       const pkt = PKT_RPC_REQUEST(serial, scope, api, args);
-      if (!connected) {
+      if (socket.readyState !== Socket.OPEN) {
         return deferSend(pkt);
       }
 
@@ -126,7 +124,7 @@ function connect(url, store, Socket = global.WebSocket) {
       scopeCalls[scopeSerial] = [resolve, reject, name, manifest];
 
       const pkt = PKT_SCOPE_REQUEST(scopeSerial, name, !manifest);
-      if (!connected) {
+      if (socket.readyState !== Socket.OPEN) {
         return deferSend(pkt);
       }
 
@@ -136,8 +134,6 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   socket.onopen = () => {
-    connected = true;
-
     // Execute all the pending calls
     pending.forEach(p => socket.send(p));
     pending.length = 0;
@@ -151,8 +147,6 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   socket.onclose = () => {
-    connected = false;
-
     // Clear all pending, as they will be rejected from below
     pending.length = 0;
 
