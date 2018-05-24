@@ -1,5 +1,5 @@
 {
-  "name": "redsock",
+  "name": "shocked",
   "version": "0.2.6",
   "description": "Websocket server",
   "main": "cjs/index.js",

@@ -1,5 +1,5 @@
 {
-  "name": "redsock-client",
+  "name": "shocked-client",
   "version": "0.2.6",
   "description": "Socket Client",
   "main": "cjs/index.js",
