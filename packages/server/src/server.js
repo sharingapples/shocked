@@ -78,12 +78,20 @@ export default function start(options, validateSession, pulseRate = 30000) {
 
   const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
 
-  // Return method to stop the server
-  return () => {
-    if (heartBeat) {
-      clearInterval(heartBeat);
-    }
-    wss.clients.forEach(ws => ws.close());
-    wss.close();
+  // Return an instance of server
+  return {
+    stop: () => {
+      if (heartBeat) {
+        clearInterval(heartBeat);
+      }
+
+      // Close all client connections
+      wss.clients.forEach(ws => ws.close());
+
+      // Close the server
+      wss.close();
+    },
+
+    length: () => wss.clients.size(),
   };
 }
