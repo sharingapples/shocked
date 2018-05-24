@@ -18,7 +18,9 @@ function connect(url, store, Socket = global.WebSocket) {
   function fire(event, data) {
     const eventListeners = listeners[event];
     if (eventListeners) {
-      eventListeners.forEach(l => l(data));
+      // Call the listener with client as `this` instance
+      // eslint-disable-next-line no-use-before-define
+      eventListeners.forEach(l => l.call(client, data));
     }
   }
 
