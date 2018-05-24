@@ -1,6 +1,6 @@
 {
   "name": "redsock",
-  "version": "0.2.2",
+  "version": "0.2.5",
   "description": "Websocket server",
   "main": "cjs/index.js",
   "scripts": {
