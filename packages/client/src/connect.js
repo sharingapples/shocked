@@ -35,6 +35,10 @@ function connect(url, store, Socket = global.WebSocket) {
   }
 
   function connection(remoteUrl) {
+    if (remoteUrl === null) {
+      return null;
+    }
+
     const sock = new Socket(remoteUrl);
 
     sock.onopen = () => {
@@ -128,14 +132,23 @@ function connect(url, store, Socket = global.WebSocket) {
   };
 
   const client = {
-    isConnected: () => socket.readyState === Socket.OPEN,
+    isConnected: () => socket && socket.readyState === Socket.OPEN,
 
     reconnect: (remoteUrl = null) => {
-      const finalUrl = remoteUrl || url;
+      // Cannot connect without a remote url
+      if (remoteUrl === null && socket === null) {
+        return false;
+      }
+
+      // Use the given url or a last successfully connected url
+      const finalUrl = remoteUrl || socket.url;
+
       // Only perform a reconnect if the socket is not connected or the url has changed
-      if (socket.url !== finalUrl || socket.readyState !== Socket.OPEN) {
+      if (socket === null || socket.url !== finalUrl || socket.readyState !== Socket.OPEN) {
         // Make sure to cleanup the previous socket
-        socket.close();
+        if (socket !== null) {
+          socket.close();
+        }
 
         // Perform a new connection
         socket = connection(finalUrl);
@@ -169,7 +182,7 @@ function connect(url, store, Socket = global.WebSocket) {
 
     call: (scope, api, ...args) => {
       const pkt = PKT_CALL(scope, api, args);
-      if (socket.readyState !== Socket.OPEN) {
+      if (!client.isConnected()) {
         // Add to pending tasks
         return deferSend(pkt);
       }
@@ -183,7 +196,7 @@ function connect(url, store, Socket = global.WebSocket) {
       serial += 1;
       rpcs[serial] = [resolve, reject];
       const pkt = PKT_RPC_REQUEST(serial, scope, api, args);
-      if (socket.readyState !== Socket.OPEN) {
+      if (!client.isConnected()) {
         return deferSend(pkt);
       }
 
@@ -201,7 +214,7 @@ function connect(url, store, Socket = global.WebSocket) {
       scopeCalls[scopeSerial] = [resolve, reject, name, manifest];
 
       const pkt = PKT_SCOPE_REQUEST(scopeSerial, name, !manifest);
-      if (socket.readyState !== Socket.OPEN) {
+      if (!client.isConnected()) {
         return deferSend(pkt);
       }
 
