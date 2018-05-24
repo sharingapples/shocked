@@ -89,6 +89,7 @@ function connect(url, store, Socket = global.WebSocket) {
     return sock;
   }
 
+  // Make the first connection
   let socket = connection(url);
 
   parser.onEvent = fire;
@@ -128,6 +129,24 @@ function connect(url, store, Socket = global.WebSocket) {
 
   const client = {
     isConnected: () => socket.readyState === Socket.OPEN,
+
+    reconnect: (remoteUrl = null) => {
+      const finalUrl = remoteUrl || url;
+      // Only perform a reconnect if the socket is not connected or the url has changed
+      if (socket.url !== finalUrl || socket.readyState !== Socket.OPEN) {
+        // Make sure to cleanup the previous socket
+        socket.close();
+
+        // Perform a new connection
+        socket = connection(finalUrl);
+
+        // The reconnection has been attempted
+        return true;
+      }
+
+      // No reattempt needed
+      return false;
+    },
 
     close: () => {
       socket.close();
