@@ -1,6 +1,6 @@
 {
   "name": "redsock-client",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Socket Client",
   "main": "cjs/index.js",
   "files": [
