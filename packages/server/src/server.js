@@ -30,37 +30,35 @@ export default function start(options, validateSession, pulseRate = 30000) {
         return;
       }
 
-      // Create a session object
-      const session = new Session(info.req, params);
-      Promise.resolve(validateSession(session)).then(() => {
-        // eslint-disable-next-line no-param-reassign
-        info.req.session = session;
-        cb(true);
-      }).catch((err) => {
-        cb(false, 500, err.message);
-      });
+      // eslint-disable-next-line no-param-reassign
+      info.req.params = params;
+      cb(true);
     },
   };
 
   const wss = new WebSocket.Server(wsOptions);
 
   wss.on('connection', (ws, req) => {
-    // Get the session created by verifyClient above
-    const { session } = req;
+    // Create a new session object, in transmit mode, until validated
+    const session = new Session(req, req.params, ws);
 
-    // Activate the session
-    session.activate(ws);
+    Promise.resolve(validateSession(session)).then(() => {
+      // Enable reception mode
+      session.activate(ws);
+      // Add heart beat
+      if (pulseRate) {
+        ws.isAlive = true;    // eslint-disable-line no-param-reassign
+        ws.on('pong', beat);
+      }
 
-    // Add heart beat
-    if (pulseRate) {
-      ws.isAlive = true;    // eslint-disable-line no-param-reassign
-      ws.on('pong', beat);
-    }
-
-    // TODO: How to handle error condition
-    ws.on('error', (err) => {
-      // eslint-disable-next-line no-console
-      console.error(err);
+      // TODO: How to handle error condition
+      ws.on('error', (err) => {
+        // eslint-disable-next-line no-console
+        console.error(err);
+      });
+    }).catch((err) => {
+      session.emit('error', err.message);
+      ws.close();
     });
   });
 

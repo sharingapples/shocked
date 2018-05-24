@@ -5,7 +5,7 @@ import { findScope } from './scoping';
 import Channel from './Channel';
 
 class Session {
-  constructor(req, params) {
+  constructor(req, params, ws) {
     this.id = uuid();
 
     this.req = req;
@@ -20,6 +20,20 @@ class Session {
     this.scopes = {};
 
     this.proxy = null;
+    this.ws = ws;
+
+    ws.on('close', () => {
+      // Remove all subscriptions
+      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
+
+      // Trigger all the close listeners
+      this.closeListeners.forEach(c => c());
+
+      // Perform all cleanups
+      Object.keys(this.cleanUps).forEach((k) => {
+        this.cleanUps[k]();
+      });
+    });
   }
 
   clearProxy(scopeId) {
@@ -82,8 +96,6 @@ class Session {
   }
 
   activate(ws) {
-    this.ws = ws;
-
     const parser = createParser();
     parser.onScopeRequest = (tracker, scopeId, manifest) => {
       let scope = this.scopes[scopeId];
@@ -150,19 +162,6 @@ class Session {
       // Finally execute the method
       return fn.apply(apiInstance, args);
     };
-
-    ws.on('close', () => {
-      // Remove all subscriptions
-      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
-
-      // Trigger all the close listeners
-      this.closeListeners.forEach(c => c());
-
-      // Perform all cleanups
-      Object.keys(this.cleanUps).forEach((k) => {
-        this.cleanUps[k]();
-      });
-    });
 
     ws.on('message', (data) => {
       parser.parse(data);
