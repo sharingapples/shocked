@@ -5,7 +5,6 @@ const noop = () => {};
 function connect(url, store, Socket = global.WebSocket) {
   const parser = createParser();
 
-  let socket = new Socket(url);
   let serial = 0;
   let scopeSerial = 0;
 
@@ -32,6 +31,63 @@ function connect(url, store, Socket = global.WebSocket) {
       }
     };
   }
+
+  function connection(remoteUrl) {
+    const sock = new Socket(remoteUrl);
+
+    sock.onopen = () => {
+      // Execute all the pending calls
+      pending.forEach(p => sock.send(p));
+      pending.length = 0;
+
+      // Trigger the connect event
+      fire('connect');
+    };
+
+    sock.onmessage = (e) => {
+      parser.parse(e.data);
+    };
+
+    sock.onclose = () => {
+      // Clear all pending, as they will be rejected from below
+      pending.length = 0;
+
+      // Reject all rpcs and scopes with termination error
+      const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
+      rpcs = {};
+      scopeCalls = {};
+      rejections.forEach(([, reject]) => {
+        reject(new Error('Connection terminated'));
+      });
+
+      // Clear all scope manifests
+      scopeManifests = {};
+
+      // Fire the close event on client
+      fire('disconnect');
+    };
+
+    sock.onerror = (e) => {
+      const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
+      rpcs = {};
+      scopeCalls = {};
+
+      // Clear all pending tasks, as they will be rejected from below
+      pending.length = 0;
+
+      // Reject all rpcs with error
+      rejections.forEach(([, reject]) => {
+        reject(e.message);
+      });
+
+      // Fire the error event on client
+      fire('error', e.message);
+    };
+
+    return sock;
+  }
+
+  let socket = connection(url);
 
   parser.onEvent = fire;
   parser.onAction = (action) => {
@@ -131,55 +187,6 @@ function connect(url, store, Socket = global.WebSocket) {
       socket.send(pkt);
       return noop;
     }),
-  };
-
-  socket.onopen = () => {
-    // Execute all the pending calls
-    pending.forEach(p => socket.send(p));
-    pending.length = 0;
-
-    // Trigger the connect event
-    fire('connect');
-  };
-
-  socket.onmessage = (e) => {
-    parser.parse(e.data);
-  };
-
-  socket.onclose = () => {
-    // Clear all pending, as they will be rejected from below
-    pending.length = 0;
-
-    // Reject all rpcs and scopes with termination error
-    const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
-    rpcs = {};
-    scopeCalls = {};
-    rejections.forEach(([, reject]) => {
-      reject(new Error('Connection terminated'));
-    });
-
-    // Clear all scope manifests
-    scopeManifests = {};
-
-    // Fire the close event on client
-    fire('disconnect');
-  };
-
-  socket.onerror = (e) => {
-    const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
-    rpcs = {};
-    scopeCalls = {};
-
-    // Clear all pending tasks, as they will be rejected from below
-    pending.length = 0;
-
-    // Reject all rpcs with error
-    rejections.forEach(([, reject]) => {
-      reject(e.message);
-    });
-
-    // Fire the error event on client
-    fire('error', e.message);
   };
 
   return client;
