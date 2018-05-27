@@ -42,23 +42,27 @@ export default function start(options, validateSession, pulseRate = 30000) {
     // Create a new session object, in transmit mode, until validated
     const session = new Session(req, req.params, ws);
 
-    Promise.resolve(validateSession(session)).then(() => {
-      // Enable reception mode
-      session.activate(ws);
-      // Add heart beat
-      if (pulseRate) {
-        ws.isAlive = true;    // eslint-disable-line no-param-reassign
-        ws.on('pong', beat);
-      }
-
-      // TODO: How to handle error condition
-      ws.on('error', (err) => {
-        // eslint-disable-next-line no-console
-        console.error(err);
-      });
-    }).catch((err) => {
+    Promise.resolve(validateSession(session)).catch((err) => {
       session.emit('error', err.message);
       ws.close();
+    }).then((res) => {
+      if (res) {
+        // Enable reception mode
+        session.activate(ws);
+        // Add heart beat
+        if (pulseRate) {
+          ws.isAlive = true;    // eslint-disable-line no-param-reassign
+          ws.on('pong', beat);
+        }
+
+        // TODO: How to handle error condition
+        ws.on('error', (err) => {
+          // eslint-disable-next-line no-console
+          console.error(err);
+        });
+      } else {
+        ws.close();
+      }
     });
   });
 
