@@ -169,7 +169,7 @@ class Session {
   }
 
   close() {
-    this.ws.close();
+    setImmediate(() => this.ws.close());
   }
 
   dispatch(action) {
