@@ -1,6 +1,9 @@
 import redis from 'redis';
 
-export default function createProvider(redisOptions) {
+const port = process.env.REDIS_PORT || 6379;
+const host = process.env.REDIS_HOST || 'localhost';
+
+export default function createProvider(options) {
   let pubClient = null;
   let subClient = null;
 
@@ -11,7 +14,7 @@ export default function createProvider(redisOptions) {
       return pubClient;
     }
 
-    pubClient = redis.createClient(redisOptions);
+    pubClient = redis.createClient(port, host, options);
     return pubClient;
   }
 
@@ -20,7 +23,7 @@ export default function createProvider(redisOptions) {
       return subClient;
     }
 
-    subClient = redis.createClient(redisOptions);
+    subClient = redis.createClient(port, host, options);
     subClient.on('message', (channel, message) => {
       const list = channels[channel];
       if (list) {
