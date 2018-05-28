@@ -1,6 +1,6 @@
 {
   "name": "shocked-channel-redis",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "description": "Redis based channel for redsock",
   "main": "cjs/index.js",
   "scripts": {
