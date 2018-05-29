@@ -1,5 +1,5 @@
-import { start } from 'redsock';
-import createRedisProvider from 'redsock-channel-redis';
+import { start } from 'shocked';
+import createRedisProvider from 'shocked-channel-redis';
 
 import { PORT } from '../common';
 
@@ -14,4 +14,5 @@ start({ port: PORT, url, channelProvider }, (session) => {
   console.log(`Creating session for ${user.name}/${user.id}`);
 
   session.set('user', user);
+  return true;
 });

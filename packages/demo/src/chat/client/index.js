@@ -1,5 +1,5 @@
 import uuid from 'uuid/v4';
-import { connect } from 'redsock-client';
+import { connect } from 'shocked-client';
 import { createStore } from 'redux';
 
 import { PORT } from '../common';
@@ -66,6 +66,7 @@ function chatMain(chat) {
   rl.question(' (exit to leave) >', (answer) => {
     if (answer === 'exit') {
       chat.leave();
+      // eslint-disable-next-line no-use-before-define
       showRooms(chat);
     } else {
       chat.send(answer);
@@ -80,15 +81,24 @@ function showRooms(chat) {
   state.rooms.forEach((room, idx) => console.log(idx, room));
 
   rl.question('Enter room to join', async (answer) => {
-    await chat.join(answer);
-    chatMain(chat);
+    try {
+      await chat.join(answer);
+      chatMain(chat);
+    } catch (err) {
+      console.error('Could not join', err);
+      showRooms(chat);
+    }
   });
 }
 
 client.on('connect', async () => {
   console.log('Connected');
-  const chat = await client.scope('chat');
-  showRooms(chat);
+  try {
+    const chat = await client.scope('chat');
+    showRooms(chat);
+  } catch (err) {
+    console.error('error getting scope', err);
+  }
   // console.log(chat);
 });
 

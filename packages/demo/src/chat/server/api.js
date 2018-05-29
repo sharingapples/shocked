@@ -1,4 +1,4 @@
-import { createScope } from 'redsock';
+import { createScope } from 'shocked';
 
 const ROOMS = {
   python: [],
