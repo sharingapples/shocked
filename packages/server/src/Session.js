@@ -44,7 +44,7 @@ class Session {
     }
   }
 
-  async setupProxy(scopeId, url) {
+  setupProxy(scopeId, url) {
     const scope = this.scopes[scopeId];
     if (!scope) {
       throw new Error(`Unknown scope ${scopeId}`);
@@ -120,7 +120,7 @@ class Session {
       return this.send(PKT_SCOPE_RESPONSE(tracker, true, null));
     };
 
-    parser.onRpcRequest = async (tracker, scopeId, api, args) => {
+    parser.onRpcRequest = (tracker, scopeId, api, args) => {
       const apiInstance = { session: this, scope: scopeId };
       const scope = this.scopes[scopeId];
       if (!scope) {
@@ -136,12 +136,11 @@ class Session {
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scopeId}/${api}`));
       }
 
-      try {
-        const res = await fn.apply(apiInstance, args);
-        return this.send(PKT_RPC_RESPONSE(tracker, true, res));
-      } catch (err) {
-        return this.send(PKT_RPC_RESPONSE(tracker, false, err));
-      }
+      return Promise.resolve(fn.apply(apiInstance, args)).then((res) => {
+        this.send(PKT_RPC_RESPONSE(tracker, true, res));
+      }).catch((err) => {
+        this.send(PKT_RPC_RESPONSE(tracker, false, err));
+      });
     };
 
     parser.onCall = (scopeId, api, args) => {
