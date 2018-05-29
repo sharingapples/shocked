@@ -46,7 +46,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
       session.emit('error', err.message);
       ws.close();
     }).then((res) => {
-      if (res === undefined || res) {
+      if (res || res === undefined) {
         // Enable reception mode
         session.activate(ws);
         // Add heart beat
