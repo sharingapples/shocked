@@ -1,4 +1,4 @@
-import { PKT_ACTION, PKT_EVENT } from 'redsock-common';
+import { PKT_ACTION, PKT_EVENT } from 'shocked-common';
 
 class Channel {
   constructor(id) {

@@ -1,4 +1,4 @@
-import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'redsock-common';
+import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'shocked-common';
 
 const noop = () => {};
 

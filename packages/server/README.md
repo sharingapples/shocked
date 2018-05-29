@@ -1,24 +1,24 @@
-# socket.red
+# shocked
 A websocket server for executing your apis, dispatching redux actions on clients
 and emitting events from server.
 
 # Installation
-> `$ yarn add redsock`
-> `$ npm install --save redsock`
+> `$ yarn add shocked`
+> `$ npm install --save shocked`
 
 # Usage
 * Starting the server
 ```javascript
-import { start } from 'redsock';
+import { start } from 'shocked';
 
-const url = 'redsock/:app/:token';
+const url = 'shocked/:app/:token';
 start({ port, url }, (session) => {
   
 });
 ```
 * Declaring and binding your api
 ```javascript
-import { createScope } from 'redsock';
+import { createScope } from 'shocked';
 
 const demo = createScope('demo');
 

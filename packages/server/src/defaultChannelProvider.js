@@ -1,6 +1,6 @@
 /**
  * A default channel provider that works on a single system.
- * For production use consider something like redsock-channel-redis
+ * For production use consider something like shocked-channel-redis
  */
 
 export default function createDefaultProvider() {

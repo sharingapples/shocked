@@ -1,6 +1,6 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
-import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL } from 'redsock-common';
+import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL } from 'shocked-common';
 import { findScope } from './scoping';
 import Channel from './Channel';
 
