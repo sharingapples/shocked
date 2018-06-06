@@ -237,7 +237,7 @@ class Session {
 
   clear(name) {
     if (!this.values[name]) {
-      throw new Error(`Session doesn't have a value at ${name} to clear`);
+      return;
     }
 
     const onClear = this.cleanUps[name];
