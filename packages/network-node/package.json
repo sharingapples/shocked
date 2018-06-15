@@ -1,0 +1,24 @@
+{
+  "name": "shocked-network-node",
+  "version": "0.2.14",
+  "description": "A network detector module for shocked client to be used with nodejs",
+  "main": "cjs/index.js",
+  "files": [
+    "cjs"
+  ],
+  "scripts": {
+    "demo": "babel-node __demo__/index.js",
+    "lint": "eslint src",
+    "clean": "rimraf cjs",
+    "build": "babel src -d cjs",
+    "prepare": "npm run lint && npm run clean && npm run build"
+  },
+  "repository": "https://github.com/bhoos/shocked",
+  "author": "Ranjan Shrestha",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "eslint": "^4.19.1",
+    "rimraf": "^2.6.2"
+  }
+}
