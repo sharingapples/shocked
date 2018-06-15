@@ -1,6 +1,6 @@
 {
   "name": "shocked-network-node",
-  "version": "0.2.0",
+  "version": "0.2.14",
   "description": "A network detector module for shocked client to be used with nodejs",
   "main": "cjs/index.js",
   "files": [

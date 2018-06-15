@@ -1,6 +1,6 @@
 {
   "name": "shocked-network-react-native",
-  "version": "0.2.0",
+  "version": "0.2.14",
   "description": "A library for detecting standard online/offline status on react-native",
   "main": "src/index.js",
   "repository": "https://github.com/bhoos/shocked",
