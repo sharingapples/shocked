@@ -2,7 +2,7 @@ import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'shoc
 
 const noop = () => {};
 
-function connect(url, store, Socket = global.WebSocket) {
+function connect(url, store, Socket = global.WebSocket, network = null) {
   const parser = createParser();
 
   let serial = 0;
@@ -93,9 +93,6 @@ function connect(url, store, Socket = global.WebSocket) {
     return sock;
   }
 
-  // Make the first connection
-  let socket = connection(url);
-
   parser.onEvent = fire;
   parser.onAction = (action) => {
     store.dispatch(action);
@@ -130,6 +127,9 @@ function connect(url, store, Socket = global.WebSocket) {
       resolve(scopedApi);
     }
   };
+
+  // Initialize with a connection attempt
+  let socket = connection(url);
 
   const client = {
     isConnected: () => socket && socket.readyState === Socket.OPEN,
@@ -222,6 +222,23 @@ function connect(url, store, Socket = global.WebSocket) {
       return noop;
     }),
   };
+
+  // Setup a network change listener to keep the connection alive
+  if (network) {
+    network.on('online', () => {
+      // Establish a connection as soon as we are online
+      if (socket !== null) {
+        client.reconnect();
+      }
+    });
+
+    network.on('offline', () => {
+      // close the socket as soon as we go offline
+      if (socket !== null) {
+        socket.close();
+      }
+    });
+  }
 
   return client;
 }
