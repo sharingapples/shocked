@@ -18,7 +18,9 @@ const config = {
                    // declaring the network as offline
                    // The maximum time it takes to detect the network is offline is (poll + timeout),
   servers: ['ip1', 'ip2'], // default provided by system. The name server ip addresses you would like to use to resolve
-}
+};
+
+// config is optional
 const network = createNetwork(config);
 
 network.on('online', () => {
