@@ -27,3 +27,19 @@ async function main() {
 }
 
 ```
+
+## Use optional (recommended) network state listener for automatic reconnections
+
+```javascript
+import connect from 'shocked-client';
+import createNetwork from 'shocked-network-node';
+// import createNetwork from 'shocked-network-browser';
+// import createNetwork from 'shocked-network-react-native';
+
+const options = {};
+const client = connect(
+  'ws://host/params', 
+  store, 
+  global.WebSocket, // Provide the WebSocket class
+  createNetwork()   // Create network to listen for online/offline status
+);
