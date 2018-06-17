@@ -22,4 +22,6 @@ Channel.setProvider = (provider) => {
   Channel.provider = provider;
 };
 
+Channel.get = id => new Channel(id);
+
 export default Channel;
