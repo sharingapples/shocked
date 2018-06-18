@@ -1,6 +1,6 @@
 {
   "name": "shocked",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "Websocket server",
   "main": "cjs/index.js",
   "scripts": {
