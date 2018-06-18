@@ -242,7 +242,7 @@ class Session {
 
     const onClear = this.cleanUps[name];
     if (onClear) {
-      this.onClear();
+      onClear();
       delete this.cleanUps[name];
     }
 
