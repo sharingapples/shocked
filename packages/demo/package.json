@@ -1,6 +1,6 @@
 {
   "name": "shocked-demo",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "shocked demo",
   "main": "src/index.js",
   "author": "Ranjan Shrestha",
@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "redux": "^4.0.0",
-    "shocked": "^0.2.16",
+    "shocked": "^0.2.17",
     "shocked-channel-redis": "^0.2.11",
-    "shocked-client": "^0.2.16",
+    "shocked-client": "^0.2.17",
     "uuid": "^3.2.1",
     "ws": "^5.1.1"
   },
