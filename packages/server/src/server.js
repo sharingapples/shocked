@@ -44,7 +44,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
 
     Promise.resolve(validateSession(session)).catch((err) => {
       session.emit('error', err.message);
-      ws.close();
+      ws.terminate();
     }).then((res) => {
       if (res || res === undefined) {
         // Enable reception mode
@@ -61,7 +61,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
           console.error(err);
         });
       } else {
-        ws.close();
+        ws.terminate();
       }
     });
   });
@@ -88,7 +88,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
       }
 
       // Close all client connections
-      wss.clients.forEach(ws => ws.close());
+      wss.clients.forEach(client => client.terminate());
 
       // Close the server
       wss.close();

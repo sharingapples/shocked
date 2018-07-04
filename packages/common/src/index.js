@@ -1,3 +1,21 @@
+class ParserError extends Error {
+  constructor(message, cause) {
+    super(message);
+    this.name = this.constructor.name;
+    this.message = message;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = (new Error(message)).stack;
+    }
+
+    this.original = cause;
+    const lines = (message.match(/\n/g) || []).length + 1;
+    // eslint-disable-next-line prefer-template
+    this.stack = this.stack.split('\n').slice(0, lines).join('\n') + '\n' + cause.stack;
+  }
+}
+
 const TYPE_RPC_REQUEST = 1;
 const TYPE_RPC_RESPONSE = 2;
 const TYPE_EVENT = 3;
@@ -66,7 +84,7 @@ export function createParser() {
         try {
           parser[method].apply(null, other);
         } catch (err) {
-          throw new Error(`Error executing parser - ${method} - ${err.message}`);
+          throw new ParserError(`Error executing parser - ${method} - ${err.message}`, err);
         }
       } catch (err) {
         if (parser.onError) {
