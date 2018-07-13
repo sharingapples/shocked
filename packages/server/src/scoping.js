@@ -1,5 +1,4 @@
 // Registering scoping module
-console.log('Scoping start');
 const scopes = {};
 
 export function createScope(name, initFn) {
@@ -12,9 +11,7 @@ export function createScope(name, initFn) {
     init: initFn,
   };
 
-  console.log(`Registering scope ${name}`);
   scopes[name] = scope;
-  console.log('scopes', scopes);
 
   return (api, apiName) => {
     const apiId = apiName || api.name;
@@ -31,7 +28,6 @@ export function createScope(name, initFn) {
 }
 
 export function getScope(scopeId, session) {
-  console.log('Retriveing scope', scopes);
   const scope = scopes[scopeId];
   if (!scope) {
     throw new Error(`Scope ${scopeId} is not registered`);

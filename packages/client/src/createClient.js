@@ -43,7 +43,6 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
   }
 
   function connection(remoteUrl) {
-    console.log('Trying to connect to ', remoteUrl);
     if (remoteUrl === null) {
       return null;
     }
