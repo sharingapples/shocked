@@ -1,4 +1,4 @@
-import { createScope } from 'shocked';
+import { createScope } from '../src';
 
 const ROOMS = {
   python: [],
@@ -27,8 +27,7 @@ const chat = createScope('chat', (session) => {
   });
 });
 
-function leave() {
-  const { session } = this;
+const leave = session => () => {
   const user = session.get('user');
   const room = session.get('room');
 
@@ -42,13 +41,11 @@ function leave() {
 
   // Unsubscribe from the room specific channel
   session.unsubscribe(room);
-}
+};
 
 chat(leave);
 
-function join(room) {
-  const { session } = this;
-
+const join = session => (room) => {
   const user = session.get('user');
   console.log(`JOIN ${room} ${user.name}/${user.id}`);
 
@@ -81,13 +78,11 @@ function join(room) {
       members,
     },
   });
-}
+};
 
 chat(join);
 
-function send(message) {
-  const { session } = this;
-
+const send = session => (message) => {
   const user = session.get('user');
   const room = session.get('room');
 
@@ -98,7 +93,7 @@ function send(message) {
       message,
     },
   });
-}
+};
 
 chat(send);
 

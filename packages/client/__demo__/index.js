@@ -1,8 +1,8 @@
 import uuid from 'uuid/v4';
-import { connect } from 'shocked-client';
 import { createStore } from 'redux';
+import { createClient } from '../src';
 
-import { PORT } from '../common';
+const PORT = 9090;
 
 const WebSocket = require('ws');
 const readline = require('readline');
@@ -60,7 +60,8 @@ export const store = createStore(reducer);
 const id = uuid();
 const name = process.argv[2] || 'No name';
 
-export const client = connect(`ws://localhost:${PORT}/demo/${id}/${name}`, store);
+export const client = createClient(`ws://localhost:${PORT}`, store); // /demo/${id}/${name}`, store);
+client.connect(`/demo/${id}/${name}`);
 
 function chatMain(chat) {
   rl.question(' (exit to leave) >', (answer) => {

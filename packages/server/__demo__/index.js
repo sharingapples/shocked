@@ -1,10 +1,9 @@
-import { start } from 'shocked';
 import createRedisProvider from 'shocked-channel-redis';
-
-import { PORT } from '../common';
-
+import { start } from '../src';
 
 import './api';
+
+const PORT = 9090;
 
 const url = '/demo/:id/:name';
 const channelProvider = createRedisProvider();
@@ -16,3 +15,5 @@ start({ port: PORT, url, channelProvider }, (session) => {
   session.set('user', user);
   return true;
 });
+
+console.log('Started server at port', PORT);
