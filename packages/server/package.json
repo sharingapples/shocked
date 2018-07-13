@@ -1,6 +1,6 @@
 {
   "name": "shocked",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Websocket server",
   "main": "cjs/index.js",
   "scripts": {
@@ -16,7 +16,7 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "shocked-common": "^0.3.0",
+    "shocked-common": "^0.3.1",
     "url-pattern": "^1.0.3",
     "uuid": "^3.2.1",
     "ws": "^4.0.0"
