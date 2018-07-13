@@ -1,7 +1,7 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
 import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL } from 'shocked-common';
-import { findScope } from './scoping';
+import { getScope } from './scoping';
 import Channel from './Channel';
 
 class Session {
@@ -19,7 +19,7 @@ class Session {
 
     this.scopes = {};
 
-    this.proxy = null;
+    this.proxy = {};
     this.ws = ws;
 
     ws.on('close', () => {
@@ -36,35 +36,35 @@ class Session {
     });
   }
 
-  clearProxy(scopeId) {
+  async clearProxy(scopeId) {
     if (this.proxy[scopeId]) {
-      const proxy = this.proxy[scopeId];
+      const proxy = await this.proxy[scopeId];
       delete this.proxy[scopeId];
       proxy.close();
     }
   }
 
-  setupProxy(scopeId, url) {
+  async setupProxy(scopeId, url) {
     const scope = this.scopes[scopeId];
     if (!scope) {
       throw new Error(`Unknown scope ${scopeId}`);
     }
 
-    if (scope.proxy) {
+    if (this.proxy[scopeId]) {
       throw new Error(`A proxy is already setup at ${scopeId}`);
     }
 
-    return new Promise((resolve, reject) => {
+    this.proxy[scopeId] = new Promise((resolve, reject) => {
       let done = false;
       const proxy = new WebSocket(url);
       proxy.on('close', () => {
-        if (!scope.proxy) {
+        if (!this.proxy[scopeId]) {
           // The proxy has already been disassociated, no need to do anything
           return;
         }
 
         // Remove proxy for this scope
-        scope.proxy = null;
+        delete this.proxy[scopeId];
 
         // If the proxy disconnects, close the session as well
         // Since this is a very rare case scenario, may occur when
@@ -76,7 +76,6 @@ class Session {
         // Proxy connection established, we can resolve the proxy
         if (!done) {
           done = true;
-          scope.proxy = proxy;
           resolve(proxy);
         }
       });
@@ -101,65 +100,63 @@ class Session {
       let scope = this.scopes[scopeId];
 
       if (!scope) {
-        scope = findScope(scopeId);
+        scope = getScope(scopeId, this);
         if (!scope) {
           return this.send(PKT_SCOPE_RESPONSE(tracker, false, `Unknown scope ${scopeId}`));
         }
 
         // Store the scope on the session
         this.scopes[scopeId] = scope;
-
-        // Initialize the scope for this session
-        scope.init(this);
       }
 
       if (manifest) {
-        return this.send(PKT_SCOPE_RESPONSE(tracker, true, Object.keys(scope.apis)));
+        return this.send(PKT_SCOPE_RESPONSE(tracker, true, Object.keys(scope)));
       }
 
       return this.send(PKT_SCOPE_RESPONSE(tracker, true, null));
     };
 
-    parser.onRpcRequest = (tracker, scopeId, api, args) => {
-      const apiInstance = { session: this, scope: scopeId };
+    parser.onRpcRequest = async (tracker, scopeId, api, args) => {
       const scope = this.scopes[scopeId];
       if (!scope) {
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api scope ${scopeId}`));
       }
 
-      const fn = scope.apis[api];
+      const fn = scope[api];
       if (!fn) {
         // In case there is proxy available for this scope, then use proxy
-        if (scope.proxy) {
-          return scope.proxy.send(PKT_RPC_REQUEST(tracker, scopeId, api, args));
+        const proxy = await this.proxy[scopeId];
+        if (proxy) {
+          return proxy.send(PKT_RPC_REQUEST(tracker, scopeId, api, args));
         }
         return this.send(PKT_RPC_RESPONSE(tracker, false, `Unknown api ${scopeId}/${api}`));
       }
 
-      return Promise.resolve(fn.apply(apiInstance, args)).then((res) => {
-        this.send(PKT_RPC_RESPONSE(tracker, true, res));
-      }).catch((err) => {
-        this.send(PKT_RPC_RESPONSE(tracker, false, err));
-      });
+      try {
+        const res = await fn(...args);
+        return this.send(PKT_RPC_RESPONSE(tracker, true, res));
+      } catch (err) {
+        return this.send(PKT_RPC_RESPONSE(tracker, false, err));
+      }
     };
 
-    parser.onCall = (scopeId, api, args) => {
-      const apiInstance = { session: this, scope: scopeId };
+    parser.onCall = async (scopeId, api, args) => {
       const scope = this.scopes[scopeId];
       if (!scope) {
         throw new Error(`Unknown scope ${scopeId}`);
       }
 
-      const fn = scope.apis[api];
+      const fn = scope[api];
       if (!fn) {
-        if (scope.proxy) {
-          return scope.proxy.send(PKT_CALL(scopeId, api, args));
+        const proxy = await this.proxy[scopeId];
+        if (proxy) {
+          return proxy.send(PKT_CALL(scopeId, api, args));
         }
         throw new Error(`Unknown api ${scopeId}/${api}`);
       }
 
       // Finally execute the method
-      return fn.apply(apiInstance, args);
+      return fn(...args);
     };
 
     ws.on('message', (data) => {
@@ -177,16 +174,6 @@ class Session {
 
   emit(event, data) {
     this.send(PKT_EVENT(event, data));
-  }
-
-  scope(name, scoping) {
-    if (this.scopes[name]) {
-      return this.scopes[name];
-    }
-
-    const scope = scoping(this, name);
-    this.scopes[name] = scope;
-    return scope;
   }
 
   send(message) {
