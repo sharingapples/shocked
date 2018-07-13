@@ -1,4 +1,4 @@
-import connect from './connect';
+import createClient from './createClient';
 
-export default connect;
-export { connect };
+export default createClient;
+export { createClient };

@@ -2,7 +2,15 @@ import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'shoc
 
 const noop = () => {};
 
-function connect(url, store, Socket = global.WebSocket, network = null) {
+function createClient(host, store, Socket = global.WebSocket, network = null) {
+  if (!host.startsWith('ws://') && !host.startsWith('wss://')) {
+    throw new Error(`Invalid host ${host}. Host should start with ws:// or wss://`);
+  }
+
+  if (!store || !store.dispatch || !store.getState || !store.subscribe) {
+    throw new Error('Invalid store. Store must be a valid redux store.');
+  }
+
   const parser = createParser();
 
   let serial = 0;
@@ -35,6 +43,7 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
   }
 
   function connection(remoteUrl) {
+    console.log('Trying to connect to ', remoteUrl);
     if (remoteUrl === null) {
       return null;
     }
@@ -129,36 +138,41 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
   };
 
   // Initialize with a connection attempt
-  let socket = connection(url);
+  let socket = null;
 
   const client = {
     isConnected: () => socket && socket.readyState === Socket.OPEN,
 
-    reconnect: (remoteUrl = null) => {
+    connect: (path) => {
+      const url = `${host}${path}`;
+      if (client.isConnected() && socket.url === url) {
+        return true;
+      }
+
+      if (socket !== null) {
+        socket.close();
+      }
+
+      socket = connection(url);
+      return true;
+    },
+
+    reconnect: () => {
       // Cannot connect without a remote url
-      if (remoteUrl === null && socket === null) {
+      if (socket === null) {
         return false;
       }
 
       // Use the given url or a last successfully connected url
-      const finalUrl = remoteUrl || socket.url;
+      const finalUrl = socket.url;
 
-      // Only perform a reconnect if the socket is not connected or the url has changed
-      if (socket === null || socket.url !== finalUrl || socket.readyState !== Socket.OPEN) {
-        // Make sure to cleanup the previous socket
-        if (socket !== null) {
-          socket.close();
-        }
-
-        // Perform a new connection
-        socket = connection(finalUrl);
-
-        // The reconnection has been attempted
-        return true;
+      // Since its a reconnect attempt, we will close existing socket
+      if (socket !== null) {
+        socket.close();
       }
 
-      // No reattempt needed
-      return false;
+      socket = connection(finalUrl);
+      return true;
     },
 
     close: () => {
@@ -243,4 +257,4 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
   return client;
 }
 
-export default connect;
+export default createClient;
