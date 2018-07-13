@@ -1,6 +1,6 @@
 {
   "name": "shocked-demo",
-  "version": "0.2.18",
+  "version": "0.3.0",
   "description": "shocked demo",
   "main": "src/index.js",
   "author": "Ranjan Shrestha",

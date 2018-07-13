@@ -1,13 +1,14 @@
 {
   "name": "shocked",
-  "version": "0.2.18",
+  "version": "0.3.0",
   "description": "Websocket server",
   "main": "cjs/index.js",
   "scripts": {
     "test": "../../node_modules/.bin/jest",
     "lint": "../../node_modules/.bin/eslint src",
     "build": "../../node_modules/.bin/babel src -d cjs",
-    "prepublishOnly": "npm run lint && npm run test && npm run build"
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "run-demo": "nodemon --exec ../../node_modules/.bin/babel-node __demo__/index.js"
   },
   "repository": {
     "type": "git",
@@ -16,9 +17,12 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "shocked-common": "^0.2.17",
+    "shocked-common": "^0.3.0",
     "url-pattern": "^1.0.3",
     "uuid": "^3.2.1",
     "ws": "^4.0.0"
+  },
+  "devDependencies": {
+    "shocked-channel-redis": "^0.3.0"
   }
 }
