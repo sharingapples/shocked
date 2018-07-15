@@ -17,16 +17,6 @@ const getMembers = (room) => {
   return members;
 };
 
-const chat = createScope('chat', (session) => {
-  console.log('Scoped session for chat');
-
-  // Provide all the rooms available
-  session.dispatch({
-    type: 'ROOMS',
-    payload: Object.keys(ROOMS),
-  });
-});
-
 const leave = session => () => {
   const user = session.get('user');
   const room = session.get('room');
@@ -42,8 +32,6 @@ const leave = session => () => {
   // Unsubscribe from the room specific channel
   session.unsubscribe(room);
 };
-
-chat(leave);
 
 const join = session => (room) => {
   const user = session.get('user');
@@ -80,8 +68,6 @@ const join = session => (room) => {
   });
 };
 
-chat(join);
-
 const send = session => (message) => {
   const user = session.get('user');
   const room = session.get('room');
@@ -95,5 +81,20 @@ const send = session => (message) => {
   });
 };
 
-chat(send);
+
+createScope('chat', (session) => {
+  console.log('Scoped session for chat');
+
+  // Provide all the rooms available
+  session.dispatch({
+    type: 'ROOMS',
+    payload: Object.keys(ROOMS),
+  });
+
+  return {
+    leave: leave(session),
+    join: join(session),
+    send: send(session),
+  };
+});
 
