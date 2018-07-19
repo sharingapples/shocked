@@ -1,6 +1,6 @@
 {
   "name": "shocked-client",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "description": "Socket Client",
   "main": "cjs/index.js",
   "files": [
