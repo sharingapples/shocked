@@ -107,10 +107,19 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
   };
 
   parser.onRpcResponse = (tracker, success, result) => {
-    const [resolve, reject] = rpcs[tracker];
+    const [resolve, reject, scopeId] = rpcs[tracker];
     delete rpcs[tracker];
     if (success) {
-      resolve(result);
+      if (success === -1) {
+        // the result of a proxying
+        resolve(result.reduce((res, name) => {
+          // eslint-disable-next-line no-use-before-define
+          res[name] = (...args) => client.rpc(scopeId, name, ...args);
+          return res;
+        }, {}));
+      } else {
+        resolve(result);
+      }
     } else {
       reject(result);
     }
@@ -207,7 +216,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
 
     rpc: (scope, api, ...args) => new Promise((resolve, reject) => {
       serial += 1;
-      rpcs[serial] = [resolve, reject];
+      rpcs[serial] = [resolve, reject, scope];
       const pkt = PKT_RPC_REQUEST(serial, scope, api, args);
       if (!client.isConnected()) {
         return deferSend(pkt);

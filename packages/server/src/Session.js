@@ -1,8 +1,9 @@
 import uuid from 'uuid/v4';
 import WebSocket from 'ws';
-import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL } from 'shocked-common';
+import { createParser, PKT_SCOPE_RESPONSE, PKT_RPC_RESPONSE, PKT_ACTION, PKT_EVENT, PKT_RPC_REQUEST, PKT_CALL, PKT_SCOPE_REQUEST } from 'shocked-common';
 import { getScope } from './scoping';
 import Channel from './Channel';
+import ProxyApi from './ProxyApi';
 
 class Session {
   constructor(req, params, ws) {
@@ -57,7 +58,7 @@ class Session {
     this.proxy[scopeId] = new Promise((resolve, reject) => {
       let done = false;
       const proxy = new WebSocket(url);
-      proxy.on('close', () => {
+      proxy.onclose = () => {
         if (!this.proxy[scopeId]) {
           // The proxy has already been disassociated, no need to do anything
           return;
@@ -70,28 +71,46 @@ class Session {
         // Since this is a very rare case scenario, may occur when
         // the target group scales down or up
         this.close();
-      });
+      };
 
-      proxy.on('connect', () => {
+      proxy.onopen = () => {
         // Proxy connection established, we can resolve the proxy
         if (!done) {
-          done = true;
-          resolve(proxy);
+          // Send a scope request to get the api's available via proxy
+          proxy.send(PKT_SCOPE_REQUEST(1, scopeId, true));
         }
-      });
+      };
 
-      proxy.on('error', () => {
+      proxy.onerror = () => {
         if (!done) {
           done = true;
           reject(proxy);
         }
-      });
+      };
 
       // Forward any message received back to the client
-      proxy.on('message', (data) => {
-        this.ws.send(data);
-      });
+      proxy.onmessage = (e) => {
+        // If the proxy connection has been established, transparently pass the data
+        if (done) {
+          this.ws.send(e.data);
+        } else {
+          const proxyParser = createParser();
+          proxyParser.onScopeResponse = (tracker, success, result) => {
+            done = true;
+            if (tracker !== 1) {
+              reject(new Error(`Unexpected tracker ${tracker}`));
+            } else if (!success) {
+              reject(new Error(`Proxy hasn't imlpemented ${scopeId} scope`));
+            } else {
+              resolve(new ProxyApi(result, proxy));
+            }
+          };
+          proxyParser.parse(e.data);
+        }
+      };
     });
+
+    return this.proxy[scopeId];
   }
 
   activate(ws) {
@@ -134,6 +153,9 @@ class Session {
 
       try {
         const res = await fn(...args);
+        if (res instanceof ProxyApi) {
+          return this.send(PKT_RPC_RESPONSE(tracker, -1, res.api));
+        }
         return this.send(PKT_RPC_RESPONSE(tracker, true, res));
       } catch (err) {
         return this.send(PKT_RPC_RESPONSE(tracker, false, err));
