@@ -81,7 +81,7 @@ function showRooms(chat) {
   console.log('Available Rooms');
   state.rooms.forEach((room, idx) => console.log(idx, room));
 
-  rl.question('Enter room to join (proxy): ', async (answer) => {
+  rl.question('Enter room to join (proxy, tracker): ', async (answer) => {
     if (answer === 'proxy') {
       console.log('Testing proxy');
       try {
@@ -91,6 +91,24 @@ function showRooms(chat) {
         console.log('Name of proxy is', await res.name());
       } catch (err) {
         console.error('Error while proxying', err);
+      }
+    } else if (answer === 'tracker') {
+      console.log('Testing tracker');
+      try {
+        const track = await client.scope('track');
+        const tracker = await track.trackDummy();
+        console.log('Tracker value is', tracker.get());
+        tracker.on('q', (d) => {
+          console.log('Tracker Emit q', d);
+        });
+        tracker.on('qq', (d) => {
+          console.log('Tracker Emit qq', d);
+        });
+        const r = await tracker.api.q(12);
+        console.log('R is', r);
+        await track.trackCheck(111);
+      } catch (err) {
+        console.error('Error tracking', err);
       }
     } else {
       try {
