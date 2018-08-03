@@ -50,8 +50,8 @@ export function PKT_ACTION(action) {
   return JSON.stringify([TYPE_ACTION, action]);
 }
 
-export function PKT_SCOPE_REQUEST(tracker, name, version) {
-  return JSON.stringify([TYPE_SCOPE_REQUEST, tracker, name, version]);
+export function PKT_SCOPE_REQUEST(tracker, name, manifest) {
+  return JSON.stringify([TYPE_SCOPE_REQUEST, tracker, name, manifest]);
 }
 
 export function PKT_SCOPE_RESPONSE(tracker, success, result) {
