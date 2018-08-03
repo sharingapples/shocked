@@ -2,7 +2,7 @@ import uuid from 'uuid/v4';
 import { createStore } from 'redux';
 import { createClient } from '../src';
 
-const PORT = 9090;
+const PORT = 9123;
 
 const WebSocket = require('ws');
 const readline = require('readline');
@@ -64,7 +64,7 @@ export const client = createClient(`ws://localhost:${PORT}`, store); // /demo/${
 client.connect(`/demo/${id}/${name}`);
 
 function chatMain(chat) {
-  rl.question(' (exit to leave) >', (answer) => {
+  rl.question(' (exit to leave) >', async (answer) => {
     if (answer === 'exit') {
       chat.leave();
       // eslint-disable-next-line no-use-before-define
@@ -81,13 +81,25 @@ function showRooms(chat) {
   console.log('Available Rooms');
   state.rooms.forEach((room, idx) => console.log(idx, room));
 
-  rl.question('Enter room to join', async (answer) => {
-    try {
-      await chat.join(answer);
-      chatMain(chat);
-    } catch (err) {
-      console.error('Could not join', err);
-      showRooms(chat);
+  rl.question('Enter room to join (proxy): ', async (answer) => {
+    if (answer === 'proxy') {
+      console.log('Testing proxy');
+      try {
+        const proxy = await client.scope('proxy');
+        const res = await proxy.start();
+        console.log('Proxy api ', res);
+        console.log('Name of proxy is', await res.name());
+      } catch (err) {
+        console.error('Error while proxying', err);
+      }
+    } else {
+      try {
+        await chat.join(answer);
+        chatMain(chat);
+      } catch (err) {
+        console.error('Could not join', err);
+        showRooms(chat);
+      }
     }
   });
 }

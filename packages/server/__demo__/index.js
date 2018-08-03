@@ -1,9 +1,10 @@
 import createRedisProvider from 'shocked-channel-redis';
+import { SERVER_PORT } from './common';
 import { start } from '../src';
 
 import './api';
 
-const PORT = 9090;
+const PORT = SERVER_PORT;
 
 const url = '/demo/:id/:name';
 const channelProvider = createRedisProvider();

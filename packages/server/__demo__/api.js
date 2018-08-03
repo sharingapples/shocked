@@ -1,4 +1,5 @@
 import { createScope } from '../src';
+import { PROXY_PORT } from './common';
 
 const ROOMS = {
   python: [],
@@ -81,7 +82,6 @@ const send = session => (message) => {
   });
 };
 
-
 createScope('chat', (session) => {
   console.log('Scoped session for chat');
 
@@ -98,3 +98,16 @@ createScope('chat', (session) => {
   };
 });
 
+const startProxy = session => async () => {
+  const proxyUrl = `ws://localhost:${PROXY_PORT}/proxy`;
+  return session.setupProxy('proxy', proxyUrl);
+};
+
+const stopProxy = session => async () => {
+  session.clearProxy('proxy');
+};
+
+createScope('proxy', session => ({
+  start: startProxy(session),
+  stop: stopProxy(session),
+}));
