@@ -4,7 +4,6 @@ import { PKT_CLOSE_TRACKER } from 'shocked-common';
 class TrackerClient extends EventEmitter {
   constructor(client, { id, result, api }) {
     super();
-    console.log('Tracker Client', id, result, api);
     this.id = id;
     this.client = client;
     this.result = result;
