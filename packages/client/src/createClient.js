@@ -9,6 +9,8 @@ import {
 } from 'shocked-common';
 import TrackerClient from './TrackerClient';
 
+const EventEmitter = require('events');
+
 const noop = () => {};
 
 function createClient(host, store, Socket = global.WebSocket, network = null) {
@@ -30,17 +32,8 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
   let scopeManifests = {};
   let trackers = {};
 
-  const listeners = {};
+  const eventManager = new EventEmitter();
   const pending = [];
-
-  function fire(event, data) {
-    const eventListeners = listeners[event];
-    if (eventListeners) {
-      // Call the listener with client as `this` instance
-      // eslint-disable-next-line no-use-before-define
-      eventListeners.forEach(l => l.call(client, data));
-    }
-  }
 
   function deferSend(pkt) {
     pending.push(pkt);
@@ -65,7 +58,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       pending.length = 0;
 
       // Trigger the connect event
-      fire('connect');
+      eventManager.emit('connect');
     };
 
     sock.onmessage = (e) => {
@@ -91,7 +84,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       scopeManifests = {};
 
       // Fire the close event on client
-      fire('disconnect');
+      eventManager.emit('disconnect');
     };
 
     sock.onerror = (e) => {
@@ -109,13 +102,14 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       });
 
       // Fire the error event on client
-      fire('error', e.message);
+      eventManager.emit('error', e.message);
     };
 
     return sock;
   }
 
-  parser.onEvent = fire;
+  parser.onEvent = (event, message) => eventManager.emit(event, message);
+
   parser.onAction = (action) => {
     store.dispatch(action);
   };
@@ -226,19 +220,9 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       socket = null;
     },
 
-    on: (event, listener) => {
-      // Keep track of event listeners
-      const eventListeners = listeners[event];
-      if (!eventListeners) {
-        listeners[event] = [listener];
-      } else {
-        eventListeners.push(listener);
-      }
+    on: (event, listener) => eventManager.on(event, listener),
 
-      return () => {
-        listeners[event] = listeners[event].filter(l => l === listener);
-      };
-    },
+    off: (event, listener) => eventManager.off(event, listener),
 
     call: (scope, api, ...args) => {
       const pkt = PKT_CALL(scope, api, args);
