@@ -5,6 +5,8 @@ import { getScope } from './scoping';
 import Channel from './Channel';
 import ProxyApi from './ProxyApi';
 
+const debug = require('debug')('shocked');
+
 class Session {
   constructor(req, params, ws) {
     this.id = uuid();
@@ -84,7 +86,7 @@ class Session {
       proxy.onerror = () => {
         if (!done) {
           done = true;
-          reject(proxy);
+          reject(new Error('An error occured on proxy'));
         }
       };
 
@@ -158,7 +160,8 @@ class Session {
         }
         return this.send(PKT_RPC_RESPONSE(tracker, true, res));
       } catch (err) {
-        return this.send(PKT_RPC_RESPONSE(tracker, false, err));
+        debug(`RPC Error - ${scopeId}/${api}`, err);
+        return this.send(PKT_RPC_RESPONSE(tracker, false, err.message));
       }
     };
 
