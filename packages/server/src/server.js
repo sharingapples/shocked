@@ -99,6 +99,6 @@ export default function start(options, validateSession, pulseRate = 30000) {
       wss.close();
     },
 
-    length: () => wss.clients.size(),
+    length: () => wss.clients.size,
   };
 }
