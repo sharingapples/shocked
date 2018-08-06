@@ -1,8 +1,8 @@
 import uuid from 'uuid/v4';
-import { connect } from 'shocked-client';
 import { createStore } from 'redux';
+import { createClient } from '../src';
 
-import { PORT } from '../common';
+const PORT = 9123;
 
 const WebSocket = require('ws');
 const readline = require('readline');
@@ -60,10 +60,11 @@ export const store = createStore(reducer);
 const id = uuid();
 const name = process.argv[2] || 'No name';
 
-export const client = connect(`ws://localhost:${PORT}/demo/${id}/${name}`, store);
+export const client = createClient(`ws://localhost:${PORT}`, store); // /demo/${id}/${name}`, store);
+client.connect(`/demo/${id}/${name}`);
 
 function chatMain(chat) {
-  rl.question(' (exit to leave) >', (answer) => {
+  rl.question(' (exit to leave) >', async (answer) => {
     if (answer === 'exit') {
       chat.leave();
       // eslint-disable-next-line no-use-before-define
@@ -80,13 +81,43 @@ function showRooms(chat) {
   console.log('Available Rooms');
   state.rooms.forEach((room, idx) => console.log(idx, room));
 
-  rl.question('Enter room to join', async (answer) => {
-    try {
-      await chat.join(answer);
-      chatMain(chat);
-    } catch (err) {
-      console.error('Could not join', err);
-      showRooms(chat);
+  rl.question('Enter room to join (proxy, tracker): ', async (answer) => {
+    if (answer === 'proxy') {
+      console.log('Testing proxy');
+      try {
+        const proxy = await client.scope('proxy');
+        const res = await proxy.start();
+        console.log('Proxy api ', res);
+        console.log('Name of proxy is', await res.name());
+      } catch (err) {
+        console.error('Error while proxying', err);
+      }
+    } else if (answer === 'tracker') {
+      console.log('Testing tracker');
+      try {
+        const track = await client.scope('track');
+        const tracker = await track.trackDummy();
+        console.log('Tracker value is', tracker.get());
+        tracker.on('q', (d) => {
+          console.log('Tracker Emit q', d);
+        });
+        tracker.on('qq', (d) => {
+          console.log('Tracker Emit qq', d);
+        });
+        const r = await tracker.api.q(12);
+        console.log('R is', r);
+        await track.trackCheck(111);
+      } catch (err) {
+        console.error('Error tracking', err);
+      }
+    } else {
+      try {
+        await chat.join(answer);
+        chatMain(chat);
+      } catch (err) {
+        console.error('Could not join', err);
+        showRooms(chat);
+      }
     }
   });
 }

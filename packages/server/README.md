@@ -20,9 +20,7 @@ start({ port, url }, (session) => {
 ```javascript
 import { createScope } from 'shocked';
 
-const demo = createScope('demo');
-
-async function clap(numberOfHands) {
+const clap = session => async (numberOfHands) => {
   if (!numberOfHands) {
     throw new Error('Cannot clap without any hands');
   }
@@ -42,6 +40,10 @@ async function clap(numberOfHands) {
   return `Clap Clap Clap with ${numberOfHands}`;
 }
 
-// Expose clap via demo scope
-demo(clap);
+// Create a scope and expose the api 
+createScope('demo', (session) => {
+  return {
+    clap: clap(session),
+  };
+});
 ```

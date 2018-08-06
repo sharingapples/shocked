@@ -1,6 +1,6 @@
 {
   "name": "shocked-network-browser",
-  "version": "0.2.14",
+  "version": "0.3.1",
   "description": "A network online/offline detector library for browsers",
   "main": "cjs/index.js",
   "files": [

@@ -6,6 +6,8 @@ import Channel from './Channel';
 
 import createDefaultProvider from './defaultChannelProvider';
 
+const debug = require('debug')('shocked');
+
 function noop() { }
 
 function beat() {
@@ -26,6 +28,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
       // match the url pattern if available
       const params = urlPattern ? urlPattern.match(info.req.url) : {};
       if (params === null) {
+        debug(`Could not process url ${info.req.url}`);
         cb(false, 404, `Can't serve ${info.req.url}`);
         return;
       }
@@ -43,6 +46,7 @@ export default function start(options, validateSession, pulseRate = 30000) {
     const session = new Session(req, req.params, ws);
 
     Promise.resolve(validateSession(session)).catch((err) => {
+      debug('Error while validating session', err);
       session.emit('error', err.message);
       ws.terminate();
     }).then((res) => {
@@ -58,9 +62,10 @@ export default function start(options, validateSession, pulseRate = 30000) {
         // TODO: How to handle error condition
         ws.on('error', (err) => {
           // eslint-disable-next-line no-console
-          console.error(err);
+          debug('Unexpected websocket error', err);
         });
       } else {
+        debug('Session rejected by application');
         ws.terminate();
       }
     });

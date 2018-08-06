@@ -1,3 +1,4 @@
+// Registering scoping module
 const scopes = {};
 
 export function createScope(name, initFn) {
@@ -5,28 +6,18 @@ export function createScope(name, initFn) {
     throw new Error(`A scope with the name ${name} has already been created`);
   }
 
-  const scope = {
-    apis: {},
-    init: initFn,
-  };
+  if (typeof initFn !== 'function') {
+    throw new Error(`Scope ${name} must be initialized with a function`);
+  }
 
-  scopes[name] = scope;
-
-  return (api, apiName) => {
-    const apiId = apiName || api.name;
-    if (!apiId) {
-      throw new Error(`Invalid api name under ${name} scope`);
-    }
-
-    if (scope.apis[apiId]) {
-      throw new Error(`Can't define multiple apis with the same id ${name}/${apiId}`);
-    }
-
-    scope.apis[apiId] = api;
-  };
+  scopes[name] = initFn;
 }
 
-export function findScope(scopeId) {
-  return scopes[scopeId];
-}
+export function getScope(scopeId, session) {
+  const init = scopes[scopeId];
+  if (!init) {
+    throw new Error(`Scope ${scopeId} is not registered`);
+  }
 
+  return init(session);
+}

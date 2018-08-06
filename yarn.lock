@@ -4551,6 +4551,25 @@ shellwords@^0.1.1:
   version "0.1.1"
   resolved "https://registry.npmjs.org/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
 
+shocked-common@^0.2.17:
+  version "0.2.17"
+  resolved "https://registry.npmjs.org/shocked-common/-/shocked-common-0.2.17.tgz#42b61f8d95a0177a7ff72baa190b1231ff9b9115"
+
+shocked-network-react-native@^0.2.14:
+  version "0.2.14"
+  resolved "https://registry.npmjs.org/shocked-network-react-native/-/shocked-network-react-native-0.2.14.tgz#51fed49ccbab2b5cea01d80c9b09299f4486424f"
+  dependencies:
+    "@bhoos/eventemitter" "0.1.2"
+
+shocked@^0.2.18:
+  version "0.2.18"
+  resolved "https://registry.npmjs.org/shocked/-/shocked-0.2.18.tgz#a1a11370210353bd5558b5a1ff6b25f8e2b2b667"
+  dependencies:
+    shocked-common "^0.2.17"
+    url-pattern "^1.0.3"
+    uuid "^3.2.1"
+    ws "^4.0.0"
+
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -5072,6 +5091,10 @@ uuid@^3.0.1, uuid@^3.1.0, uuid@^3.2.1:
   version "3.2.1"
   resolved "https://registry.npmjs.org/uuid/-/uuid-3.2.1.tgz#12c528bb9d58d0b9265d9a2f6f0fe8be17ff1f14"
 
+uuid@^3.3.2:
+  version "3.3.2"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-3.3.2.tgz#1b4af4955eb3077c501c23872fc6513811587131"
+
 v8flags@^2.1.1:
   version "2.1.1"
   resolved "https://registry.npmjs.org/v8flags/-/v8flags-2.1.1.tgz#aab1a1fa30d45f88dd321148875ac02c0b55e5b4"
@@ -5221,12 +5244,6 @@ ws@^4.0.0:
   dependencies:
     async-limiter "~1.0.0"
     safe-buffer "~5.1.0"
-
-ws@^5.1.1:
-  version "5.2.0"
-  resolved "https://registry.npmjs.org/ws/-/ws-5.2.0.tgz#9fd95e3ac7c76f6ae8bcc868a0e3f11f1290c33e"
-  dependencies:
-    async-limiter "~1.0.0"
 
 xml-name-validator@^3.0.0:
   version "3.0.0"

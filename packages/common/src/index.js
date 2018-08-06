@@ -23,6 +23,13 @@ const TYPE_ACTION = 4;
 const TYPE_SCOPE_REQUEST = 5;
 const TYPE_SCOPE_RESPONSE = 6;
 const TYPE_CALL = 7;
+const TYPE_TRACKER_RPC_REQUEST = 8;
+const TYPE_TRACKER_RPC_RESPONSE = 9;
+const TYPE_TRACKER_CLOSE = 10;
+const TYPE_TRACKER_EVENT = 11;
+
+export const RPC_SUCCESS_PROXY = -1;
+export const RPC_SUCCESS_TRACKER = -2;
 
 const METHOD_MAPS = {
   [TYPE_RPC_REQUEST]: 'onRpcRequest',
@@ -32,14 +39,34 @@ const METHOD_MAPS = {
   [TYPE_SCOPE_REQUEST]: 'onScopeRequest',
   [TYPE_SCOPE_RESPONSE]: 'onScopeResponse',
   [TYPE_CALL]: 'onCall',
+  [TYPE_TRACKER_RPC_REQUEST]: 'onTrackerRpcRequest',
+  [TYPE_TRACKER_RPC_RESPONSE]: 'onTrackerRpcResponse',
+  [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
+  [TYPE_TRACKER_EVENT]: 'onTrackerEvent',
 };
 
-export function PKT_RPC_REQUEST(tracker, scope, api, args) {
-  return JSON.stringify([TYPE_RPC_REQUEST, tracker, scope, api, args]);
+export function PKT_TRACKER_RPC_REQUEST(serial, trackerId, api, args) {
+  return JSON.stringify([TYPE_TRACKER_RPC_REQUEST, serial, trackerId, api, args]);
 }
 
-export function PKT_RPC_RESPONSE(tracker, success, result) {
-  return JSON.stringify([TYPE_RPC_RESPONSE, tracker, success, result]);
+export function PKT_TRACKER_RPC_RESPONSE(serial, success, result) {
+  return JSON.stringify([TYPE_TRACKER_RPC_RESPONSE, serial, success, result]);
+}
+
+export function PKT_TRACKER_CLOSE(id) {
+  return JSON.stringify([TYPE_TRACKER_CLOSE, id]);
+}
+
+export function PKT_TRACKER_EVENT(id, name, data) {
+  return JSON.stringify([TYPE_TRACKER_EVENT, id, name, data]);
+}
+
+export function PKT_RPC_REQUEST(serial, scope, api, args) {
+  return JSON.stringify([TYPE_RPC_REQUEST, serial, scope, api, args]);
+}
+
+export function PKT_RPC_RESPONSE(serial, success, result) {
+  return JSON.stringify([TYPE_RPC_RESPONSE, serial, success, result]);
 }
 
 export function PKT_EVENT(name, data) {
@@ -50,8 +77,8 @@ export function PKT_ACTION(action) {
   return JSON.stringify([TYPE_ACTION, action]);
 }
 
-export function PKT_SCOPE_REQUEST(tracker, name, version) {
-  return JSON.stringify([TYPE_SCOPE_REQUEST, tracker, name, version]);
+export function PKT_SCOPE_REQUEST(tracker, name, manifest) {
+  return JSON.stringify([TYPE_SCOPE_REQUEST, tracker, name, manifest]);
 }
 
 export function PKT_SCOPE_RESPONSE(tracker, success, result) {

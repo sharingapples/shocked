@@ -13,11 +13,12 @@ The client is built with reconnect support.
 
 # Usage
 ```javascript
-import connect from 'shocked-client'
+import { createClient } from 'shocked-client'
 
 // Create a socket connected to a redux store
 const options = {};
-const client = connect('ws://host/params', store);
+const client = createClient('ws://host', store);
+client.connect('/params');
 
 async function main() {
   const demo = await client.scope('demo');
@@ -31,15 +32,17 @@ async function main() {
 ## Use optional (recommended) network state listener for automatic reconnections
 
 ```javascript
-import connect from 'shocked-client';
+import { createClient } from 'shocked-client';
 import createNetwork from 'shocked-network-node';
 // import createNetwork from 'shocked-network-browser';
 // import createNetwork from 'shocked-network-react-native';
 
 const options = {};
-const client = connect(
-  'ws://host/params', 
+const client = createClient(
+  'ws://host', 
   store, 
   global.WebSocket, // Provide the WebSocket class
   createNetwork()   // Create network to listen for online/offline status
 );
+
+client.connect('/params');

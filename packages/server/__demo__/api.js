@@ -1,4 +1,5 @@
-import { createScope } from 'shocked';
+import { createScope } from '../src';
+import { PROXY_PORT } from './common';
 
 const ROOMS = {
   python: [],
@@ -17,18 +18,7 @@ const getMembers = (room) => {
   return members;
 };
 
-const chat = createScope('chat', (session) => {
-  console.log('Scoped session for chat');
-
-  // Provide all the rooms available
-  session.dispatch({
-    type: 'ROOMS',
-    payload: Object.keys(ROOMS),
-  });
-});
-
-function leave() {
-  const { session } = this;
+const leave = session => () => {
   const user = session.get('user');
   const room = session.get('room');
 
@@ -42,13 +32,9 @@ function leave() {
 
   // Unsubscribe from the room specific channel
   session.unsubscribe(room);
-}
+};
 
-chat(leave);
-
-function join(room) {
-  const { session } = this;
-
+const join = session => (room) => {
   const user = session.get('user');
   console.log(`JOIN ${room} ${user.name}/${user.id}`);
 
@@ -81,13 +67,9 @@ function join(room) {
       members,
     },
   });
-}
+};
 
-chat(join);
-
-function send(message) {
-  const { session } = this;
-
+const send = session => (message) => {
   const user = session.get('user');
   const room = session.get('room');
 
@@ -98,7 +80,53 @@ function send(message) {
       message,
     },
   });
-}
+};
 
-chat(send);
+const trackDummy = session => () => {
+  const initialValue = ['dummy'];
+  return session.createTracker('t11', initialValue, tracker => ({
+    q: (n) => {
+      tracker.emit('q', n);
+      return `dummy${n}`;
+    },
+  }));
+};
 
+const trackCheck = session => () => {
+  session.tracker('t11').emit('qq', 'Check OK');
+};
+
+createScope('track', session => ({
+  trackDummy: trackDummy(session),
+  trackCheck: trackCheck(session),
+}));
+
+createScope('chat', (session) => {
+  console.log('Scoped session for chat');
+
+  // Provide all the rooms available
+  session.dispatch({
+    type: 'ROOMS',
+    payload: Object.keys(ROOMS),
+  });
+
+  return {
+    leave: leave(session),
+    join: join(session),
+    send: send(session),
+  };
+});
+
+const startProxy = session => async () => {
+  const proxyUrl = `ws://localhost:${PROXY_PORT}/proxy`;
+  return session.setupProxy('proxy', proxyUrl);
+};
+
+const stopProxy = session => async () => {
+  session.clearProxy('proxy');
+};
+
+createScope('proxy', session => ({
+  start: startProxy(session),
+  stop: stopProxy(session),
+}));

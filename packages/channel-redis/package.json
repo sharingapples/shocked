@@ -1,6 +1,6 @@
 {
   "name": "shocked-channel-redis",
-  "version": "0.2.11",
+  "version": "0.3.1",
   "description": "Redis based channel for shocked library",
   "main": "cjs/index.js",
   "scripts": {

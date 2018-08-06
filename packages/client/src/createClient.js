@@ -1,8 +1,27 @@
-import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'shocked-common';
+import {
+  createParser,
+  PKT_RPC_REQUEST,
+  PKT_SCOPE_REQUEST,
+  PKT_CALL,
+  PKT_TRACKER_RPC_REQUEST,
+  RPC_SUCCESS_PROXY,
+  RPC_SUCCESS_TRACKER,
+} from 'shocked-common';
+import TrackerClient from './TrackerClient';
+
+const EventEmitter = require('events');
 
 const noop = () => {};
 
-function connect(url, store, Socket = global.WebSocket, network = null) {
+function createClient(host, store, Socket = global.WebSocket, network = null) {
+  if (!host.startsWith('ws://') && !host.startsWith('wss://')) {
+    throw new Error(`Invalid host ${host}. Host should start with ws:// or wss://`);
+  }
+
+  if (!store || !store.dispatch || !store.getState || !store.subscribe) {
+    throw new Error('Invalid store. Store must be a valid redux store.');
+  }
+
   const parser = createParser();
 
   let serial = 0;
@@ -11,18 +30,10 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
   let rpcs = {};
   let scopeCalls = {};
   let scopeManifests = {};
+  let trackers = {};
 
-  const listeners = {};
+  const eventManager = new EventEmitter();
   const pending = [];
-
-  function fire(event, data) {
-    const eventListeners = listeners[event];
-    if (eventListeners) {
-      // Call the listener with client as `this` instance
-      // eslint-disable-next-line no-use-before-define
-      eventListeners.forEach(l => l.call(client, data));
-    }
-  }
 
   function deferSend(pkt) {
     pending.push(pkt);
@@ -47,7 +58,7 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       pending.length = 0;
 
       // Trigger the connect event
-      fire('connect');
+      eventManager.emit('connect');
     };
 
     sock.onmessage = (e) => {
@@ -62,6 +73,9 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
       rpcs = {};
       scopeCalls = {};
+      // Clear listeners
+      Object.keys(trackers).forEach(trackerId => trackers[trackerId].removeAllListeners());
+      trackers = {};
       rejections.forEach(([, reject]) => {
         reject(new Error('Connection terminated'));
       });
@@ -70,13 +84,14 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       scopeManifests = {};
 
       // Fire the close event on client
-      fire('disconnect');
+      eventManager.emit('disconnect');
     };
 
     sock.onerror = (e) => {
       const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
       rpcs = {};
       scopeCalls = {};
+      trackers = {};
 
       // Clear all pending tasks, as they will be rejected from below
       pending.length = 0;
@@ -87,22 +102,47 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       });
 
       // Fire the error event on client
-      fire('error', e.message);
+      eventManager.emit('error', e.message);
     };
 
     return sock;
   }
 
-  parser.onEvent = fire;
+  parser.onEvent = (event, message) => eventManager.emit(event, message);
+
   parser.onAction = (action) => {
     store.dispatch(action);
   };
 
-  parser.onRpcResponse = (tracker, success, result) => {
-    const [resolve, reject] = rpcs[tracker];
-    delete rpcs[tracker];
+  parser.onTrackerRpcResponse = (serialNum, success, result) => {
+    const [resolve, reject] = rpcs[serialNum];
+    delete rpcs[serialNum];
     if (success) {
       resolve(result);
+    } else {
+      reject(result);
+    }
+  };
+
+  parser.onRpcResponse = (rpcId, success, result) => {
+    const [resolve, reject, scopeId] = rpcs[rpcId];
+    delete rpcs[rpcId];
+    if (success) {
+      if (success === RPC_SUCCESS_PROXY) {
+        // the result of a proxying
+        resolve(result.reduce((res, name) => {
+          // eslint-disable-next-line no-use-before-define
+          res[name] = (...args) => client.rpc(scopeId, name, ...args);
+          return res;
+        }, {}));
+      } else if (success === RPC_SUCCESS_TRACKER) {
+        // eslint-disable-next-line no-use-before-define
+        const tracker = new TrackerClient(client, result);
+        trackers[tracker.id] = tracker;
+        resolve(tracker);
+      } else {
+        resolve(result);
+      }
     } else {
       reject(result);
     }
@@ -128,37 +168,51 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
     }
   };
 
+  parser.onTrackerEvent = (trackerId, event, data) => {
+    const tracker = trackers[trackerId];
+    if (!tracker) {
+      return;
+    }
+
+    tracker.emit(event, data);
+  };
+
   // Initialize with a connection attempt
-  let socket = connection(url);
+  let socket = null;
 
   const client = {
     isConnected: () => socket && socket.readyState === Socket.OPEN,
 
-    reconnect: (remoteUrl = null) => {
+    connect: (path) => {
+      const url = `${host}${path}`;
+      if (client.isConnected() && socket.url === url) {
+        return true;
+      }
+
+      if (socket !== null) {
+        socket.close();
+      }
+
+      socket = connection(url);
+      return true;
+    },
+
+    reconnect: () => {
       // Cannot connect without a remote url
-      if (remoteUrl === null && socket === null) {
+      if (socket === null) {
         return false;
       }
 
       // Use the given url or a last successfully connected url
-      const finalUrl = remoteUrl || socket.url;
+      const finalUrl = socket.url;
 
-      // Only perform a reconnect if the socket is not connected or the url has changed
-      if (socket === null || socket.url !== finalUrl || socket.readyState !== Socket.OPEN) {
-        // Make sure to cleanup the previous socket
-        if (socket !== null) {
-          socket.close();
-        }
-
-        // Perform a new connection
-        socket = connection(finalUrl);
-
-        // The reconnection has been attempted
-        return true;
+      // Since its a reconnect attempt, we will close existing socket
+      if (socket !== null) {
+        socket.close();
       }
 
-      // No reattempt needed
-      return false;
+      socket = connection(finalUrl);
+      return true;
     },
 
     close: () => {
@@ -166,19 +220,9 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       socket = null;
     },
 
-    on: (event, listener) => {
-      // Keep track of event listeners
-      const eventListeners = listeners[event];
-      if (!eventListeners) {
-        listeners[event] = [listener];
-      } else {
-        eventListeners.push(listener);
-      }
+    on: (event, listener) => eventManager.on(event, listener),
 
-      return () => {
-        listeners[event] = listeners[event].filter(l => l === listener);
-      };
-    },
+    off: (event, listener) => eventManager.off(event, listener),
 
     call: (scope, api, ...args) => {
       const pkt = PKT_CALL(scope, api, args);
@@ -194,7 +238,7 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
 
     rpc: (scope, api, ...args) => new Promise((resolve, reject) => {
       serial += 1;
-      rpcs[serial] = [resolve, reject];
+      rpcs[serial] = [resolve, reject, scope];
       const pkt = PKT_RPC_REQUEST(serial, scope, api, args);
       if (!client.isConnected()) {
         return deferSend(pkt);
@@ -203,6 +247,22 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
       socket.send(pkt);
       return noop();
     }),
+
+    trackerRpc: (id, api, ...args) => new Promise((resolve, reject) => {
+      serial += 1;
+      rpcs[serial] = [resolve, reject];
+      const pkt = PKT_TRACKER_RPC_REQUEST(serial, id, api, args);
+      if (!client.isConnected()) {
+        return deferSend(pkt);
+      }
+      socket.send(pkt);
+      return noop();
+    }),
+
+    removeTracker: (id) => {
+      trackers[id].removeAllListeners();
+      delete trackers[id];
+    },
 
     scope: (name, manifest = null) => new Promise((resolve, reject) => {
       // If the scope has already been manifested, return immediately
@@ -243,4 +303,4 @@ function connect(url, store, Socket = global.WebSocket, network = null) {
   return client;
 }
 
-export default connect;
+export default createClient;
