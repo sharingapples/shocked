@@ -21,6 +21,7 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
+    "events": "^3.0.0",
     "shocked-common": "^0.3.6"
   },
   "devDependencies": {

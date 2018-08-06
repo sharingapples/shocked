@@ -1,4 +1,13 @@
-import { createParser, PKT_RPC_REQUEST, PKT_SCOPE_REQUEST, PKT_CALL } from 'shocked-common';
+import {
+  createParser,
+  PKT_RPC_REQUEST,
+  PKT_SCOPE_REQUEST,
+  PKT_CALL,
+  PKT_TRACKER_RPC_REQUEST,
+  RPC_SUCCESS_PROXY,
+  RPC_SUCCESS_TRACKER,
+} from 'shocked-common';
+import TrackerClient from './TrackerClient';
 
 const noop = () => {};
 
@@ -19,6 +28,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
   let rpcs = {};
   let scopeCalls = {};
   let scopeManifests = {};
+  let trackers = {};
 
   const listeners = {};
   const pending = [];
@@ -70,6 +80,9 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
       rpcs = {};
       scopeCalls = {};
+      // Clear listeners
+      Object.keys(trackers).forEach(trackerId => trackers[trackerId].removeAllListeners());
+      trackers = {};
       rejections.forEach(([, reject]) => {
         reject(new Error('Connection terminated'));
       });
@@ -85,6 +98,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       const rejections = Object.values(rpcs).concat(Object.values(scopeCalls));
       rpcs = {};
       scopeCalls = {};
+      trackers = {};
 
       // Clear all pending tasks, as they will be rejected from below
       pending.length = 0;
@@ -106,17 +120,32 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
     store.dispatch(action);
   };
 
-  parser.onRpcResponse = (tracker, success, result) => {
-    const [resolve, reject, scopeId] = rpcs[tracker];
-    delete rpcs[tracker];
+  parser.onTrackerRpcResponse = (serialNum, success, result) => {
+    const [resolve, reject] = rpcs[serialNum];
+    delete rpcs[serialNum];
     if (success) {
-      if (success === -1) {
+      resolve(result);
+    } else {
+      reject(result);
+    }
+  };
+
+  parser.onRpcResponse = (rpcId, success, result) => {
+    const [resolve, reject, scopeId] = rpcs[rpcId];
+    delete rpcs[rpcId];
+    if (success) {
+      if (success === RPC_SUCCESS_PROXY) {
         // the result of a proxying
         resolve(result.reduce((res, name) => {
           // eslint-disable-next-line no-use-before-define
           res[name] = (...args) => client.rpc(scopeId, name, ...args);
           return res;
         }, {}));
+      } else if (success === RPC_SUCCESS_TRACKER) {
+        // eslint-disable-next-line no-use-before-define
+        const tracker = new TrackerClient(client, result);
+        trackers[tracker.id] = tracker;
+        resolve(tracker);
       } else {
         resolve(result);
       }
@@ -143,6 +172,15 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
 
       resolve(scopedApi);
     }
+  };
+
+  parser.onTrackerEvent = (trackerId, event, data) => {
+    const tracker = trackers[trackerId];
+    if (!tracker) {
+      return;
+    }
+
+    tracker.emit(event, data);
   };
 
   // Initialize with a connection attempt
@@ -225,6 +263,22 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
       socket.send(pkt);
       return noop();
     }),
+
+    trackerRpc: (id, api, ...args) => new Promise((resolve, reject) => {
+      serial += 1;
+      rpcs[serial] = [resolve, reject];
+      const pkt = PKT_TRACKER_RPC_REQUEST(serial, id, api, args);
+      if (!client.isConnected()) {
+        return deferSend(pkt);
+      }
+      socket.send(pkt);
+      return noop();
+    }),
+
+    removeTracker: (id) => {
+      trackers[id].removeAllListeners();
+      delete trackers[id];
+    },
 
     scope: (name, manifest = null) => new Promise((resolve, reject) => {
       // If the scope has already been manifested, return immediately

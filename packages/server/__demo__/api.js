@@ -82,6 +82,25 @@ const send = session => (message) => {
   });
 };
 
+const trackDummy = session => () => {
+  const initialValue = ['dummy'];
+  return session.createTracker('t11', initialValue, tracker => ({
+    q: (n) => {
+      tracker.emit('q', n);
+      return `dummy${n}`;
+    },
+  }));
+};
+
+const trackCheck = session => () => {
+  session.tracker('t11').emit('qq', 'Check OK');
+};
+
+createScope('track', session => ({
+  trackDummy: trackDummy(session),
+  trackCheck: trackCheck(session),
+}));
+
 createScope('chat', (session) => {
   console.log('Scoped session for chat');
 
