@@ -1,6 +1,6 @@
 {
   "name": "shocked-client",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Socket Client",
   "main": "cjs/index.js",
   "files": [
@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "events": "^3.0.0",
-    "shocked-common": "^0.3.6"
+    "shocked-common": "^0.3.7"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1",
