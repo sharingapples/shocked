@@ -96,14 +96,6 @@ class Session {
         this.close();
       };
 
-      proxy.onopen = () => {
-        // Proxy connection established, we can resolve the proxy
-        if (!done) {
-          // Send a scope request to get the api's available via proxy
-          proxy.send(PKT_SCOPE_REQUEST(1, scopeId, true));
-        }
-      };
-
       proxy.onerror = () => {
         if (!done) {
           done = true;
@@ -118,6 +110,16 @@ class Session {
           this.ws.send(e.data);
         } else {
           const proxyParser = createParser();
+          proxyParser.onEvent = (event) => {
+            // Wait for session to be active before sending in a scope request
+            // Session validation might take some time, so the message might
+            // be lost, if it is send as soon as the connection is established
+            if (event === EVENT_ACTIVE) {
+              // the proxy server is active, we can proceed now
+              proxy.send(PKT_SCOPE_REQUEST(1, scopeId, true));
+            }
+          };
+
           proxyParser.onScopeResponse = (tracker, success, result) => {
             done = true;
             if (tracker !== 1) {
