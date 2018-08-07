@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import UrlPattern from 'url-pattern';
 
-import Session from './Session';
+import Session, { EVENT_ACTIVE } from './Session';
 import Channel from './Channel';
 
 import createDefaultProvider from './defaultChannelProvider';
@@ -51,6 +51,9 @@ export default function start(options, validateSession, pulseRate = 30000) {
       ws.terminate();
     }).then((res) => {
       if (res || res === undefined) {
+        // Emit an active event as soon as a session is established
+        session.emit(EVENT_ACTIVE, res);
+
         // Enable reception mode
         session.activate(ws);
         // Add heart beat

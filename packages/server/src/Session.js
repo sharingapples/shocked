@@ -20,6 +20,8 @@ import Tracker from './Tracker';
 
 const debug = require('debug')('shocked');
 
+export const EVENT_ACTIVE = 'active';
+
 class Session {
   constructor(req, params, ws) {
     this.id = uuid();
