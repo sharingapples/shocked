@@ -24,6 +24,10 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
 
   const parser = createParser();
 
+  // List of action pre processors, that could parse the action before
+  // being dispatched to store
+  const actionPreProcessors = [];
+
   let serial = 0;
   let scopeSerial = 0;
 
@@ -111,7 +115,11 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
   parser.onEvent = (event, message) => eventManager.emit(event, message);
 
   parser.onAction = (action) => {
-    store.dispatch(action);
+    if (actionPreProcessors.length > 0) {
+      store.dispatch(actionPreProcessors.reduce((res, preProcessor) => preProcessor(res), action));
+    } else {
+      store.dispatch(action);
+    }
   };
 
   parser.onTrackerRpcResponse = (serialNum, success, result) => {
@@ -218,6 +226,25 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
     close: () => {
       socket.close();
       socket = null;
+    },
+
+    addActionPreProcessor(preProcessor) {
+      if (actionPreProcessors.indexOf(preProcessor) >= 0) {
+        return false;
+      }
+      // Include the preProcessor at the beginning of the array
+      // to make sure that the last one gets executed first
+      actionPreProcessors.unshift(preProcessor);
+      return true;
+    },
+
+    removeActionPreProcessor(preProcessor) {
+      const idx = actionPreProcessors.indexOf(preProcessor);
+      if (idx >= 0) {
+        actionPreProcessors.splice(idx, 1);
+        return true;
+      }
+      return false;
     },
 
     on: (event, listener) => eventManager.on(event, listener),
