@@ -102,7 +102,7 @@ class Session {
         if (!done) {
           throw new Error('Received data on proxy before the connection has been established');
         }
-        this.ws.send(e.data);
+        this.send(e.data);
       };
     });
 

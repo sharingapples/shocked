@@ -1,10 +1,10 @@
-import start from './server';
+import shocked from './server';
 import { createScope } from './scoping';
 import Channel from './Channel';
 
-export default start;
+export default shocked;
 export {
-  start,
+  shocked,
   createScope,
   Channel,
 };

@@ -1,4 +1,4 @@
-import { start, createScope } from '../src';
+import { shocked, createScope } from '../src';
 import { PROXY_PORT } from './common';
 
 const name = () => 'proxy';
@@ -9,9 +9,8 @@ createScope('proxy', () => ({
 
 const url = '/proxy';
 
-start({ port: PROXY_PORT, url }, () => {
+shocked({ port: PROXY_PORT }).handle(url, () => {
   console.log('Starting proxy session');
   return true;
 });
 
-console.log('Started proxy server at port', PROXY_PORT);

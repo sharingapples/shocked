@@ -1,3 +1,4 @@
+import http from 'http';
 import WebSocket from 'ws';
 import UrlPattern from 'url-pattern';
 
@@ -5,6 +6,8 @@ import Session from './Session';
 import Channel from './Channel';
 
 import createDefaultProvider from './defaultChannelProvider';
+
+const pkg = require('../package.json');
 
 const debug = require('debug')('shocked');
 
@@ -14,88 +17,131 @@ function beat() {
   this.isAlive = true;
 }
 
-export default function start(options, validateSession, pulseRate = 30000) {
-  const { url, channelProvider, ...other } = options;
+const defaultHttpHandler = (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.end(`${pkg.name}@${pkg.version}`);
+};
 
-  // Use the channel provider
+export default function shocked({
+  port,
+  pulseRate = 30000,
+  httpHandler = defaultHttpHandler,
+  channelProvider,
+} = {}) {
+  if (arguments.length > 1) {
+    throw new Error('Please use the handler returned to add url specific handler. New version');
+  }
+
+  if (!port) {
+    throw new Error('Provide a port to listen on');
+  }
+
   Channel.setProvider(channelProvider || createDefaultProvider());
+  const handlers = [];
 
-  const urlPattern = url ? new UrlPattern(options.url) : null;
+  const server = http.createServer(httpHandler);
+  const errHandler = new WebSocket.Server({ noServer: true });
 
-  const wsOptions = {
-    ...other,
-    verifyClient: (info, cb) => {
-      // match the url pattern if available
-      const params = urlPattern ? urlPattern.match(info.req.url) : {};
-      if (params === null) {
-        debug(`Could not process url ${info.req.url}`);
-        cb(false, 404, `Can't serve ${info.req.url}`);
-        return;
-      }
-
-      const session = new Session(params);
-      // eslint-disable-next-line no-param-reassign
-      info.req.session = session;
-
-      Promise.resolve(validateSession(session)).catch((err) => {
-        debug('Error while validating session', err);
-        cb(false, 500, err.message);
-      }).then((res) => {
-        if (res === false) {
-          debug('Session rejected by application, validation returned `false`');
-          cb(false, 500, 'Session rejected by application');
-        } else {
-          cb(true);
-        }
+  server.on('upgrade', async (request, socket, head) => {
+    function end(code, message) {
+      errHandler.handleUpgrade(request, socket, head, (ws) => {
+        ws.close(code, message);
       });
-    },
-  };
-
-  const wss = new WebSocket.Server(wsOptions);
-
-  wss.on('connection', (ws, req) => {
-    // Create a new session object, in transmit mode, until validated
-    const { session } = req;
-    session.activate(ws);
-
-    if (pulseRate) {
-      ws.isAlive = true; // eslint-disable-line no-param-reassign
-      ws.on('pong', beat);
     }
 
-    ws.on('error', (err) => {
-      debug('Unexpected websocket error', err);
+    // Search for a handler that can handle this request
+    const h = handlers.reduce((res, handler) => {
+      if (res) {
+        return res;
+      }
+
+      const params = handler.urlPattern.match(request.url);
+      if (params === null) {
+        return null;
+      }
+
+      return {
+        wss: handler.wss,
+        validator: handler.validator,
+        params,
+      };
+    }, null);
+
+    if (h === null) {
+      return end(4001, 'No handler');
+    }
+
+    // First try to validate session
+    const session = new Session(h.params);
+    try {
+      const r = await h.validator(session);
+      if (r === false) {
+        throw new Error('Session is not validated');
+      }
+    } catch (err) {
+      debug('Session validation failed', err);
+      return end(4002, err.message);
+    }
+
+    // Everything went ok, upgrade the websocket request
+    return h.wss.handleUpgrade(request, socket, head, (ws) => {
+      // First activate the session
+      session.activate(ws);
+
+      if (pulseRate > 0) {
+        ws.isAlive = true;  // eslint-disable-line
+        ws.on('pong', beat);
+      }
     });
   });
 
-  function keepAlive() {
-    wss.clients.forEach((ws) => {
+  const keepAlive = () => {
+    handlers.forEach(({ wss }) => wss.clients.forEach((ws) => {
       if (!ws.isAlive) {
-        return ws.terminate();
+        ws.terminate();
       }
 
-      // eslint-disable-next-line no-param-reassign
-      ws.isAlive = false;
-      return ws.ping(noop);
-    });
-  }
+      ws.isAlive = false; // eslint-disable-line
+      ws.ping(noop);
+    }));
+  };
 
   const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
 
-  // Return an instance of server
+  server.listen(port, () => {
+    if (handlers.length === 0) {
+      throw new Error('No handlers defined');
+    }
+
+    debug(`Server listening at port ${port}`);
+  });
+
   return {
-    stop: () => {
+    handle: (url, validator) => {
+      const handler = {
+        urlPattern: new UrlPattern(url),
+        validator,
+        wss: new WebSocket.Server({ noServer: true }),
+      };
+      handlers.push(handler);
+
+      return {
+        length: () => handler.wss.clients.size,
+      };
+    },
+
+    quit: () => {
       if (heartBeat) {
         clearInterval(heartBeat);
       }
 
-      // Close all client connections
-      wss.clients.forEach(client => client.terminate());
+      handlers.forEach(({ wss }) => {
+        // Terminate all clients
+        wss.clients.forEach(c => c.terminate());
 
-      // Close the server
-      wss.close();
+        // Terminate the server
+        wss.close();
+      });
     },
-
-    length: () => wss.clients.size,
   };
 }
