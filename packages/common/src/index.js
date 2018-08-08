@@ -27,6 +27,7 @@ const TYPE_TRACKER_RPC_REQUEST = 8;
 const TYPE_TRACKER_RPC_RESPONSE = 9;
 const TYPE_TRACKER_CLOSE = 10;
 const TYPE_TRACKER_EVENT = 11;
+const TYPE_PROXY_SCOPE_REQUEST = 12;
 
 export const RPC_SUCCESS_PROXY = -1;
 export const RPC_SUCCESS_TRACKER = -2;
@@ -43,6 +44,7 @@ const METHOD_MAPS = {
   [TYPE_TRACKER_RPC_RESPONSE]: 'onTrackerRpcResponse',
   [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
   [TYPE_TRACKER_EVENT]: 'onTrackerEvent',
+  [TYPE_PROXY_SCOPE_REQUEST]: 'onProxyScopeRequest',
 };
 
 export function PKT_TRACKER_RPC_REQUEST(serial, trackerId, api, args) {
@@ -75,6 +77,10 @@ export function PKT_EVENT(name, data) {
 
 export function PKT_ACTION(action) {
   return JSON.stringify([TYPE_ACTION, action]);
+}
+
+export function PKT_PROXY_SCOPE_REQUEST(rpcId, scopeId) {
+  return JSON.stringify([TYPE_PROXY_SCOPE_REQUEST, rpcId, scopeId]);
 }
 
 export function PKT_SCOPE_REQUEST(tracker, name, manifest) {

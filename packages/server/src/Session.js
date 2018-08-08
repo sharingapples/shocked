@@ -8,7 +8,7 @@ import {
   PKT_EVENT,
   PKT_RPC_REQUEST,
   PKT_CALL,
-  PKT_SCOPE_REQUEST,
+  PKT_PROXY_SCOPE_REQUEST,
   PKT_TRACKER_RPC_RESPONSE,
   RPC_SUCCESS_TRACKER,
   RPC_SUCCESS_PROXY,
@@ -44,6 +44,9 @@ class Session {
     ws.on('close', () => {
       // Remove all subscriptions
       this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
+
+      // Close all proxies
+      Object.keys(this.proxy).forEach(id => this.clearProxy(this.proxy[id]));
 
       // Remove all trackers
       Object.keys(this.trackers).forEach((trackerId) => {
@@ -116,20 +119,15 @@ class Session {
             // be lost, if it is send as soon as the connection is established
             if (event === EVENT_ACTIVE) {
               // the proxy server is active, we can proceed now
-              proxy.send(PKT_SCOPE_REQUEST(1, scopeId, true));
+              done = true;
+              // Resolve with a proxy api and a callback to invoke
+              // proxy scope request for the given serial id
+              resolve(new ProxyApi((serialId) => {
+                proxy.send(PKT_PROXY_SCOPE_REQUEST(serialId, scopeId, true));
+              }, proxy));
             }
           };
 
-          proxyParser.onScopeResponse = (tracker, success, result) => {
-            done = true;
-            if (tracker !== 1) {
-              reject(new Error(`Unexpected tracker ${tracker}`));
-            } else if (!success) {
-              reject(new Error(`Proxy hasn't imlpemented ${scopeId} scope`));
-            } else {
-              resolve(new ProxyApi(result, proxy));
-            }
-          };
           proxyParser.parse(e.data);
         }
       };
@@ -138,19 +136,36 @@ class Session {
     return this.proxy[scopeId];
   }
 
+  initScope(scopeId) {
+    const scope = this.scopes[scopeId];
+    if (scope) {
+      return scope;
+    }
+
+    const newScope = getScope(scopeId, this);
+    if (newScope) {
+      this.scopes[scopeId] = newScope;
+    }
+
+    return newScope;
+  }
+
   activate(ws) {
     const parser = createParser();
+    parser.onProxyScopeRequest = (rpcId, scopeId) => {
+      const scope = this.initScope(scopeId);
+      if (!scope) {
+        return this.send(PKT_RPC_RESPONSE(rpcId, false, `Scope ${scopeId} is not supported by proxy`));
+      }
+
+      return this.send(PKT_RPC_RESPONSE(rpcId, RPC_SUCCESS_PROXY, Object.keys(scope)));
+    };
+
     parser.onScopeRequest = (tracker, scopeId, manifest) => {
-      let scope = this.scopes[scopeId];
+      const scope = this.initScope(scopeId);
 
       if (!scope) {
-        scope = getScope(scopeId, this);
-        if (!scope) {
-          return this.send(PKT_SCOPE_RESPONSE(tracker, false, `Unknown scope ${scopeId}`));
-        }
-
-        // Store the scope on the session
-        this.scopes[scopeId] = scope;
+        return this.send(PKT_SCOPE_RESPONSE(tracker, false, `Unknown scope ${scopeId}`));
       }
 
       if (manifest) {
@@ -206,7 +221,8 @@ class Session {
       try {
         const res = await fn(...args);
         if (res instanceof ProxyApi) {
-          return this.send(PKT_RPC_RESPONSE(serialId, RPC_SUCCESS_PROXY, res.api));
+          res.forward(serialId);
+          return null;
         } else if (res instanceof Tracker) {
           return this.send(PKT_RPC_RESPONSE(serialId, RPC_SUCCESS_TRACKER, res));
         }

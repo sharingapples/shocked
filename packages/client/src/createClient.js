@@ -66,6 +66,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
     };
 
     sock.onmessage = (e) => {
+      console.log(e.data.toString());
       parser.parse(e.data);
     };
 
@@ -137,6 +138,7 @@ function createClient(host, store, Socket = global.WebSocket, network = null) {
     delete rpcs[rpcId];
     if (success) {
       if (success === RPC_SUCCESS_PROXY) {
+        console.log(rpcId, success, result);
         // the result of a proxying
         resolve(result.reduce((res, name) => {
           // eslint-disable-next-line no-use-before-define

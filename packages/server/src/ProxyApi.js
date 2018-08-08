@@ -1,6 +1,6 @@
 class ProxyApi {
-  constructor(api, ws) {
-    this.api = api;
+  constructor(forward, ws) {
+    this.forward = forward;
     this.ws = ws;
   }
 
