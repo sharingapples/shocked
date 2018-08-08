@@ -142,6 +142,11 @@ export default function shocked({
         // Terminate the server
         wss.close();
       });
+
+      errHandler.close();
+
+      // Finally close the server
+      server.close();
     },
   };
 }
