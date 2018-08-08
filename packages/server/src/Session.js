@@ -20,13 +20,10 @@ import Tracker from './Tracker';
 
 const debug = require('debug')('shocked');
 
-export const EVENT_ACTIVE = 'active';
-
 class Session {
-  constructor(req, params, ws) {
+  constructor(params) {
     this.id = uuid();
 
-    this.req = req;
     this.params = params;
 
     this.values = {};
@@ -39,28 +36,11 @@ class Session {
     this.scopes = {};
 
     this.proxy = {};
-    this.ws = ws;
 
-    ws.on('close', () => {
-      // Remove all subscriptions
-      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
-
-      // Close all proxies
-      Object.keys(this.proxy).forEach(id => this.clearProxy(this.proxy[id]));
-
-      // Remove all trackers
-      Object.keys(this.trackers).forEach((trackerId) => {
-        Channel.unsubscribe(trackerId, this.trackers[trackerId]);
-      });
-
-      // Trigger all the close listeners
-      this.closeListeners.forEach(c => c());
-
-      // Perform all cleanups
-      Object.keys(this.cleanUps).forEach((k) => {
-        this.cleanUps[k]();
-      });
-    });
+    // During session validation, the socket is not available,
+    // in which case, we queue the packets and as soon as the
+    // socket is available send them through
+    this.queue = [];
   }
 
   async clearProxy(scopeId) {
@@ -84,6 +64,16 @@ class Session {
     this.proxy[scopeId] = new Promise((resolve, reject) => {
       let done = false;
       const proxy = new WebSocket(url);
+      proxy.onopen = () => {
+        // the proxy server is active, we can proceed now
+        done = true;
+        // Resolve with a proxy api and a callback to invoke
+        // proxy scope request for the given serial id
+        resolve(new ProxyApi((serialId) => {
+          proxy.send(PKT_PROXY_SCOPE_REQUEST(serialId, scopeId, true));
+        }, proxy));
+      };
+
       proxy.onclose = () => {
         if (!this.proxy[scopeId]) {
           // The proxy has already been disassociated, no need to do anything
@@ -109,27 +99,10 @@ class Session {
       // Forward any message received back to the client
       proxy.onmessage = (e) => {
         // If the proxy connection has been established, transparently pass the data
-        if (done) {
-          this.ws.send(e.data);
-        } else {
-          const proxyParser = createParser();
-          proxyParser.onEvent = (event) => {
-            // Wait for session to be active before sending in a scope request
-            // Session validation might take some time, so the message might
-            // be lost, if it is send as soon as the connection is established
-            if (event === EVENT_ACTIVE) {
-              // the proxy server is active, we can proceed now
-              done = true;
-              // Resolve with a proxy api and a callback to invoke
-              // proxy scope request for the given serial id
-              resolve(new ProxyApi((serialId) => {
-                proxy.send(PKT_PROXY_SCOPE_REQUEST(serialId, scopeId, true));
-              }, proxy));
-            }
-          };
-
-          proxyParser.parse(e.data);
+        if (!done) {
+          throw new Error('Received data on proxy before the connection has been established');
         }
+        this.ws.send(e.data);
       };
     });
 
@@ -151,6 +124,12 @@ class Session {
   }
 
   activate(ws) {
+    // highly unlikely to activate twice, even then just keep tab
+    if (this.ws) {
+      throw new Error('Session cannot be activated more than once');
+    }
+
+    this.ws = ws;
     const parser = createParser();
     parser.onProxyScopeRequest = (rpcId, scopeId) => {
       const scope = this.initScope(scopeId);
@@ -252,6 +231,31 @@ class Session {
       return fn(...args);
     };
 
+    // Clean up the queue
+    this.queue.forEach(message => ws.send(message));
+    this.queue = null;
+
+    ws.on('close', () => {
+      // Remove all subscriptions
+      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
+
+      // Close all proxies
+      Object.keys(this.proxy).forEach(id => this.clearProxy(this.proxy[id]));
+
+      // Remove all trackers
+      Object.keys(this.trackers).forEach((trackerId) => {
+        Channel.unsubscribe(trackerId, this.trackers[trackerId]);
+      });
+
+      // Trigger all the close listeners
+      this.closeListeners.forEach(c => c());
+
+      // Perform all cleanups
+      Object.keys(this.cleanUps).forEach((k) => {
+        this.cleanUps[k]();
+      });
+    });
+
     ws.on('message', (data) => {
       parser.parse(data);
     });
@@ -270,7 +274,9 @@ class Session {
   }
 
   send(message) {
-    if (this.ws.readyState === this.ws.OPEN) {
+    if (!this.ws) {
+      this.queue.push(message);
+    } else if (this.ws.readyState === this.ws.OPEN) {
       this.ws.send(message);
     }
   }
