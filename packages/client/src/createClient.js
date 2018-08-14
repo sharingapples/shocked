@@ -19,12 +19,36 @@ function createClient(host, WebSocket = global.WebSocket) {
 
   const eventManager = new EventEmitter();
 
+  let reconnectTimerHandle = null;
+  function setupReconnection(interval) {
+    if (reconnectTimerHandle) {
+      return;
+    }
+
+    reconnectTimerHandle = setTimeout(() => {
+      console.log('perform a reconnection', interval);
+      reconnectTimerHandle = null;
+      // eslint-disable-next-line no-use-before-define
+      client.reconnect();
+    }, interval);
+  }
+
+  function clearRetry() {
+    if (reconnectTimerHandle) {
+      clearTimeout(reconnectTimerHandle);
+      reconnectTimerHandle = null;
+    }
+  }
+
   function connection(remoteUrl) {
     if (remoteUrl === null) {
       return null;
     }
 
     const sock = new WebSocket(remoteUrl);
+    sock.onerror = () => {
+      // console.error('Error', e);
+    };
 
     sock.onopen = () => {
       // Let all the trackers know tha we are now connected
@@ -37,7 +61,13 @@ function createClient(host, WebSocket = global.WebSocket) {
       eventManager.emit('connect');
     };
 
-    sock.onclose = () => {
+    sock.onclose = (e) => {
+      console.log('Socket close error code', e.code);
+      if (e.code !== 1000 && e.code !== 1005) {
+        // Try to reconnect again after sometime
+        setupReconnection(1000);
+      }
+
       trackers.forEach((tracker) => {
         // Let all the trackers know that the client is not available
         tracker.onDisconnect();
@@ -56,12 +86,9 @@ function createClient(host, WebSocket = global.WebSocket) {
   }
 
   parser.onTrackerCreateNew = (trackerId, serial, data, apis) => {
-    console.log('New tracker created for', trackerId, data);
     const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.onCreate(serial, data, apis);
-    } else {
-      console.log('No tracker found for ', trackerId);
     }
   };
 
@@ -95,6 +122,7 @@ function createClient(host, WebSocket = global.WebSocket) {
 
   // Initialize with a connection attempt
   let socket = null;
+  let url = null;
 
   const client = {
     on: (event, listener) => {
@@ -105,14 +133,14 @@ function createClient(host, WebSocket = global.WebSocket) {
 
     off: (event, listener) => {
       if (listener) {
-        eventManager.off(event, listener);
+        eventManager.removeListener(event, listener);
       }
     },
 
     isConnected: () => socket && socket.readyState === WebSocket.OPEN,
 
     connect: (path) => {
-      const url = `${host}${path}`;
+      url = `${host}${path}`;
       if (client.isConnected() && socket.url === url) {
         return true;
       }
@@ -126,20 +154,17 @@ function createClient(host, WebSocket = global.WebSocket) {
     },
 
     reconnect: () => {
-      // Cannot connect without a remote url
-      if (socket === null) {
+      if (url === null) {
+        // No prior url to reconnect to
         return false;
       }
-
-      // Use the given url or a last successfully connected url
-      const finalUrl = socket.url;
 
       // Since its a reconnect attempt, we will close existing socket
       if (socket !== null) {
         socket.close();
       }
 
-      socket = connection(finalUrl);
+      socket = connection(url);
       return true;
     },
 
@@ -148,6 +173,8 @@ function createClient(host, WebSocket = global.WebSocket) {
         socket.close();
       }
       socket = null;
+
+      clearRetry();
     },
 
     send: (data) => {
