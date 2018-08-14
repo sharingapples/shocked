@@ -93,6 +93,8 @@ const App = () => (
 ```
 ### The Tracking Component
 ```javascript
+import { track } from 'shocked-react';
+
 const SpecialScreen = () = (
   <div>
     <SpecialList />
@@ -104,6 +106,8 @@ export default track('Special', () => 'special', reducer);
 ```
 ### Connecting component with data
 ```javascript
+import { connect } from 'shocked-react';
+
 // listItems is null until the client is connected
 const SpecialList = ({ listItems }) => (
   <div>...</div>
@@ -114,6 +118,7 @@ export default connect('Special')(mapStateToProps)(SpecialList);
 ```
 ### Execute apis
 ```javascript
+import { connect, createApi } from 'shocked-react';
 const SpecialForm = ({ add }) => (
   <form onSubmit={() => add(record)}>
     ...
