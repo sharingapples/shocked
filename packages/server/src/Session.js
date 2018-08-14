@@ -1,363 +1,104 @@
-import uuid from 'uuid/v4';
-import WebSocket from 'ws';
-import {
+const {
   createParser,
-  PKT_SCOPE_RESPONSE,
-  PKT_RPC_RESPONSE,
-  PKT_ACTION,
-  PKT_EVENT,
-  PKT_RPC_REQUEST,
-  PKT_CALL,
-  PKT_PROXY_SCOPE_REQUEST,
-  PKT_TRACKER_RPC_RESPONSE,
-  RPC_SUCCESS_TRACKER,
-  RPC_SUCCESS_PROXY,
-} from 'shocked-common';
-import { getScope } from './scoping';
-import Channel from './Channel';
-import ProxyApi from './ProxyApi';
-import Tracker from './Tracker';
-
-const debug = require('debug')('shocked');
+  PKT_TRACKER_CREATE_FAIL,
+  PKT_TRACKER_CREATE_NEW,
+  PKT_TRACKER_CREATE_UPDATE,
+  PKT_TRACKER_API_RESPONSE,
+} = require('shocked-common');
+const WebSocket = require('ws');
 
 class Session {
-  constructor(params) {
-    this.id = uuid();
+  async onTrackerCreate(group, channelId, params, serial) {
+    // Do not allow creating multiple trackers on the same group
+    // for the same session. Could not think of a use case
+    if (this.trackers[group]) {
+      return this.send(PKT_TRACKER_CREATE_FAIL(group, 'Another tracker is still open. Multiple trackers on the same group are not allowed for the same session'));
+    }
 
-    this.params = params;
+    const tracker = await this.service.createTracker(group, channelId, this, params);
+    console.log('Tracker created');
+    if (!tracker) {
+      return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group}/${channelId} not recoginized`));
+    }
 
-    this.values = {};
-    this.cleanUps = {};
-    this.scopes = {};
-    this.closeListeners = [];
-    this.subscriptions = [];
-    this.trackers = {};
+    // Keep this tracker
+    this.trackers[group] = tracker;
 
-    this.scopes = {};
+    // Check if the client needs a full refresh or just some actions
+    if (serial) {
+      // In case of re-connection it might just be enough to
+      // send some missing actions
+      const actions = await tracker.getActions(serial);
+      if (actions) {
+        return this.send(PKT_TRACKER_CREATE_UPDATE(group, tracker.serial, actions));
+      }
+    }
 
-    this.proxy = {};
-
-    // During session validation, the socket is not available,
-    // in which case, we queue the packets and as soon as the
-    // socket is available send them through
-    this.queue = [];
+    // Looks like the tracker needs to be fully initialized
+    const data = await tracker.getData(params);
+    const pkt = PKT_TRACKER_CREATE_NEW(group, await tracker.serial, data, tracker.getApis());
+    return this.send(pkt);
   }
 
-  async clearProxy(scopeId) {
-    if (this.proxy[scopeId]) {
-      const proxy = await this.proxy[scopeId];
-      delete this.proxy[scopeId];
-      proxy.close();
+  async onTrackerApiCall(sn, group, id, api, args) {
+    const tracker = this.trackers[group];
+    if (!tracker) {
+      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, 'Tracker is not available, may be already closed.'));
+    }
+
+    if (tracker.id !== id) {
+      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, 'Tracker mismatch. Please stop this now.'));
+    }
+
+    try {
+      const res = await tracker.executeApi(api, ...args);
+      return this.send(PKT_TRACKER_API_RESPONSE(sn, true, res));
+    } catch (err) {
+      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, err.message));
     }
   }
 
-  async setupProxy(scopeId, url) {
-    const scope = this.scopes[scopeId];
-    if (!scope) {
-      throw new Error(`Unknown scope ${scopeId}`);
-    }
-
-    if (this.proxy[scopeId]) {
-      throw new Error(`A proxy is already setup at ${scopeId}`);
-    }
-
-    this.proxy[scopeId] = new Promise((resolve, reject) => {
-      let done = false;
-      const proxy = new WebSocket(url);
-      proxy.onopen = () => {
-        // the proxy server is active, we can proceed now
-        done = true;
-        // Resolve with a proxy api and a callback to invoke
-        // proxy scope request for the given serial id
-        resolve(new ProxyApi((serialId) => {
-          proxy.send(PKT_PROXY_SCOPE_REQUEST(serialId, scopeId, true));
-        }, proxy));
-      };
-
-      proxy.onclose = () => {
-        if (!this.proxy[scopeId]) {
-          // The proxy has already been disassociated, no need to do anything
-          return;
-        }
-
-        // Remove proxy for this scope
-        delete this.proxy[scopeId];
-
-        // If the proxy disconnects, close the session as well
-        // Since this is a very rare case scenario, may occur when
-        // the target group scales down or up
-        this.close();
-      };
-
-      proxy.onerror = () => {
-        if (!done) {
-          done = true;
-          reject(new Error('An error occured on proxy'));
-        }
-      };
-
-      // Forward any message received back to the client
-      proxy.onmessage = (e) => {
-        // If the proxy connection has been established, transparently pass the data
-        if (!done) {
-          throw new Error('Received data on proxy before the connection has been established');
-        }
-        this.send(e.data);
-      };
-    });
-
-    return this.proxy[scopeId];
-  }
-
-  initScope(scopeId) {
-    const scope = this.scopes[scopeId];
-    if (scope) {
-      return scope;
-    }
-
-    const newScope = getScope(scopeId, this);
-    if (newScope) {
-      this.scopes[scopeId] = newScope;
-    }
-
-    return newScope;
-  }
-
-  activate(ws) {
-    // highly unlikely to activate twice, even then just keep tab
-    if (this.ws) {
-      throw new Error('Session cannot be activated more than once');
-    }
-
-    this.ws = ws;
-    const parser = createParser();
-    parser.onProxyScopeRequest = (rpcId, scopeId) => {
-      const scope = this.initScope(scopeId);
-      if (!scope) {
-        return this.send(PKT_RPC_RESPONSE(rpcId, false, `Scope ${scopeId} is not supported by proxy`));
-      }
-
-      return this.send(PKT_RPC_RESPONSE(rpcId, RPC_SUCCESS_PROXY, Object.keys(scope)));
-    };
-
-    parser.onScopeRequest = (tracker, scopeId, manifest) => {
-      const scope = this.initScope(scopeId);
-
-      if (!scope) {
-        return this.send(PKT_SCOPE_RESPONSE(tracker, false, `Unknown scope ${scopeId}`));
-      }
-
-      if (manifest) {
-        return this.send(PKT_SCOPE_RESPONSE(tracker, true, Object.keys(scope)));
-      }
-
-      return this.send(PKT_SCOPE_RESPONSE(tracker, true, null));
-    };
-
-    parser.onTrackerRpcRequest = async (serialId, trackerId, api, args) => {
-      const tracker = this.trackers[trackerId];
-      if (!tracker) {
-        return this.send(PKT_TRACKER_RPC_RESPONSE(serialId, false, 'Tracker id not found'));
-      }
-
-      const fn = await tracker.api[api];
-      if (!fn) {
-        return this.send(PKT_TRACKER_RPC_RESPONSE(serialId, false, `Tracker doesn't have ${api} api`));
-      }
-
-      try {
-        const res = await fn(...args);
-        return this.send(PKT_TRACKER_RPC_RESPONSE(serialId, true, res));
-      } catch (err) {
-        return this.send(PKT_TRACKER_RPC_RESPONSE(serialId, false, err));
-      }
-    };
-
-    parser.onTrackerClose = (trackerId) => {
-      const tracker = this.trackers[trackerId];
-      if (tracker) {
-        Channel.unsubscribe(trackerId, tracker);
-        delete this.trackers[trackerId];
-      }
-    };
-
-    parser.onRpcRequest = async (serialId, scopeId, api, args) => {
-      const scope = this.scopes[scopeId];
-      if (!scope) {
-        return this.send(PKT_RPC_RESPONSE(serialId, false, `Unknown api scope ${scopeId}`));
-      }
-
-      const fn = scope[api];
-      if (!fn) {
-        // In case there is proxy available for this scope, then use proxy
-        const proxy = await this.proxy[scopeId];
-        if (proxy) {
-          return proxy.send(PKT_RPC_REQUEST(serialId, scopeId, api, args));
-        }
-        return this.send(PKT_RPC_RESPONSE(serialId, false, `Unknown api ${scopeId}/${api}`));
-      }
-
-      try {
-        const res = await fn(...args);
-        if (res instanceof ProxyApi) {
-          res.forward(serialId);
-          return null;
-        } else if (res instanceof Tracker) {
-          return this.send(PKT_RPC_RESPONSE(serialId, RPC_SUCCESS_TRACKER, res));
-        }
-        return this.send(PKT_RPC_RESPONSE(serialId, true, res));
-      } catch (err) {
-        debug(`RPC Error - ${scopeId}/${api}`, err);
-        return this.send(PKT_RPC_RESPONSE(serialId, false, err.message));
-      }
-    };
-
-    parser.onCall = async (scopeId, api, args) => {
-      const scope = this.scopes[scopeId];
-      if (!scope) {
-        throw new Error(`Unknown scope ${scopeId}`);
-      }
-
-      const fn = scope[api];
-      if (!fn) {
-        const proxy = await this.proxy[scopeId];
-        if (proxy) {
-          return proxy.send(PKT_CALL(scopeId, api, args));
-        }
-        throw new Error(`Unknown api ${scopeId}/${api}`);
-      }
-
-      // Finally execute the method
-      return fn(...args);
-    };
-
-    // Clean up the queue
-    this.queue.forEach(message => ws.send(message));
-    this.queue = null;
-
-    ws.on('close', () => {
-      // Remove all subscriptions
-      this.subscriptions.forEach(channelId => Channel.unsubscribe(channelId, this));
-
-      // Close all proxies
-      Object.keys(this.proxy).forEach(id => this.clearProxy(this.proxy[id]));
-
-      // Remove all trackers
-      Object.keys(this.trackers).forEach((trackerId) => {
-        Channel.unsubscribe(trackerId, this.trackers[trackerId]);
-      });
-
-      // Trigger all the close listeners
-      this.closeListeners.forEach(c => c());
-
-      // Perform all cleanups
-      Object.keys(this.cleanUps).forEach((k) => {
-        this.cleanUps[k]();
-      });
-    });
-
-    ws.on('message', (data) => {
-      parser.parse(data);
-    });
-  }
-
-  close() {
-    setImmediate(() => this.ws.close());
-  }
-
-  dispatch(action) {
-    this.send(PKT_ACTION(action));
-  }
-
-  emit(event, data) {
-    this.send(PKT_EVENT(event, data));
-  }
-
-  send(message) {
-    if (!this.ws) {
-      this.queue.push(message);
-    } else if (this.ws.readyState === this.ws.OPEN) {
-      this.ws.send(message);
+  async onTrackerClose(group) {
+    const tracker = this.trackers[group];
+    if (tracker) {
+      tracker.close();
+      delete this.trackers[group];
     }
   }
 
-  subscribe(channelId) {
-    if (Channel.subscribe(channelId, this)) {
-      this.subscriptions.push(channelId);
-    }
-  }
-
-  unsubscribe(channelId) {
-    if (Channel.unsubscribe(channelId, this)) {
-      const idx = this.subscriptions.indexOf(channelId);
-      if (idx >= 0) {
-        this.subscriptions.splice(idx);
-      }
-    }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  channel(id) {
-    return new Channel(id);
-  }
-
-  createTracker(id, result, api) {
-    if (this.trackers[id]) {
-      throw new Error(`A tracker with id ${id} already exists. A session cannot have duplicate trackers with same id`);
-    }
-
-    const tracker = new Tracker(this, id, result, api);
-    this.trackers[id] = tracker;
-    Channel.subscribe(id, tracker);
-    return tracker;
-  }
-
-  tracker(id) {
-    return this.channel(id);
-  }
-
-  set(name, value, onClear) {
-    // If there is a previous value, clear that first
-    if (this.values[name]) {
-      this.clear(name);
-    }
-
-    this.values[name] = value;
-    if (onClear) {
-      this.cleanUps[name] = onClear;
+  send(data) {
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(data);
     }
   }
 
   get(name) {
-    if (!this.values[name]) {
-      throw new Error(`Session doesn't have a value at ${name}`);
-    }
-
-    return this.values[name];
+    return this.data[name];
   }
 
-  clear(name) {
-    if (!this.values[name]) {
-      return;
-    }
+  constructor(service, ws, inputs) {
+    this.service = service;
+    this.ws = ws;
+    this.uniqueId = 0;
+    this.data = inputs;
 
-    const onClear = this.cleanUps[name];
-    if (onClear) {
-      onClear();
-      delete this.cleanUps[name];
-    }
+    // Trackers created for the session
+    this.trackers = {};
 
-    delete this.values[name];
-  }
+    const parser = createParser();
+    console.log('Creating session', service);
 
-  addCloseListener(listener) {
-    this.closeListeners.push(listener);
-  }
+    parser.onTrackerCreate = this.onTrackerCreate.bind(this);
+    parser.onTrackerApiCall = this.onTrackerApiCall.bind(this);
 
-  removeCloseListener(listener) {
-    const idx = this.closeListeners.indexOf(listener);
-    this.closeListeners.splice(idx, 1);
+    ws.on('close', () => {
+      this.cleanUp();
+    });
+
+    ws.on('message', (msg) => {
+      parser.parse(msg);
+    });
   }
 }
 
-export default Session;
+module.exports = Session;

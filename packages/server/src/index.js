@@ -1,10 +1,9 @@
-import shocked from './server';
-import { createScope } from './scoping';
-import Channel from './Channel';
+const createServer = require('./Server');
+const Service = require('./Service');
+const Tracker = require('./Tracker');
 
-export default shocked;
-export {
-  shocked,
-  createScope,
-  Channel,
+module.exports = {
+  createServer,
+  Service,
+  Tracker,
 };

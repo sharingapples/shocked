@@ -16,86 +16,76 @@ class ParserError extends Error {
   }
 }
 
-const TYPE_RPC_REQUEST = 1;
-const TYPE_RPC_RESPONSE = 2;
-const TYPE_EVENT = 3;
-const TYPE_ACTION = 4;
-const TYPE_SCOPE_REQUEST = 5;
-const TYPE_SCOPE_RESPONSE = 6;
-const TYPE_CALL = 7;
-const TYPE_TRACKER_RPC_REQUEST = 8;
-const TYPE_TRACKER_RPC_RESPONSE = 9;
-const TYPE_TRACKER_CLOSE = 10;
-const TYPE_TRACKER_EVENT = 11;
-const TYPE_PROXY_SCOPE_REQUEST = 12;
+// const TYPE_RPC_REQUEST = 1;
+// const TYPE_RPC_RESPONSE = 2;
+// const TYPE_EVENT = 3;
+// const TYPE_ACTION = 4;
+// const TYPE_SCOPE_REQUEST = 5;
+// const TYPE_SCOPE_RESPONSE = 6;
+// const TYPE_CALL = 7;
+// const TYPE_TRACKER_RPC_REQUEST = 8;
+// const TYPE_TRACKER_RPC_RESPONSE = 9;
+// const TYPE_TRACKER_CLOSE = 10;
+// const TYPE_TRACKER_EVENT = 11;
+// const TYPE_PROXY_SCOPE_REQUEST = 12;
 
-export const RPC_SUCCESS_PROXY = -1;
-export const RPC_SUCCESS_TRACKER = -2;
+const TYPE_TRACKER_CREATE = 13;
+const TYPE_TRACKER_ACTION = 14;
+const TYPE_TRACKER_CREATE_NEW = 15;
+const TYPE_TRACKER_CREATE_UPDATE = 16;
+const TYPE_TRACKER_API = 17;
+const TYPE_TRACKER_API_RESPONSE = 18;
+const TYPE_TRACKER_EMIT = 19;
+const TYPE_TRACKER_CLOSE = 20;
+const TYPE_TRACKER_CREATE_FAIL = 21;
 
 const METHOD_MAPS = {
-  [TYPE_RPC_REQUEST]: 'onRpcRequest',
-  [TYPE_RPC_RESPONSE]: 'onRpcResponse',
-  [TYPE_EVENT]: 'onEvent',
-  [TYPE_ACTION]: 'onAction',
-  [TYPE_SCOPE_REQUEST]: 'onScopeRequest',
-  [TYPE_SCOPE_RESPONSE]: 'onScopeResponse',
-  [TYPE_CALL]: 'onCall',
-  [TYPE_TRACKER_RPC_REQUEST]: 'onTrackerRpcRequest',
-  [TYPE_TRACKER_RPC_RESPONSE]: 'onTrackerRpcResponse',
-  [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
-  [TYPE_TRACKER_EVENT]: 'onTrackerEvent',
-  [TYPE_PROXY_SCOPE_REQUEST]: 'onProxyScopeRequest',
+  [TYPE_TRACKER_CREATE]: 'onTrackerCreate',
+  [TYPE_TRACKER_ACTION]: 'onTrackerAction',
+  [TYPE_TRACKER_CREATE_NEW]: 'onTrackerCreateNew',
+  [TYPE_TRACKER_CREATE_UPDATE]: 'onTrackerCreateUpdate',
+  [TYPE_TRACKER_API]: 'onTrackerApi',
+  [TYPE_TRACKER_API_RESPONSE]: 'onTrackerApiResponse',
+  [TYPE_TRACKER_EMIT]: 'onTrackerEmit',
 };
 
-export function PKT_TRACKER_RPC_REQUEST(serial, trackerId, api, args) {
-  return JSON.stringify([TYPE_TRACKER_RPC_REQUEST, serial, trackerId, api, args]);
-}
+exports.PKT_TRACKER_CREATE = (group, id, params, serial) => (
+  JSON.stringify([TYPE_TRACKER_CREATE, group, id, params, serial])
+);
 
-export function PKT_TRACKER_RPC_RESPONSE(serial, success, result) {
-  return JSON.stringify([TYPE_TRACKER_RPC_RESPONSE, serial, success, result]);
-}
+exports.PKT_TRACKER_ACTION = (group, action) => (
+  JSON.stringify([TYPE_TRACKER_ACTION, group, action])
+);
 
-export function PKT_TRACKER_CLOSE(id) {
-  return JSON.stringify([TYPE_TRACKER_CLOSE, id]);
-}
+exports.PKT_TRACKER_CREATE_FAIL = (group, err) => (
+  JSON.stringify([TYPE_TRACKER_CREATE_FAIL, group, err])
+);
 
-export function PKT_TRACKER_EVENT(id, name, data) {
-  return JSON.stringify([TYPE_TRACKER_EVENT, id, name, data]);
-}
+exports.PKT_TRACKER_CREATE_NEW = (group, serial, data, apis) => (
+  JSON.stringify([TYPE_TRACKER_CREATE_NEW, group, serial, data, apis])
+);
 
-export function PKT_RPC_REQUEST(serial, scope, api, args) {
-  return JSON.stringify([TYPE_RPC_REQUEST, serial, scope, api, args]);
-}
+exports.PKT_TRACKER_CREATE_UPDATE = (group, serial, actions) => (
+  JSON.stringify([TYPE_TRACKER_CREATE_UPDATE, group, serial, actions])
+);
 
-export function PKT_RPC_RESPONSE(serial, success, result) {
-  return JSON.stringify([TYPE_RPC_RESPONSE, serial, success, result]);
-}
+exports.PKT_TRACKER_API = (group, apiId, name, args) => (
+  JSON.stringify([TYPE_TRACKER_API, group, apiId, name, args])
+);
 
-export function PKT_EVENT(name, data) {
-  return JSON.stringify([TYPE_EVENT, name, data]);
-}
+exports.PKT_TRACKER_API_RESPONSE = (group, apiId, result, response, params) => (
+  JSON.stringify([TYPE_TRACKER_API_RESPONSE, group, apiId, result, response, params])
+);
 
-export function PKT_ACTION(action) {
-  return JSON.stringify([TYPE_ACTION, action]);
-}
+exports.PKT_TRACKER_EMIT = (group, event, data) => (
+  JSON.stringify([TYPE_TRACKER_EMIT, group, event, data])
+);
 
-export function PKT_PROXY_SCOPE_REQUEST(rpcId, scopeId) {
-  return JSON.stringify([TYPE_PROXY_SCOPE_REQUEST, rpcId, scopeId]);
-}
+exports.PKT_TRACKER_CLOSE = group => (
+  JSON.stringify([TYPE_TRACKER_CLOSE, group])
+);
 
-export function PKT_SCOPE_REQUEST(tracker, name, manifest) {
-  return JSON.stringify([TYPE_SCOPE_REQUEST, tracker, name, manifest]);
-}
-
-export function PKT_SCOPE_RESPONSE(tracker, success, result) {
-  return JSON.stringify([TYPE_SCOPE_RESPONSE, tracker, success, result]);
-}
-
-export function PKT_CALL(scope, api, args) {
-  return JSON.stringify([TYPE_CALL, scope, api, args]);
-}
-
-export function createParser() {
+exports.createParser = () => {
   const parser = {
     parse: (message) => {
       try {
@@ -131,4 +121,4 @@ export function createParser() {
   };
 
   return parser;
-}
+};

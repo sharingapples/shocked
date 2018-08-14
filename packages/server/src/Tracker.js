@@ -1,36 +1,79 @@
-import { PKT_TRACKER_EVENT, createParser } from 'shocked-common';
-import Channel from './Channel';
-
 class Tracker {
-  constructor(session, id, result, api) {
+  constructor(session, channel, params) {
     this.session = session;
-    this.id = id;
-    this.result = result;
+    this.channel = channel;
+    this.paramUpdates = params;
+    this.apis = {};
 
-    this.parser = createParser();
-    this.channel = new Channel(id);
-    this.parser.onEvent = (event, data) => {
-      this.session.send(PKT_TRACKER_EVENT(id, event, data));
-    };
+    this.channel.subscribe(session);
 
-    this.api = typeof api === 'function' ? api(this) : api;
+    if (this.onCreate) {
+      console.log('Creating tracker', this.constructor.name);
+      this.onCreate();
+    }
   }
 
-  send(message) {
-    this.parser.parse(message);
+  get serial() {
+    return this.channel.getSerial();
   }
 
-  emit(event, data) {
-    this.channel.emit(event, data);
+  getApis() {
+    return Object.keys(this.apis);
   }
 
-  toJSON() {
-    return {
-      id: this.id,
-      result: this.result,
-      api: Object.keys(this.api),
-    };
+  registerApi(name, fn) {
+    if (this.apis[name]) {
+      throw new Error(`Api ${name} is already registered with ${this.constructor.name}`);
+    }
+
+    if (typeof fn !== 'function') {
+      throw new Error(`Api ${this.constructor.name}::${name} is not a function`);
+    }
+
+    console.log(this.constructor.name, 'Registering api', name);
+    this.apis[name] = fn;
+  }
+
+  registerApis(...args) {
+    args.forEach((fn) => {
+      this.registerApi(fn.name, fn);
+    });
+  }
+
+  async executeApi(name, ...args) {
+    const api = this.apis[name];
+    if (!api) {
+      throw new Error(`Unknown api ${this.constructor.name}::${name}`);
+    }
+    return api(...args);
+  }
+
+  updateParams(params) {
+    Object.assign(this.paramUpdates, params);
+  }
+
+  // Get the actions available from the channel that could
+  // update the tracker with the global state of the channel
+  async getActions(serialNumber) {
+    return this.channel.getActions(serialNumber);
+  }
+
+  // eslint-disable-next-line class-methods-use-this, no-unused-vars
+  async getData(params) {
+    throw new Error('Tracker must implement getData() method');
+  }
+
+  close() {
+    const n = this.channel.unsubscribe(this.session);
+    if (n === 0) {
+      // Cleanup the channel
+      this.session.service.server.clearChannel(this.channel.id);
+    }
+  }
+
+  dispatch(action) {
+    this.channel.dispatch(action);
   }
 }
 
-export default Tracker;
+module.exports = Tracker;

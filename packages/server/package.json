@@ -1,8 +1,8 @@
 {
   "name": "shocked",
-  "version": "0.3.14",
+  "version": "1.0.0",
   "description": "Websocket server",
-  "main": "cjs/index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "../../node_modules/.bin/jest",
     "lint": "../../node_modules/.bin/eslint src",
@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "debug": "^3.1.0",
-    "shocked-common": "^0.3.12",
+    "shocked-common": "^1.0.0",
     "url-pattern": "^1.0.3",
     "uuid": "^3.2.1",
     "ws": "^4.0.0"

@@ -1,8 +1,8 @@
 {
   "name": "shocked-common",
-  "version": "0.3.12",
+  "version": "1.0.0",
   "description": "A common package for client and server packages",
-  "main": "cjs/index.js",
+  "main": "src/index.js",
   "scripts": {
     "lint": "../../node_modules/.bin/eslint src",
     "clean": "../../node_modules/.bin/rimraf cjs",
