@@ -5,6 +5,7 @@ import { createClient } from 'shocked-client';
 type Props = {
   host: string,
   path: string,
+  onInit: () => {},
   onConnect: () => {},
   onDisconnect: () => {},
 };
@@ -22,11 +23,20 @@ class Shocked extends Component<Props> {
 
     this.client.on('connect', onConnect);
     this.client.on('disconnect', onDisconnect);
+
+    if (props) {
+      props.onInit(this.client);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setPath(nextProps.path);
-    const { onConnect, onDisconnect } = this.props;
+    const { path, onConnect, onDisconnect } = this.props;
+
+    // Set the path only when it changes
+    if (path !== nextProps.path) {
+      this.setPath(nextProps.path);
+    }
+
     if (nextProps.onConnect !== onConnect) {
       this.client.off('connect', onConnect);
       this.client.on('connect', nextProps.onConnect);
