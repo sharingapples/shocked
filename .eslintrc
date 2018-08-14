@@ -1,6 +1,6 @@
 {
   "parser": "babel-eslint",
-  "extends": "airbnb-base",
+  "extends": "airbnb",
   "rules": {
     "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
     "comma-dangle": ["error", {
@@ -9,6 +9,11 @@
       "imports": "always-multiline",
       "exports": "always-multiline",
       "functions": "never"
-    }]
+    }],
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+    "react/jsx-one-expression-per-line": "off"
+  },
+  "settings": {
+    "import/core-modules": ["react"]
   }
 }
