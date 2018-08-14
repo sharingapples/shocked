@@ -2,11 +2,13 @@
  * A default channel that works on a single system.
  * For production use consider something like shocked-channel-redis
  */
-function configureDefaultChannel({ queueSize = 100 } = {}) {
-  return class DefaultChannel {
-    constructor(id) {
+function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
+  const instances = {};
+
+  class Instance {
+    constructor(channel) {
+      this.channel = channel;
       this.listeners = [];
-      this.id = id;
       this.serialNumber = 0;
       this.actions = [];
     }
@@ -32,6 +34,14 @@ function configureDefaultChannel({ queueSize = 100 } = {}) {
     }
 
     async subscribe(listener) {
+      // First subscription, automatically register it
+      if (this.listeners.length === 0) {
+        if (instances[this.channel.id]) {
+          throw new Error(`Channel instance with the same id is already registered ${this.id}`);
+        }
+        instances[this.channel.id] = this;
+      }
+
       this.listeners.push(listener);
       return this.serialNumber;
     }
@@ -41,7 +51,9 @@ function configureDefaultChannel({ queueSize = 100 } = {}) {
       if (idx >= 0) {
         this.listeners.splice(idx, 1);
       }
-      return this.listeners.length;
+      if (this.listeners.length === 0) {
+        delete this.listeners[this.channel.id];
+      }
     }
 
     async dispatch(action) {
@@ -58,12 +70,40 @@ function configureDefaultChannel({ queueSize = 100 } = {}) {
       });
 
       this.listeners.forEach(listener => listener(serializedAction));
-    }
 
-    // async emit(event, data) {
-    //   this.sessions.forEach(session => session.emit(event, data));
-    // }
+      // Dispatch to all parent channels recursively
+      if (this.channel.parent) {
+        const parentInstance = instances[this.channel.parent.id];
+        if (parentInstance) {
+          parentInstance.dispatch(action);
+        }
+      }
+    }
+  }
+
+  return {
+    getInstance(channel) {
+      const instance = instances[channel.id];
+      if (instance) {
+        return instance;
+      }
+
+      return new Instance(channel);
+    },
+
+    findInstance(channel) {
+      let ch = channel;
+      do {
+        const instance = instances[ch.id];
+        if (instance) {
+          return instance;
+        }
+
+        ch = ch.parent;
+      } while (ch !== null);
+      return null;
+    },
   };
 }
 
-module.exports = configureDefaultChannel;
+module.exports = configureDefaultChannelDriver;

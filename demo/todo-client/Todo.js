@@ -24,4 +24,4 @@ const Todo = () => (
   </div>
 );
 
-export default track('User', ({ user }) => `todo-${user}`, reducer)(Todo);
+export default track('User', reducer)(Todo);

@@ -14,11 +14,10 @@ const defaultOptions = {
 };
 
 class TrackerClient extends EventEmitter {
-  constructor(store, group, channel, params, destroyer, options = defaultOptions) {
+  constructor(store, group, params, destroyer, options = defaultOptions) {
     super();
     this.store = store;
     this.group = group;
-    this.channel = channel;
     this.params = params;
     this.destroy = destroyer;
     this.apis = null;
@@ -31,7 +30,7 @@ class TrackerClient extends EventEmitter {
 
   onConnect(client) {
     this.client = client;
-    client.send(PKT_TRACKER_CREATE(this.group, this.channel, this.params, this.serial));
+    client.send(PKT_TRACKER_CREATE(this.group, this.params, this.serial));
   }
 
   onDisconnect() {

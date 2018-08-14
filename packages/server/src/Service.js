@@ -1,7 +1,9 @@
 const UrlPattern = require('url-pattern');
 const Session = require('./Session');
 const Tracker = require('./Tracker');
+const Channel = require('./Channel');
 
+const configureDefaultChannelDriver = require('./DefaultChannelDriver');
 
 function validateTracker(ServiceTracker) {
   if (ServiceTracker === null) {
@@ -30,6 +32,13 @@ class Service {
     this.urlMatcher = url ? new UrlPattern(url) : null;
     this.host = host;
     this.trackers = {};
+    this.channelDriver = null;
+  }
+
+  setChannelDriver(channelDriver) {
+    if (!this.channelDriver) {
+      this.channelDriver = channelDriver || configureDefaultChannelDriver();
+    }
   }
 
   registerTracker(ServiceTracker, name = null) {
@@ -62,7 +71,11 @@ class Service {
     };
   }
 
-  createTracker(trackerName, channelId, session, params) {
+  findChannelInstance(channel) {
+    return this.channelDriver.findInstance(channel);
+  }
+
+  async createTracker(trackerName, session, params) {
     const info = this.trackers[trackerName];
 
     if (!info) {
@@ -70,8 +83,16 @@ class Service {
     }
 
     const { TrackerClass } = info;
-    const channel = this.server.getChannel(channelId);
-    return new TrackerClass(session, channel, params, trackerName);
+    const tracker = new TrackerClass(session, params, trackerName);
+    const channel = await tracker.onCreate();
+    if (!(channel instanceof Channel)) {
+      throw new Error(`${trackerName}Tracker must return a channel on create.`);
+    }
+
+    // Setup channel and channelInstance
+    const channelInstance = this.channelDriver.getInstance(channel);
+    tracker.start(channel, channelInstance);
+    return tracker;
   }
 
   validateTrackerApi(trackerName, api) {

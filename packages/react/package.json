@@ -3,8 +3,10 @@
   "version": "1.0.5",
   "description": "React client side bindings for shocked api",
   "main": "cjs/index.js",
+  "module": "src/index.js",
   "files": [
-    "cjs"
+    "cjs",
+    "src"
   ],
   "scripts": {
     "lint": "eslint src",

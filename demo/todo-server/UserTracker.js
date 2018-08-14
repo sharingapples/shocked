@@ -1,4 +1,4 @@
-const { Tracker } = require('shocked');
+const { Tracker, Channel } = require('shocked');
 
 const todos = {};
 
@@ -21,6 +21,11 @@ const createTodo = (userId, title) => {
 };
 
 class UserTracker extends Tracker {
+  getChannelId() {
+    const org = this.session.get('org');
+    return `org-${org.id}`;
+  }
+
   getData() {
     const user = this.session.get('user');
     const res = getTodos(user);
@@ -30,6 +35,8 @@ class UserTracker extends Tracker {
   onCreate() {
     const user = this.session.get('user');
     this.userId = user;
+
+    return new Channel('todo');
   }
 
   add(title) {

@@ -3,8 +3,10 @@
   "version": "1.0.5",
   "description": "Socket Client",
   "main": "cjs/index.js",
+  "module": "src/index.js",
   "files": [
-    "cjs"
+    "cjs",
+    "src"
   ],
   "scripts": {
     "test": "../../node_modules/.bin/jest",

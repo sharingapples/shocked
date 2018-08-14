@@ -1,11 +1,14 @@
 const createServer = require('./Server');
 const Service = require('./Service');
 const Tracker = require('./Tracker');
-const configureDefaultChannel = require('./DefaultChannel');
+const Channel = require('./Channel');
+
+const configureDefaultChannelDriver = require('./DefaultChannelDriver');
 
 module.exports = {
   createServer,
   Service,
   Tracker,
-  configureDefaultChannel,
+  Channel,
+  configureDefaultChannelDriver,
 };

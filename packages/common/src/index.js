@@ -50,8 +50,8 @@ const METHOD_MAPS = {
   [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
 };
 
-exports.PKT_TRACKER_CREATE = (group, id, params, serial) => (
-  JSON.stringify([TYPE_TRACKER_CREATE, group, id, params, serial])
+exports.PKT_TRACKER_CREATE = (group, params, serial) => (
+  JSON.stringify([TYPE_TRACKER_CREATE, group, params, serial])
 );
 
 exports.PKT_TRACKER_ACTION = (group, action) => (

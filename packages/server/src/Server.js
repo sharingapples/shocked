@@ -3,7 +3,6 @@ const WebSocket = require('ws');
 const debug = require('debug')('shocked');
 
 const pkg = require('../package.json');
-const configureDefaultChannel = require('./DefaultChannel');
 
 function beat() {
   this.isAlive = true;
@@ -18,11 +17,10 @@ const wss = new WebSocket.Server({ noServer: true });
 
 function createServer({
   pulseRate = 0,
-  Channel = configureDefaultChannel(),
+  channelDriver,
   httpHandler = defaultHttpHandler,
 } = {}) {
   const services = [];
-  const channels = {};
   const httpServer = http.createServer(httpHandler);
 
   function keepAlive() {
@@ -43,6 +41,7 @@ function createServer({
   const server = {
     serve: (service) => {
       services.push(service);
+      service.setChannelDriver(channelDriver);
       return service;
     },
 
@@ -64,30 +63,6 @@ function createServer({
 
       // Close the main server
       httpServer.close();
-    },
-
-    getChannel: (id) => {
-      if (id in channels) {
-        return channels[id];
-      }
-
-      const channel = new Channel(id);
-      if (channel.onCreate) {
-        channel.onCreate();
-      }
-      channels[id] = channel;
-      return channel;
-    },
-
-    clearChannel: (id) => {
-      if (id in channels) {
-        // Invoke the destroy event
-        const channel = channels[id];
-        if (channel.onDestroy) {
-          channel.onDestroy();
-        }
-        delete channels[id];
-      }
     },
   };
 
@@ -128,7 +103,9 @@ function createServer({
       // There is nothing we could do when an error occurs, since the
       // socket is always closed after the error.
       ws.on('error', (err) => {
-        debug('Session socket error', err);
+        if (err.code !== 'ECONNRESET') {
+          debug('Session socket error', err);
+        }
       });
 
       service.start(req, ws, server);

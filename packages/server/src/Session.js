@@ -9,16 +9,16 @@ const WebSocket = require('ws');
 const debug = require('debug')('shocked');
 
 class Session {
-  async onTrackerCreate(group, channelId, params, serial) {
+  async onTrackerCreate(group, params, serial) {
     // Do not allow creating multiple trackers on the same group
     // for the same session. Could not think of a use case
     if (this.trackers[group]) {
       return this.send(PKT_TRACKER_CREATE_FAIL(group, 'Another tracker is still open. Multiple trackers on the same group are not allowed for the same session'));
     }
 
-    const tracker = await this.service.createTracker(group, channelId, this, params);
+    const tracker = await this.service.createTracker(group, this, params);
     if (!tracker) {
-      return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group}/${channelId} not recoginized`));
+      return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group} not recoginized`));
     }
 
     // Keep this tracker

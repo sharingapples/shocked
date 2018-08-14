@@ -1,18 +1,19 @@
 const { PKT_TRACKER_ACTION } = require('shocked-common');
 
 class Tracker {
-  constructor(session, channel, params, id) {
+  constructor(session, params, id) {
     this.session = session;
-    this.channel = channel;
     this.paramUpdates = params;
     this.id = id;
 
     this.onAction = this.onAction.bind(this);
-    this.channel.subscribe(this.onAction);
+  }
 
-    if (this.onCreate) {
-      this.onCreate();
-    }
+  start(channel, channelInstance) {
+    this.channel = channel;
+    this.channelInstance = channelInstance;
+
+    channelInstance.subscribe(this.onAction);
   }
 
   onAction(action) {
@@ -25,7 +26,7 @@ class Tracker {
   }
 
   get serial() {
-    return this.channel.getSerial();
+    return this.channelInstance.getSerial();
   }
 
   updateParams(params) {
@@ -41,7 +42,7 @@ class Tracker {
   // Get the actions available from the channel that could
   // update the tracker with the global state of the channel
   async getActions(serialNumber) {
-    return this.channel.getActions(serialNumber);
+    return this.channelInstance.getActions(serialNumber);
   }
 
   // eslint-disable-next-line class-methods-use-this, no-unused-vars
@@ -50,15 +51,18 @@ class Tracker {
   }
 
   close() {
-    const n = this.channel.unsubscribe(this.onAction);
-    if (n === 0) {
-      // Cleanup the channel
-      this.session.service.server.clearChannel(this.channel.id);
-    }
+    this.channelInstance.unsubscribe(this.onAction);
   }
 
-  dispatch(action) {
-    this.channel.dispatch(action);
+  dispatch(action, channel) {
+    if (channel && channel !== this.channel) {
+      const instance = this.session.service.findChannelInstance(channel);
+      if (instance) {
+        instance.dispatch(action);
+      }
+    } else {
+      this.channelInstance.dispatch(action);
+    }
   }
 }
 

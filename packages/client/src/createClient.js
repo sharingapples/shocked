@@ -183,13 +183,13 @@ function createClient(host, WebSocket = global.WebSocket) {
       socket.send(data);
     },
 
-    createTracker: (trackerId, channel, store, params = {}) => {
+    createTracker: (trackerId, store, params = {}) => {
       // make sure this trackerId is unique for this client
       if (trackers.find(tracker => tracker.trackerId === trackerId)) {
         throw new Error(`A tracker for ${trackerId} already exists on the client. There can only be one tracker for one trackerId.`);
       }
 
-      const tracker = new TrackerClient(store, trackerId, channel, params, () => {
+      const tracker = new TrackerClient(store, trackerId, params, () => {
         const idx = trackers.indexOf(tracker);
         if (idx >= 0) {
           trackers.splice(idx, 1);
