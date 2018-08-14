@@ -4,9 +4,9 @@
   "description": "React client side bindings for shocked api",
   "main": "src/index.js",
   "dependencies": {
-    "shocked-client": "^1.0.0",
+    "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "react-redux": "^5.0.7"
+    "shocked-client": "^1.0.0"
   },
   "peerDependencies": {
     "react": "^16.4.1"
