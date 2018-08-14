@@ -1,5 +1,5 @@
 # shocked
-WebSocket based library for real time application
+WebSocket and Redux based library for real time application
 development.
 
 ## Concepts
@@ -55,6 +55,11 @@ class SpecialTracker extends Tracker {
     return initialData;
   }
 
+  onCreate() {
+    // Return the channel that this tracker attaches to
+    return new Channel('special');
+  }
+
   // Define your apis as needed for your special tracker
   add(record) {
     // Data is also available on session, you can throw
@@ -102,8 +107,9 @@ const SpecialScreen = () = (
 );
 
 const reducer = your-special-reducer;
-export default track('Special', () => 'special', reducer)(SpecialScreen);
+export default track('Special', reducer)(SpecialScreen);
 ```
+
 ### Connecting component with data
 ```javascript
 import { connect } from 'shocked-react';
@@ -116,6 +122,7 @@ const SpecialList = ({ listItems }) => (
 const mapStateToProps = (items) => ({ listItems: items });
 export default connect('Special')(mapStateToProps)(SpecialList);
 ```
+
 ### Execute apis
 ```javascript
 import { connect, createApi } from 'shocked-react';
@@ -133,5 +140,3 @@ const mapApiToProps = ({ createApi }) => ({
 export default connect('Special')(null, mapApiToProps)(SpecialForm);
 
 ```
-
-
