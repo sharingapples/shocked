@@ -1,6 +1,6 @@
 {
   "name": "shocked-react",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "React client side bindings for shocked api",
   "main": "cjs/index.js",
   "module": "src/index.js",
@@ -17,7 +17,7 @@
   "dependencies": {
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "shocked-client": "^1.0.5"
+    "shocked-client": "^1.0.6"
   },
   "peerDependencies": {
     "react": "^16.4.1"
