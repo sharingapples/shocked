@@ -1,10 +1,10 @@
 {
-  "name": "redsock",
+  "name": "shocked",
   "private": true,
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Bhoos WebSocket library",
   "workspaces": [
-    "packages/*"
+    "packages/*", "demo/*"
   ],
   "main": "index.js",
   "scripts": {
@@ -29,8 +29,10 @@
     "babel-preset-import-export": "^1.0.2",
     "babel-preset-react-native": "^4.0.0",
     "eslint": "^4.16.0",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.8.0",
+    "eslint-config-airbnb": "^17.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.9.1",
     "jest": "^22.1.4",
     "lerna": "^2.9.1",
     "rimraf": "^2.6.2"
