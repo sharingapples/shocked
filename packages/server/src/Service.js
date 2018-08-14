@@ -1,5 +1,28 @@
 const UrlPattern = require('url-pattern');
 const Session = require('./Session');
+const Tracker = require('./Tracker');
+
+
+function validateTracker(ServiceTracker) {
+  if (ServiceTracker === null) {
+    throw new Error('Not a valid Tracker class. All tracker classes must extend from `Tracker`');
+  }
+
+  if (ServiceTracker === Tracker) {
+    return true;
+  }
+
+  return validateTracker(Object.getPrototypeOf(ServiceTracker));
+}
+
+function extractName(TrackerClass) {
+  const className = TrackerClass.prototype.constructor.name;
+  if (className.endsWith('Tracker')) {
+    return className.substr(0, className.length - 7);
+  }
+
+  return className;
+}
 
 class Service {
   constructor(server, { url, host } = {}) {
@@ -9,26 +32,60 @@ class Service {
     this.trackers = {};
   }
 
-  registerTracker(name, Tracker) {
-    if (!name || !Tracker) {
-      throw new Error(`Invalid tracker registration ${name} -> ${Tracker}`);
+  registerTracker(ServiceTracker, name = null) {
+    validateTracker(ServiceTracker);
+
+    const trackerName = name || extractName(ServiceTracker);
+
+    if (!trackerName || !ServiceTracker) {
+      throw new Error(`Invalid tracker registration ${trackerName} -> ${ServiceTracker}`);
     }
 
-    if (this.trackers[name]) {
-      throw new Error(`Tracker ${name} is already registered`);
+    if (this.trackers[trackerName]) {
+      throw new Error(`Tracker ${trackerName} is already registered`);
     }
 
-    this.trackers[name] = Tracker;
+    const allMethods = Object.getOwnPropertyNames(ServiceTracker.prototype);
+    const nonApis = Object.getOwnPropertyNames(Tracker.prototype);
+    const apis = allMethods.filter(api => !nonApis.includes(api));
+
+    if (apis.length === 0) {
+      throw new Error(`No apis available with the tracker ${ServiceTracker.class.name}`);
+    }
+
+    this.trackers[trackerName] = {
+      TrackerClass: ServiceTracker,
+      apis: apis.reduce((res, n) => {
+        res[n] = ServiceTracker.prototype[n];
+        return res;
+      }, {}),
+    };
   }
 
-  createTracker(name, channelId, session, params) {
-    const Tracker = this.trackers[name];
-    if (!Tracker) {
-      throw new Error(`No tracker found for ${name}`);
+  createTracker(trackerName, channelId, session, params) {
+    const info = this.trackers[trackerName];
+
+    if (!info) {
+      throw new Error(`No tracker found for ${trackerName}`);
     }
 
+    const { TrackerClass } = info;
     const channel = this.server.getChannel(channelId);
-    return new Tracker(session, channel, params);
+    return new TrackerClass(session, channel, params, trackerName);
+  }
+
+  validateTrackerApi(trackerName, api) {
+    const { apis } = this.trackers[trackerName];
+    if (!apis[api]) {
+      throw new Error(`Api ${trackerName}.${api} is not found`);
+    }
+
+    return apis[api];
+  }
+
+  getTrackerApis(trackerName) {
+    const { apis } = this.trackers[trackerName];
+    return Object.keys(apis);
   }
 
   match(request) {

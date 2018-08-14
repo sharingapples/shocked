@@ -47,6 +47,7 @@ const METHOD_MAPS = {
   [TYPE_TRACKER_API]: 'onTrackerApi',
   [TYPE_TRACKER_API_RESPONSE]: 'onTrackerApiResponse',
   [TYPE_TRACKER_EMIT]: 'onTrackerEmit',
+  [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
 };
 
 exports.PKT_TRACKER_CREATE = (group, id, params, serial) => (

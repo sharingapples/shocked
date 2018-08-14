@@ -8,7 +8,13 @@ function createClient(host, WebSocket = global.WebSocket) {
     throw new Error(`Invalid host ${host}. Host should start with ws:// or wss://`);
   }
 
+  // Using an array, since the number of trackers is not expected
+  // to be very high, typically 2 trackers at a time
   const trackers = [];
+  function findTracker(trackerId) {
+    return trackers.find(tracker => tracker.group === trackerId);
+  }
+
   const parser = createParser();
 
   const eventManager = new EventEmitter();
@@ -49,36 +55,39 @@ function createClient(host, WebSocket = global.WebSocket) {
     return sock;
   }
 
-  parser.onTrackerResponseNew = (trackerId, serial, data, apis) => {
-    const tracker = trackers[trackerId];
+  parser.onTrackerCreateNew = (trackerId, serial, data, apis) => {
+    console.log('New tracker created for', trackerId, data);
+    const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.onCreate(serial, data, apis);
+    } else {
+      console.log('No tracker found for ', trackerId);
     }
   };
 
-  parser.onTrackerResponseUpdate = (trackerId, serial, actions) => {
-    const tracker = trackers[trackerId];
+  parser.onTrackerCreateUpdate = (trackerId, serial, actions) => {
+    const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.onUpdate(serial, actions);
     }
   };
 
   parser.onTrackerAction = (trackerId, action) => {
-    const tracker = trackers[trackerId];
+    const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.onAction(action);
     }
   };
 
   parser.onTrackerApiResponse = (trackerId, apiId, status, response, params) => {
-    const tracker = trackers[trackerId];
+    const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.onApiResponse(apiId, status, response, params);
     }
   };
 
   parser.onTrackerEvent = (trackerId, event, data) => {
-    const tracker = trackers[trackerId];
+    const tracker = findTracker(trackerId);
     if (tracker) {
       tracker.emit(event, data);
     }

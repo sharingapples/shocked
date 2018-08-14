@@ -1,4 +1,8 @@
 import createClient from './createClient';
+import enhanceReducer from './enhanceReducer';
 
 export default createClient;
-export { createClient };
+export {
+  enhanceReducer,
+  createClient,
+};

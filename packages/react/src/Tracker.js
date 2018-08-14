@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { createStore } from 'redux';
 import { createProvider } from 'react-redux';
+import { enhanceReducer } from 'shocked-client';
 import { Consumer } from './Shocked';
 
 function track(trackerId, channel, reducer) {
@@ -45,12 +46,15 @@ function track(trackerId, channel, reducer) {
 
       if (!this.tracker) {
         // Create store supporting redux devtool extension
-        this.store = createStore(
-          reducer,
+        const store = createStore(
+          enhanceReducer(reducer),
           // eslint-disable-next-line no-underscore-dangle, no-undef
           window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
         );
-        this.tracker = client.createTracker(trackerId, channelId, this.store);
+        this.tracker = client.createTracker(trackerId, channelId, store);
+        store.dispatch.createApi = name => this.tracker.createApi(name);
+
+        this.store = store;
       }
 
       return (

@@ -6,6 +6,7 @@ const {
   PKT_TRACKER_API_RESPONSE,
 } = require('shocked-common');
 const WebSocket = require('ws');
+const debug = require('debug')('shocked');
 
 class Session {
   async onTrackerCreate(group, channelId, params, serial) {
@@ -16,7 +17,6 @@ class Session {
     }
 
     const tracker = await this.service.createTracker(group, channelId, this, params);
-    console.log('Tracker created');
     if (!tracker) {
       return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group}/${channelId} not recoginized`));
     }
@@ -36,31 +36,32 @@ class Session {
 
     // Looks like the tracker needs to be fully initialized
     const data = await tracker.getData(params);
-    const pkt = PKT_TRACKER_CREATE_NEW(group, await tracker.serial, data, tracker.getApis());
+    const apis = this.service.getTrackerApis(group);
+    const pkt = PKT_TRACKER_CREATE_NEW(group, await tracker.serial, data, apis);
     return this.send(pkt);
   }
 
-  async onTrackerApiCall(sn, group, id, api, args) {
-    const tracker = this.trackers[group];
-    if (!tracker) {
-      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, 'Tracker is not available, may be already closed.'));
-    }
-
-    if (tracker.id !== id) {
-      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, 'Tracker mismatch. Please stop this now.'));
-    }
-
+  async onTrackerApi(group, sn, api, args) {
     try {
-      const res = await tracker.executeApi(api, ...args);
-      return this.send(PKT_TRACKER_API_RESPONSE(sn, true, res));
+      const tracker = this.trackers[group];
+      if (!tracker) {
+        throw new Error(`Tracker not available for ${group}, may be already closed.`);
+      }
+
+      this.service.validateTrackerApi(group, api);
+      // const fn = tracker[api];
+      const res = await tracker[api](...args);
+      return this.send(PKT_TRACKER_API_RESPONSE(group, sn, true, res, tracker.clearParamUpdates()));
     } catch (err) {
-      return this.send(PKT_TRACKER_API_RESPONSE(sn, false, err.message));
+      debug(err);
+      return this.send(PKT_TRACKER_API_RESPONSE(group, sn, false, err.message));
     }
   }
 
   async onTrackerClose(group) {
     const tracker = this.trackers[group];
     if (tracker) {
+      debug(`Closing tracker ${group}`);
       tracker.close();
       delete this.trackers[group];
     }
@@ -86,10 +87,10 @@ class Session {
     this.trackers = {};
 
     const parser = createParser();
-    console.log('Creating session', service);
 
     parser.onTrackerCreate = this.onTrackerCreate.bind(this);
-    parser.onTrackerApiCall = this.onTrackerApiCall.bind(this);
+    parser.onTrackerApi = this.onTrackerApi.bind(this);
+    parser.onTrackerClose = this.onTrackerClose.bind(this);
 
     ws.on('close', () => {
       this.cleanUp();
@@ -98,6 +99,14 @@ class Session {
     ws.on('message', (msg) => {
       parser.parse(msg);
     });
+  }
+
+  cleanUp() {
+    Object.keys(this.trackers).forEach((trackerName) => {
+      this.trackers[trackerName].close();
+    });
+
+    this.trackers = null;
   }
 }
 

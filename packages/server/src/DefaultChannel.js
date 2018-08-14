@@ -5,7 +5,7 @@
 
 class DefaultChannel {
   constructor(id) {
-    this.sessions = [];
+    this.listeners = [];
     this.id = id;
     this.serialNumber = 0;
     this.actions = [];
@@ -15,17 +15,17 @@ class DefaultChannel {
     return this.serialNumber;
   }
 
-  async subscribe(session) {
-    this.sessions.push(session);
+  async subscribe(listener) {
+    this.listeners.push(listener);
     return this.serialNumber;
   }
 
-  async unsubscribe(session) {
-    const idx = this.sessions.indexOf(session);
+  async unsubscribe(listener) {
+    const idx = this.listeners.indexOf(listener);
     if (idx >= 0) {
-      this.sessions.splice(idx, 1);
+      this.listeners.splice(idx, 1);
     }
-    return this.sessions.length;
+    return this.listeners.length;
   }
 
   async dispatch(action) {
@@ -33,12 +33,13 @@ class DefaultChannel {
     const serializedAction = Object.assign({}, action, {
       $serial$: this.serialNumber,
     });
-    this.sessions.forEach(session => session.dispatch(serializedAction));
+
+    this.listeners.forEach(listener => listener(serializedAction));
   }
 
-  async emit(event, data) {
-    this.sessions.forEach(session => session.emit(event, data));
-  }
+  // async emit(event, data) {
+  //   this.sessions.forEach(session => session.emit(event, data));
+  // }
 }
 
 module.exports = DefaultChannel;

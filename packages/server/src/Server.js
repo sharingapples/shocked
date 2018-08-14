@@ -1,5 +1,6 @@
 const http = require('http');
 const WebSocket = require('ws');
+const debug = require('debug')('shocked');
 
 const pkg = require('../package.json');
 const DefaultChannel = require('./DefaultChannel');
@@ -110,22 +111,26 @@ function createServer({
 
     // Try to validate the req
     try {
-      console.log('Validate request', req);
-      await service.validate(req);
+      req = await service.validate(req) || req;
     } catch (err) {
-      console.error(err);
       return wss.handleUpgrade(request, socket, head, (ws) => {
         ws.close(4001, err.message);
       });
     }
 
-    console.log('upgrade ws to session');
     // Everything's ok, start the session
     return wss.handleUpgrade(request, socket, head, (ws) => {
       // Attach the ping-pong handler
       if (pulseRate > 0) {
         ws.on('pong', beat);
       }
+
+      // Add error handler to avoid crashing on errors
+      // There is nothing we could do when an error occurs, since the
+      // socket is always closed after the error.
+      ws.on('error', (err) => {
+        debug('Session socket error', err);
+      });
 
       service.start(req, ws, server);
     });

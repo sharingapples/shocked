@@ -1,55 +1,41 @@
+const { PKT_TRACKER_ACTION } = require('shocked-common');
+
 class Tracker {
-  constructor(session, channel, params) {
+  constructor(session, channel, params, id) {
     this.session = session;
     this.channel = channel;
     this.paramUpdates = params;
-    this.apis = {};
+    this.id = id;
 
-    this.channel.subscribe(session);
+    this.onAction = this.onAction.bind(this);
+    this.channel.subscribe(this.onAction);
 
     if (this.onCreate) {
-      console.log('Creating tracker', this.constructor.name);
       this.onCreate();
     }
+  }
+
+  onAction(action) {
+    this.session.send(PKT_TRACKER_ACTION(this.id, action));
+  }
+
+  // eslint-disable-next-line
+  onCreate() {
+    // Dummy place holder, overrride this method instead of creating constructor
   }
 
   get serial() {
     return this.channel.getSerial();
   }
 
-  getApis() {
-    return Object.keys(this.apis);
-  }
-
-  registerApi(name, fn) {
-    if (this.apis[name]) {
-      throw new Error(`Api ${name} is already registered with ${this.constructor.name}`);
-    }
-
-    if (typeof fn !== 'function') {
-      throw new Error(`Api ${this.constructor.name}::${name} is not a function`);
-    }
-
-    console.log(this.constructor.name, 'Registering api', name);
-    this.apis[name] = fn;
-  }
-
-  registerApis(...args) {
-    args.forEach((fn) => {
-      this.registerApi(fn.name, fn);
-    });
-  }
-
-  async executeApi(name, ...args) {
-    const api = this.apis[name];
-    if (!api) {
-      throw new Error(`Unknown api ${this.constructor.name}::${name}`);
-    }
-    return api(...args);
-  }
-
   updateParams(params) {
     Object.assign(this.paramUpdates, params);
+  }
+
+  clearParamUpdates() {
+    const updates = this.paramUpdates;
+    this.paramUpdates = {};
+    return updates;
   }
 
   // Get the actions available from the channel that could
@@ -64,7 +50,7 @@ class Tracker {
   }
 
   close() {
-    const n = this.channel.unsubscribe(this.session);
+    const n = this.channel.unsubscribe(this.onAction);
     if (n === 0) {
       // Cleanup the channel
       this.session.service.server.clearChannel(this.channel.id);
