@@ -102,7 +102,7 @@ const SpecialScreen = () = (
 );
 
 const reducer = your-special-reducer;
-export default track('Special', () => 'special', reducer);
+export default track('Special', () => 'special', reducer)(SpecialScreen);
 ```
 ### Connecting component with data
 ```javascript
