@@ -43,7 +43,7 @@ class Shocked extends Component<Props> {
     }
 
     if (nextProps.onDisconnect !== onDisconnect) {
-      this.client.off('disonnect', onDisconnect);
+      this.client.off('disconnect', onDisconnect);
       this.client.on('disconnect', nextProps.onDisconnect);
     }
   }
