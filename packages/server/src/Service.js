@@ -103,7 +103,6 @@ class Service {
 
   validate(inp) {
     if (this.onValidate) {
-      console.log('Validate Input', inp);
       return this.onValidate(inp);
     }
     return inp;

@@ -26,7 +26,6 @@ function createClient(host, WebSocket = global.WebSocket) {
     }
 
     reconnectTimerHandle = setTimeout(() => {
-      console.log('perform a reconnection', interval);
       reconnectTimerHandle = null;
       // eslint-disable-next-line no-use-before-define
       client.reconnect();
@@ -62,7 +61,6 @@ function createClient(host, WebSocket = global.WebSocket) {
     };
 
     sock.onclose = (e) => {
-      console.log('Socket close error code', e.code);
       if (e.code !== 1000 && e.code !== 1005) {
         // Try to reconnect again after sometime
         setupReconnection(1000);

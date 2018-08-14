@@ -29,7 +29,6 @@ class Session {
       // In case of re-connection it might just be enough to
       // send some missing actions
       const actions = await tracker.getActions(serial);
-      console.log('channel actions', actions);
       if (actions) {
         return this.send(PKT_TRACKER_CREATE_UPDATE(group, await tracker.serial, actions));
       }

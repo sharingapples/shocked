@@ -20,7 +20,6 @@ function configureDefaultChannel({ queueSize = 100 } = {}) {
 
       const diff = this.serialNumber - serial;
       if (diff > this.actions.length) {
-        console.log('Requesting more than available', diff, this.actions.length);
         // Not enough actions to recreate the whole stuff
         return null;
       }
@@ -52,7 +51,6 @@ function configureDefaultChannel({ queueSize = 100 } = {}) {
       this.actions.push(action);
       if (this.actions.length > queueSize) {
         this.actions.shift();
-        console.log('Maintaining queue size at', this.actions.length);
       }
 
       const serializedAction = Object.assign({}, action, {

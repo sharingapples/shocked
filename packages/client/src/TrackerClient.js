@@ -54,7 +54,6 @@ class TrackerClient extends EventEmitter {
     // Generate api as soon as the tracker is opened
     this.apis = apis.map(name => this.createApi(name));
 
-    console.log('Initializing store with data', data);
     this.store.dispatch(initStore(data));
   }
 
@@ -65,7 +64,6 @@ class TrackerClient extends EventEmitter {
   }
 
   createApi(name) {
-    console.log(`Creating tracker api, ${this.group}::${name}`);
     return (...args) => new Promise((resolve, reject) => {
       this.sn += 1;
       const callId = this.sn;
