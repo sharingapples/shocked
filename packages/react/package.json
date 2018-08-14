@@ -2,7 +2,13 @@
   "name": "shocked-react",
   "version": "1.0.0",
   "description": "React client side bindings for shocked api",
-  "main": "src/index.js",
+  "main": "cjs/index.js",
+  "scripts": {
+    "lint": "eslint src",
+    "clean": "rimraf cjs",
+    "build": "babel src -d cjs",
+    "prepare": "npm run lint && npm run clean && npm run build"
+  },
   "dependencies": {
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
@@ -12,5 +18,15 @@
     "react": "^16.4.1"
   },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-import-export": "^1.0.2",
+    "eslint": "^4.19",
+    "rimraf": "^2.6.2"
+  }
 }
