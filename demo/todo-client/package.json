@@ -1,0 +1,13 @@
+{
+  "name": "todo-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ranjan Shrestha",
+  "dependencies": {
+    "react": "^16.4.2",
+    "react-dom": "^16.4.2",
+    "shocked-react": "^1.0.0"
+  },
+  "license": "MIT",
+  "private": true
+}

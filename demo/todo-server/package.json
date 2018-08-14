@@ -1,0 +1,12 @@
+{
+  "name": "todo-server",
+  "version": "1.0.0",
+  "description": "Demo TODO Server",
+  "main": "index.js",
+  "dependencies": {
+    "shocked": "^1.0.0"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT",
+  "private": true
+}
