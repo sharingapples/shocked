@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 const debug = require('debug')('shocked');
 
 const pkg = require('../package.json');
-const DefaultChannel = require('./DefaultChannel');
+const configureDefaultChannel = require('./DefaultChannel');
 
 function beat() {
   this.isAlive = true;
@@ -16,10 +16,9 @@ const defaultHttpHandler = (req, res) => {
 
 const wss = new WebSocket.Server({ noServer: true });
 
-
 function createServer({
   pulseRate = 0,
-  Channel = DefaultChannel,
+  Channel = configureDefaultChannel(),
   httpHandler = defaultHttpHandler,
 } = {}) {
   const services = [];
