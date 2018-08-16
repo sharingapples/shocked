@@ -82,6 +82,20 @@ class Service {
     return this.channelDriver.findInstance(channel);
   }
 
+  subscribe(channel, listener) {
+    const instance = this.channelDriver.getInstance(channel);
+    instance.subscribe(listener);
+    return instance;
+  }
+
+  unsubscribe(channel, listener) {
+    const instance = this.channelDriver.findInstance(channel);
+    if (instance) {
+      instance.unsubscribe(listener);
+    }
+    return instance;
+  }
+
   async createTracker(trackerName, session, params) {
     const info = this.trackers[trackerName];
 
