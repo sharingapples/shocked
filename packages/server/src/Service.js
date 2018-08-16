@@ -35,6 +35,13 @@ class Service {
     this.channelDriver = null;
   }
 
+  close() {
+    // Perform cleanup when the server is closing
+    if (this.onClose) {
+      this.close();
+    }
+  }
+
   setChannelDriver(channelDriver) {
     if (!this.channelDriver) {
       this.channelDriver = channelDriver || configureDefaultChannelDriver();
