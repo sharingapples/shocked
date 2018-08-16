@@ -24,7 +24,7 @@ class Shocked extends Component<Props> {
     this.client.on('connect', onConnect);
     this.client.on('disconnect', onDisconnect);
 
-    if (props) {
+    if (props.onInit) {
       props.onInit(this.client);
     }
   }
