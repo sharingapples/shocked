@@ -35,7 +35,7 @@ function track(trackerId, reducer, extend) {
 
       return (
         <Provider store={this.store}>
-          <Target />
+          <Target {...this.props} />
         </Provider>
       );
     }
