@@ -66,7 +66,7 @@ class Service {
     const apis = allMethods.filter(api => !nonApis.includes(api));
 
     if (apis.length === 0) {
-      throw new Error(`No apis available with the tracker ${ServiceTracker.class.name}`);
+      throw new Error(`No apis available with the tracker ${ServiceTracker.constructor.name}`);
     }
 
     this.trackers[trackerName] = {

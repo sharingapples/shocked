@@ -37,7 +37,7 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
       // First subscription, automatically register it
       if (this.listeners.length === 0) {
         if (instances[this.channel.id]) {
-          throw new Error(`Channel instance with the same id is already registered ${this.id}`);
+          throw new Error(`Channel instance with the same id is already registered ${this.channel.id}`);
         }
         instances[this.channel.id] = this;
       }
