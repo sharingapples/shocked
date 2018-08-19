@@ -4,7 +4,7 @@ import { createProvider } from 'react-redux';
 import { enhanceReducer } from 'shocked-client';
 import { Consumer } from './Shocked';
 
-function track(trackerId, reducer) {
+function track(trackerId, reducer, extend) {
   const Provider = createProvider(trackerId);
 
   return Target => class Tracker extends Component {
@@ -24,7 +24,11 @@ function track(trackerId, reducer) {
           window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
         );
         this.tracker = client.createTracker(trackerId, store);
-        store.dispatch.createApi = name => this.tracker.createApi(name);
+        if (extend) {
+          Object.assign(store.dispatch, extend(this.tracker, this.props));
+        } else {
+          store.dispatch.createApi = name => this.tracker.createApi(name);
+        }
 
         this.store = store;
       }
