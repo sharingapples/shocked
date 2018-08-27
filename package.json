@@ -2,7 +2,7 @@
   "name": "shocked",
   "private": true,
   "version": "1.0.0",
-  "description": "Bhoos WebSocket library",
+  "description": "A Websocket app development library",
   "workspaces": [
     "packages/*", "demo/*"
   ],
@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bhoos/socket.git"
+    "url": "git+https://github.com/sharingapples/shocked.git"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bhoos/socket/issues"
+    "url": "https://github.com/sharingapples/shocked/issues"
   },
-  "homepage": "https://github.com/bhoos/socket#readme",
+  "homepage": "https://github.com/sharingapples/shocked#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.2.1",
