@@ -21,17 +21,11 @@ class Session {
       return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group} not recoginized`));
     }
 
-    // Make sure the tracker should serialize, serialization is based on
-    // channel
-    const serialize = serial && (tracker.channel.id === this.trackerChannels[group]);
-    console.log('')
-
     // Keep this tracker
     this.trackers[group] = tracker;
-    this.trackerChannels[group] = tracker.channel.id;
 
     // Check if the client needs a full refresh or just some actions
-    if (serialize) {
+    if (serial) {
       // In case of re-connection it might just be enough to
       // send some missing actions
       const actions = await tracker.getActions(serial);
@@ -92,9 +86,6 @@ class Session {
     // Trackers created for the session
     this.trackers = {};
 
-    // Keep track of the channel, for correcting serialization
-    this.trackerChannels = {};
-
     const parser = createParser();
 
     parser.onTrackerCreate = this.onTrackerCreate.bind(this);
@@ -116,7 +107,6 @@ class Session {
     });
 
     this.trackers = null;
-    this.trackerChannels = null;
   }
 }
 

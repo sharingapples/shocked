@@ -14,13 +14,18 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
     }
 
     getActions(serial) {
-      if (serial > this.serialNumber) {
+      if (serial.id !== this.channel.id) {
+        // Mismatched channel id, cannot sync
+        return null;
+      }
+
+      if (serial.num > this.serialNumber) {
         // Weird, its not possible to serialize on this scenario
         // This could happen during the server restart
         return null;
       }
 
-      const diff = this.serialNumber - serial;
+      const diff = this.serialNumber - serial.num;
       if (diff > this.actions.length) {
         // Not enough actions to recreate the whole stuff
         return null;
@@ -29,8 +34,15 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
       return this.actions.slice(this.actions.length - diff);
     }
 
+    /**
+     * This method is asynchrnous for compatiblity with redis based
+     * channels
+     */
     async getSerial() {
-      return this.serialNumber;
+      return {
+        id: this.channel.id,
+        num: this.serialNumber,
+      }
     }
 
     async subscribe(listener) {
@@ -66,7 +78,7 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
       }
 
       const serializedAction = Object.assign({}, action, {
-        $serial$: this.serialNumber,
+        $serial$: await this.getSerial(),
       });
 
       this.listeners.forEach(listener => listener(serializedAction));
