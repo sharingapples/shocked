@@ -42,7 +42,7 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
       return {
         id: this.channel.id,
         num: this.serialNumber,
-      }
+      };
     }
 
     async subscribe(listener) {
