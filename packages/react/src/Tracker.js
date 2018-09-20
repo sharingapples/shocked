@@ -11,8 +11,37 @@ function track(trackerId, reducer, extend) {
     componentWillUnmount() {
       if (this.tracker) {
         this.tracker.close();
+
+        // Unregister all the event handlers
+        this.tracker.off('init', this.onStart);
+        this.tracker.client.off('connect', this.onConnect);
+        this.tracker.client.off('disconnect', this.onDisconnect);
+
+        // Clear up
         this.tracker = null;
       }
+    }
+
+    onInit = (data) => {
+      if (this.trackerNode && this.trackerNode.onInit) {
+        this.trackerNode.onInit(data);
+      }
+    }
+
+    onConnect = () => {
+      if (this.trackerNode && this.trackerNode.onConnect) {
+        this.trackerNode.onConnect(this.tracker);
+      }
+    }
+
+    onDisconnect = () => {
+      if (this.trackerNode && this.trackerNode.onDisconnect) {
+        this.trackerNode.onDisconnect(this.tracker);
+      }
+    }
+
+    registerNode = (node) => {
+      this.trackerNode = node;
     }
 
     renderShocked = (client) => {
@@ -30,12 +59,21 @@ function track(trackerId, reducer, extend) {
           store.dispatch.createApi = name => this.tracker.createApi(name);
         }
 
+        // Register listeners for connection and disconnection
+        this.tracker.on('init', this.onInit);
+        client.on('connect', this.onConnect);
+        client.on('disconnect', this.onDisconnect);
+
         this.store = store;
       }
 
       return (
         <Provider store={this.store}>
-          <Target {...this.props} />
+          <Target
+            ref={this.registerNode}
+            {...this.props}
+            tracker={this.tracker}
+          />
         </Provider>
       );
     }
