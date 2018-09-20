@@ -55,7 +55,7 @@ class Tracker {
   }
 
   emit(event, data) {
-    this.session.send(PKT(this.id, event, data));
+    this.session.send(PKT_TRACKER_EMIT(this.id, event, data));
   }
 
   dispatch(action, channel) {

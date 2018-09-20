@@ -117,7 +117,6 @@ function createClient(host, WebSocket = global.WebSocket) {
   parser.onTrackerEmit = (trackerId, event, data) => {
     const tracker = findTracker(trackerId);
     if (tracker) {
-      console.log('Tracker emit is', tracker.emit);
       tracker.emit(event, data);
     }
   };
