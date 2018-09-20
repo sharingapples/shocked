@@ -68,24 +68,26 @@ function createServer({
 
   // Setup the http server to handle websocket upgrade
   httpServer.on('upgrade', async (request, socket, head) => {
+    debug(`Upgrade request ${socket.remoteAddress}:${socket.remotePort}/${request.url}`);
     // Search for the first registered service that can handle
     // this request. (By URL or header)
-    let req = null;
+    let reqParams = null;
     const service = services.find((s) => {
-      req = s.match(request);
-      return req;
+      reqParams = s.match(request);
+      return reqParams;
     });
 
-    if (!req) {
+    if (!reqParams) {
       // End the request
       return wss.handleUpgrade(request, socket, head, (ws) => {
+        debug(`No matching request found for ${request.url} host: ${request.headers.host}`);
         ws.close(4002, `No service found at ${request.url}`);
       });
     }
 
-    // Try to validate the req
+    // Try to validate the request Parameters
     try {
-      req = await service.validate(req) || req;
+      reqParams = await service.validate(reqParams) || reqParams;
     } catch (err) {
       return wss.handleUpgrade(request, socket, head, (ws) => {
         ws.close(4001, err.message);
@@ -108,7 +110,8 @@ function createServer({
         }
       });
 
-      service.start(req, ws, server);
+      debug(`Start session for ${socket.remoteAddress}:${socket.remotePort}`);
+      service.start(reqParams, ws, server);
     });
   });
 
