@@ -45,11 +45,14 @@ function createClient(host, WebSocket = global.WebSocket) {
     }
 
     const sock = new WebSocket(remoteUrl);
-    sock.onerror = () => {
-      // console.error('Error', e);
+    sock.onerror = (e) => {
+      console.error('Socket Error', e);
     };
 
     sock.onopen = () => {
+      // Clear any auto reconnect attempts
+      clearRetry();
+
       // Let all the trackers know tha we are now connected
       trackers.forEach((tracker) => {
         // eslint-disable-next-line no-use-before-define
@@ -152,7 +155,8 @@ function createClient(host, WebSocket = global.WebSocket) {
     },
 
     reconnect: () => {
-      if (url === null) {
+      // Only make a reconnect event if the socket is already connected
+      if (url === null || (socket && socket.readyState === WebSocket.CONNECTING)) {
         // No prior url to reconnect to
         return false;
       }
