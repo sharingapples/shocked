@@ -1,4 +1,4 @@
-const { PKT_TRACKER_ACTION } = require('shocked-common');
+const { PKT_TRACKER_ACTION, PKT_TRACKER_EMIT } = require('shocked-common');
 
 class Tracker {
   constructor(session, params, id) {
@@ -52,6 +52,10 @@ class Tracker {
 
   close() {
     this.channelInstance.unsubscribe(this.onAction);
+  }
+
+  emit(event, data) {
+    this.session.send(PKT_TRACKER_EMIT(this.id, event, data));
   }
 
   dispatch(action, channel) {
