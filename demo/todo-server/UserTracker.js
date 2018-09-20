@@ -41,6 +41,7 @@ class UserTracker extends Tracker {
 
     const todo = createTodo(userId, title);
     this.dispatch({ type: 'add_todo', payload: todo });
+    this.emit('remote', 'CreateTodo action complete on server');
     return todo;
   }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { track } from 'shocked-react';
 import TodoList from './TodoList';
 import TodoEntry from './TodoEntry';
@@ -16,12 +16,38 @@ const reducer = (state = null, action) => {
   }
 };
 
-const Todo = () => (
-  <div>
-    <h3>Todos</h3>
-    <TodoList />
-    <TodoEntry />
-  </div>
-);
+class Todo extends Component {
+  constructor(props) {
+    super(props);
+
+    props.tracker.on('remote', this.onRemoteEvent);
+  }
+
+  onRemoteEvent = (data) => {
+    console.log('Received remote event sent from server', data);
+  }
+
+  onInit(data) {
+    console.log('Initial data', data);
+  }
+
+  onConnect() {
+    console.log('Todo Tracker connected');
+  }
+
+  onDisconnect() {
+    console.log('Todo tracker disconnected');
+  }
+
+  render() {
+    return (
+      <div>
+        <h3>Todos</h3>
+        <TodoList />
+        <TodoEntry />
+      </div>
+    );
+  }
+}
 
 export default track('User', reducer)(Todo);
