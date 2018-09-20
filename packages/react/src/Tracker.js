@@ -13,7 +13,7 @@ function track(trackerId, reducer, extend) {
         this.tracker.close();
 
         // Unregister all the event handlers
-        this.tracker.off('init', this.onStart);
+        this.tracker.removeListener('init', this.onInit);
         this.tracker.client.off('connect', this.onConnect);
         this.tracker.client.off('disconnect', this.onDisconnect);
 
