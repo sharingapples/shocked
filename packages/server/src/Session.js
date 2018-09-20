@@ -23,6 +23,7 @@ class Session {
 
     // Keep this tracker
     this.trackers[group] = tracker;
+    this.trackerChannels[group] = tracker.channel.id;
 
     // Check if the client needs a full refresh or just some actions
     if (serial) {
@@ -86,6 +87,9 @@ class Session {
     // Trackers created for the session
     this.trackers = {};
 
+    // Keep track of the channel, for correcting serialization
+    this.trackerChannels = {};
+
     const parser = createParser();
 
     parser.onTrackerCreate = this.onTrackerCreate.bind(this);
@@ -107,6 +111,7 @@ class Session {
     });
 
     this.trackers = null;
+    this.trackerChannels = null;
   }
 }
 
