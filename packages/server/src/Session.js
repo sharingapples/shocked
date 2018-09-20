@@ -23,7 +23,8 @@ class Session {
 
     // Make sure the tracker should serialize, serialization is based on
     // channel
-    const serialize = serial && tracker.channel.id !== this.trackerChannels[group];
+    const serialize = serial && (tracker.channel.id === this.trackerChannels[group]);
+    console.log('')
 
     // Keep this tracker
     this.trackers[group] = tracker;
