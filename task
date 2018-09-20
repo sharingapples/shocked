@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+// A helper script to run the dev scripts
+const { spawn, exec } = require('child_process');
+const path = require('path');
+
+const bin = b => path.resolve(__dirname, 'node_modules', '.bin', b);
+
+function execute(cmd) {
+  switch (cmd) {
+    case 'clean':
+      return spawn(bin('rimraf'),  ['./dist'], {
+        stdio: 'inherit',
+      });
+
+    case 'lint':
+      return spawn(bin('eslint'), ['./src'], {
+        stdio: 'inherit',
+      });
+
+    case 'build':
+      return spawn(bin('babel'), ['./src', '-d', './dist'], {
+        stdio: 'inherit',
+      });
+
+    case 'test':
+      return spawn(bin('jest'), ['--rootDir', '.'], {
+        stdio: 'inherit',
+      });
+
+    default:
+      return spawn(bin(cmd), process.argv.slice(3), {
+        stdio: ['inherit', 'inherit', 'inherit'],
+      });
+  }
+}
+
+const proc = execute(process.argv[2]);
+proc.on('exit', (code) => {
+  process.exit(code);
+});
+

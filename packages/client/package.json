@@ -2,19 +2,19 @@
   "name": "shocked-client",
   "version": "1.0.6",
   "description": "Socket Client",
-  "main": "cjs/index.js",
+  "main": "dist/index.js",
   "module": "src/index.js",
+  "react-native": "src/index.js",
   "files": [
-    "cjs",
+    "dist",
     "src"
   ],
   "scripts": {
-    "test": "../../node_modules/.bin/jest",
-    "lint": "../../node_modules/.bin/eslint src",
-    "clean": "../../node_modules/.bin/rimraf cjs",
-    "build": "../../node_modules/.bin/babel src -d cjs",
-    "prepare": "npm run lint && npm run test && npm run clean && npm run build",
-    "run-demo": "nodemon --exec ../../node_modules/.bin/babel-node __demo__/index.js"
+    "test": "../../task test",
+    "lint": "../../task lint",
+    "clean": "../../task clean",
+    "build": "../../task build",
+    "prepare": "yarn run lint && yarn run test && yarn run clean && yarn run build"
   },
   "repository": {
     "type": "git",
@@ -25,9 +25,5 @@
   "dependencies": {
     "events": "^3.0.0",
     "shocked-common": "^1.0.6"
-  },
-  "devDependencies": {
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-stage-3": "^6.24.1"
   }
 }

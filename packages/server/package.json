@@ -4,9 +4,9 @@
   "description": "Websocket server",
   "main": "src/index.js",
   "scripts": {
-    "test": "../../node_modules/.bin/jest",
-    "lint": "../../node_modules/.bin/eslint src",
-    "prepublishOnly": "npm run lint && npm run test"
+    "test": "../../task test",
+    "lint": "../../task lint",
+    "prepublishOnly": "yarn run lint && yarn run test"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,6 @@
     "debug": "^3.1.0",
     "shocked-common": "^1.0.6",
     "url-pattern": "^1.0.3",
-    "uuid": "^3.2.1",
     "ws": "^4.0.0"
   }
 }

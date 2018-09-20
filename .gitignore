@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 __dist__
 cjs
+dist
 lerna-debug.log
 yarn-error.log
 npm-debug.log
