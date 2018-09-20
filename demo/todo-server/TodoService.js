@@ -13,6 +13,7 @@ class TodoService extends Service {
   }
 
   async onValidate({ params }) {
+    console.log('Validating request', params);
     const user = this.users.find(u => u === params.userId);
     if (!user) {
       throw new Error(`Unknown User ${params.userId}`);

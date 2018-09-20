@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Demo TODO Server",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "shocked": "^1.0.0"
   },

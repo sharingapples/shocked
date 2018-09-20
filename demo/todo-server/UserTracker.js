@@ -21,11 +21,6 @@ const createTodo = (userId, title) => {
 };
 
 class UserTracker extends Tracker {
-  getChannelId() {
-    const org = this.session.get('org');
-    return `org-${org.id}`;
-  }
-
   getData() {
     const user = this.session.get('user');
     const res = getTodos(user);
@@ -36,7 +31,8 @@ class UserTracker extends Tracker {
     const user = this.session.get('user');
     this.userId = user;
 
-    return new Channel('todo');
+    console.log('Listening on channel', user);
+    return new Channel(`todo-${this.userId}`);
   }
 
   add(title) {
