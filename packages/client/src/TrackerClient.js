@@ -54,6 +54,9 @@ class TrackerClient extends EventEmitter {
     this.apis = apis.map(name => this.createApi(name));
 
     this.store.dispatch(initStore(data));
+
+    // Also emit a start event, with the initial data
+    this.emit('init', data);
   }
 
   onUpdate(serial, actions) {
