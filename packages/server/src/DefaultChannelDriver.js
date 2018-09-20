@@ -52,7 +52,7 @@ function configureDefaultChannelDriver({ queueSize = 100 } = {}) {
         this.listeners.splice(idx, 1);
       }
       if (this.listeners.length === 0) {
-        delete this.listeners[this.channel.id];
+        delete instances[this.channel.id];
       }
     }
 
