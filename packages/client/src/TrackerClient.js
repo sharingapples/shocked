@@ -21,7 +21,7 @@ class TrackerClient extends EventEmitter {
     this.params = params;
     this.destroy = destroyer;
     this.apis = null;
-    this.serial = 0;
+    this.serial = null;
     this.options = options;
 
     this.sn = 0;
@@ -106,6 +106,7 @@ class TrackerClient extends EventEmitter {
   }
 
   onAction(action) {
+    // TODO: Validate serial number, the difference should always be 1
     this.serial = action.$serial$;
     this.store.dispatch(action);
   }

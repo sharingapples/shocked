@@ -41,8 +41,8 @@ class Tracker {
 
   // Get the actions available from the channel that could
   // update the tracker with the global state of the channel
-  async getActions(serialNumber) {
-    return this.channelInstance.getActions(serialNumber);
+  async getActions(serial) {
+    return this.channelInstance.getActions(serial);
   }
 
   // eslint-disable-next-line class-methods-use-this, no-unused-vars
@@ -55,7 +55,7 @@ class Tracker {
   }
 
   emit(event, data) {
-    this.session.send(PKT_TRACKER_EMIT(this.id, event, data));
+    this.session.send(PKT(this.id, event, data));
   }
 
   dispatch(action, channel) {
