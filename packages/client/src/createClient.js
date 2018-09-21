@@ -3,10 +3,23 @@ import TrackerClient from './TrackerClient';
 
 const EventEmitter = require('events');
 
-function createClient(host, WebSocket = global.WebSocket) {
-  if (!host.startsWith('ws://') && !host.startsWith('wss://')) {
-    throw new Error(`Invalid host ${host}. Host should start with ws:// or wss://`);
+function getHost(endpoint) {
+  // convert http to ws
+  if (endpoint.startsWith('https:') || endpoint.startsWith('http:')) {
+    return 'ws'.concat(endpoint.substr(4));
   }
+
+  // use ws as is
+  if (endpoint.startsWith('wss:') || endpoint.startsWith('ws:')) {
+    return endpoint;
+  }
+
+  // fallback if the endpoint is not recognizable
+  throw new Error(`Invalid endpoint ${endpoint}. It should start with one of http:, https:, ws: or wss:`);
+}
+
+function createClient(endpoint, WebSocket = global.WebSocket) {
+  const host = getHost(endpoint);
 
   // Using an array, since the number of trackers is not expected
   // to be very high, typically 2 trackers at a time
