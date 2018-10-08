@@ -1,6 +1,9 @@
 import { createParser } from 'shocked-common';
 import TrackerClient from './TrackerClient';
 
+// Try reconnection in few second(s)
+const RECONNECT_INTERVAL = 2500;
+
 const EventEmitter = require('events');
 
 function getHost(endpoint) {
@@ -79,7 +82,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     sock.onclose = (e) => {
       if (e.code !== 1000 && e.code !== 1005) {
         // Try to reconnect again after sometime
-        setupReconnection(1000);
+        setupReconnection(RECONNECT_INTERVAL);
       }
 
       trackers.forEach((tracker) => {
