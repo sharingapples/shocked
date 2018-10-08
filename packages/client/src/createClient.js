@@ -62,7 +62,10 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
     const sock = new WebSocket(remoteUrl);
     sock.onerror = (e) => {
-      console.error('Socket Error', e);
+      // the onclose event would be hit after the onerror, so just warn about the error for
+      // development mode
+      // eslint-disable-next-line no-console
+      console.warn(e.message);
     };
 
     sock.onopen = () => {
