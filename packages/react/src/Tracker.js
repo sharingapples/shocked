@@ -4,7 +4,7 @@ import { createProvider } from 'react-redux';
 import { enhanceReducer } from 'shocked-client';
 import { Consumer } from './Shocked';
 
-function track(trackerId, reducer, extend) {
+function track(trackerId, reducerFactory, extend) {
   const Provider = createProvider(trackerId);
 
   return Target => class Tracker extends Component {
@@ -46,12 +46,13 @@ function track(trackerId, reducer, extend) {
 
     renderShocked = (client) => {
       if (!this.tracker) {
-        // Create store supporting redux devtool extension
-        const store = createStore(
-          enhanceReducer(reducer),
+        const res = reducerFactory(this.props, { enhanceReducer });
+        const store = typeof res !== 'function' ? res : createStore(
+          enhanceReducer(res),
           // eslint-disable-next-line no-underscore-dangle, no-undef
           window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
         );
+
         this.tracker = client.createTracker(trackerId, store);
         if (extend) {
           Object.assign(store.dispatch, extend(this.tracker, this.props));
