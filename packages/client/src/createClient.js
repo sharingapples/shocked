@@ -98,7 +98,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       });
 
       // Fire the close event on client
-      eventManager.emit('disconnect');
+      eventManager.emit('disconnect', e.code);
     };
 
 
