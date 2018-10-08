@@ -154,7 +154,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     isConnected: () => socket && socket.readyState === WebSocket.OPEN,
 
     connect: (path) => {
-      url = `${host}${path}`;
+      url = `${host}/${path}`;
       if (client.isConnected() && socket.url === url) {
         return true;
       }
