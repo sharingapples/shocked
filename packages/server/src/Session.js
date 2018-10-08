@@ -54,6 +54,9 @@ class Session {
       return this.send(PKT_TRACKER_API_RESPONSE(group, sn, true, res, tracker.clearParamUpdates()));
     } catch (err) {
       debug(err);
+      if (this.logger) {
+        this.logger.error(err);
+      }
       return this.send(PKT_TRACKER_API_RESPONSE(group, sn, false, err.message));
     }
   }
@@ -77,9 +80,10 @@ class Session {
     return this.data[name];
   }
 
-  constructor(service, ws, inputs) {
+  constructor(service, ws, inputs, logger) {
     this.service = service;
     this.ws = ws;
+    this.logger = logger;
     this.uniqueId = 0;
     this.data = inputs;
 

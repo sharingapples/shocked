@@ -150,12 +150,12 @@ class Service {
     return inp;
   }
 
-  createSession(ws, input) {
-    return new Session(this, ws, input);
+  createSession(ws, input, logger) {
+    return new Session(this, ws, input, logger);
   }
 
-  start(input, ws) {
-    const session = this.createSession(ws, input);
+  start(input, ws, logger) {
+    const session = this.createSession(ws, input, logger);
     if (this.onStart) {
       this.onStart(session);
     }

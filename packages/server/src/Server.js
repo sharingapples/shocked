@@ -19,6 +19,7 @@ function createServer({
   pulseRate = 0,
   channelDriver,
   httpHandler = defaultHttpHandler,
+  logger = null,
 } = {}) {
   const services = [];
   const httpServer = http.createServer(httpHandler);
@@ -111,7 +112,7 @@ function createServer({
       });
 
       debug(`Start session for ${socket.remoteAddress}:${socket.remotePort}`);
-      service.start(reqParams, ws, server);
+      service.start(reqParams, ws, logger);
     });
   });
 
