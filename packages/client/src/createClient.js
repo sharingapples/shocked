@@ -85,9 +85,11 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     sock.onclose = (e) => {
       // do not try to reconnect for specific errors
       // 1000: regular socket shutdown
+      // 1001: TODO: This seems to be the code when the client initiates close.
+      //             Should the retry be avoided in this case as well
       // 1005: Expected close status, recevied none - ???
       // 4001: Session expired - via shocked
-      if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) {
+      if (e.code !== 1000 && /* e.code !== 1001 && */ e.code !== 1005 && e.code !== 4001) {
         // Try to reconnect again after sometime
         setupReconnection(RECONNECT_INTERVAL);
       }
