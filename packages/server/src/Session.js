@@ -70,6 +70,15 @@ class Session {
     }
   }
 
+  /**
+   * Allow closing session
+   */
+  close() {
+    setImmediate(() => {
+      this.ws.close();
+    });
+  }
+
   send(data) {
     if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(data);
