@@ -42,8 +42,10 @@ class TrackerClient extends EventEmitter {
       const { calls } = this;
       this.calls = [];
 
-      const err = new CloseError('Connection Terminated');
-      calls.forEach(({ reject }) => reject(err));
+      if (calls.length > 0) {
+        const err = new CloseError(`Rejecting calls ${calls.length} ${calls.map(c => c.callId).join(',')} due to Connection Termination`);
+        calls.forEach(({ reject }) => reject(err));
+      }
     }
   }
 
