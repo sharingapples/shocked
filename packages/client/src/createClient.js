@@ -198,6 +198,14 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       return true;
     },
 
+    clearPath: () => {
+      url = null;
+      if (socket !== null) {
+        socket.close();
+        socket = null;
+      }
+    },
+
     reconnect: () => {
       // Only make a reconnect event if the socket is already connected
       if (url === null || (socket && socket.readyState === WebSocket.CONNECTING)) {

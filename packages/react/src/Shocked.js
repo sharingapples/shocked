@@ -52,9 +52,8 @@ class Shocked extends Component<Props> {
     if (path) {
       // Attempt a reconnect if path changes
       this.client.connect(path);
-    } else if (this.client.isConnected()) {
-      // Close the client if there's no path
-      this.client.close();
+    } else {
+      this.client.clearPath();
     }
   }
 
