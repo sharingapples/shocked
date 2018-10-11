@@ -35,6 +35,16 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
   const eventManager = new EventEmitter();
 
+  // There is a bug. Even when the connection is successful, the timer closes the connection
+  // and proceeds to make another connection, which is again closed by the timer and this
+  // goes on and on.
+  // The issue seems to be this:
+  //    1. During a reconnection or connection event
+  //       i. The previous connection is shutdown
+  //      ii. A new connection is established
+  //     iii. In certain cases, the old socket close event arrives later than the
+  //          the new connection open event
+
   let reconnectTimerHandle = null;
   function setupReconnection(interval) {
     if (reconnectTimerHandle) {
@@ -89,11 +99,19 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       //             Should the retry be avoided in this case as well
       // 1005: Expected close status, recevied none - ???
       // 4001: Session expired - via shocked
-      if (e.code !== 1000 && /* e.code !== 1001 && */ e.code !== 1005 && e.code !== 4001) {
+      console.log(`Socket closed - CODE ${e.code}`);
+      if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) {
+        // eslint-disable-next-line no-use-before-define
+        if (socket === null || socket.readyState !== WebSocket.OPEN) {
         // Try to reconnect again after sometime
         setupReconnection(RECONNECT_INTERVAL);
       }
+      }
 
+      // In some cases, the close event of the previous socket might arrive later than the
+      // open event of the new connection, avoid making a connection here
+      // eslint-disable-next-line no-use-before-define
+      if (socket === null || socket.readyState !== WebSocket.OPEN) {
       trackers.forEach((tracker) => {
         // Let all the trackers know that the client is not available
         tracker.onDisconnect();
@@ -101,6 +119,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
       // Fire the close event on client
       eventManager.emit('disconnect', e.code);
+      }
     };
 
 
