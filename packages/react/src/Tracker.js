@@ -53,7 +53,8 @@ function track(trackerId, reducerFactory, extend) {
           window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
         );
 
-        this.tracker = client.createTracker(trackerId, store);
+        // eslint-disable-next-line react/destructuring-assignment
+        this.tracker = client.createTracker(trackerId, store, this.props.params);
         if (extend) {
           Object.assign(store.dispatch, extend(this.tracker, this.props));
         } else {
