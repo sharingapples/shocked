@@ -123,6 +123,9 @@ class TrackerClient extends EventEmitter {
     // Make sure the tracker is fully destroyed
     this.destroy();
 
+    // Remove all the listeners
+    this.removeAllListeners();
+
     // Gracefully close the tracker, if the client is
     // connected;
     if (this.client) {
