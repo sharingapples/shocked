@@ -59,12 +59,14 @@ class TrackerClient extends EventEmitter {
 
     // Also emit a start event, with the initial data
     this.emit('init', data);
+    this.emit('online');
   }
 
   onUpdate(serial, actions) {
     this.serial = serial;
 
     this.store.dispatch(batchActions(actions));
+    this.emit('online');
   }
 
   createApi(name) {
