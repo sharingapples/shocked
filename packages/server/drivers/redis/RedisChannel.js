@@ -25,14 +25,15 @@ module.exports = function configureRedisChannelDriver(redis, options) {
     },
 
     unsubscribe(channel, listener) {
-      const list = subscriptionMap[channel._id];
+      const channelId = channel._id;
+      const list = subscriptionMap[channelId];
       if (list) {
         const idx = list.indexOf(listener);
         if (idx >= 0) {
           list.splice(idx, 1);
           if (list.length === 0) {
-            delete subscriptionMap[channel];
-            subscriber.unsubscribe(channel);
+            delete subscriptionMap[channelId];
+            subscriber.unsubscribe(channelId);
           }
         }
       }
