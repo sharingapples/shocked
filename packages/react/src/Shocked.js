@@ -5,9 +5,10 @@ import { createClient } from 'shocked-client';
 type Props = {
   host: string,
   path: string,
-  onInit: () => {},
+  onInit: (client: {}) => {},
   onConnect: () => {},
   onDisconnect: () => {},
+  children: any,
 };
 
 const ShockedContext = React.createContext();
@@ -29,22 +30,26 @@ class Shocked extends Component<Props> {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { path, onConnect, onDisconnect } = this.props;
-
-    // Set the path only when it changes
-    if (path !== nextProps.path) {
-      this.setPath(nextProps.path);
+  componentDidUpdate(prevProps) {
+    const {
+      path, host, onConnect, onDisconnect,
+    } = this.props;
+    if (prevProps.host !== host) {
+      throw new Error('The host property for Shocked component should not be changed');
     }
 
-    if (nextProps.onConnect !== onConnect) {
-      this.client.off('connect', onConnect);
-      this.client.on('connect', nextProps.onConnect);
+    if (path !== prevProps.path) {
+      this.setPath(path);
     }
 
-    if (nextProps.onDisconnect !== onDisconnect) {
-      this.client.off('disconnect', onDisconnect);
-      this.client.on('disconnect', nextProps.onDisconnect);
+    if (onConnect !== prevProps.onConnect) {
+      this.client.off('connect', prevProps.onConnect);
+      this.client.on('connect', onConnect);
+    }
+
+    if (onDisconnect !== prevProps.onDisconnect) {
+      this.client.off('disconnect', prevProps.onDisconnect);
+      this.client.on('disconnect', onDisconnect);
     }
   }
 
@@ -58,14 +63,10 @@ class Shocked extends Component<Props> {
   }
 
   render() {
-    const {
-      host,
-      path,
-      onConnect,
-      onDisconnect,
-      ...other
-    } = this.props;
-    return <ShockedContext.Provider value={this.client} {...other} />;
+    const { children } = this.props;
+
+    // eslint-disable-next-line react/no-children-prop
+    return <ShockedContext.Provider value={this.client} children={children} />;
   }
 }
 
