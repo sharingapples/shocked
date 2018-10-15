@@ -1,3 +1,6 @@
+exports.TYPE_BATCH_ACTIONS = '$shocked.batch';
+exports.TYPE_TRACKER_INIT = '$shocked.init';
+
 class ParserError extends Error {
   constructor(message, cause) {
     super(message);
@@ -123,3 +126,13 @@ exports.createParser = () => {
 
   return parser;
 };
+
+exports.batchActions = actions => ({
+  type: exports.TYPE_BATCH_ACTIONS,
+  payload: actions,
+});
+
+exports.initTracker = initialData => ({
+  type: exports.TYPE_TRACKER_INIT,
+  payload: initialData,
+});
