@@ -52,7 +52,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     }
 
     reconnectTimerHandle = setTimeout(() => {
-      console.log('Executing reconnection timeout');
       reconnectTimerHandle = null;
       // eslint-disable-next-line no-use-before-define
       client.reconnect();
@@ -80,7 +79,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     };
 
     sock.onopen = () => {
-      console.log('Socket is now open');
       // Clear any auto reconnect attempts
       clearRetry();
 
@@ -101,7 +99,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       //             Should the retry be avoided in this case as well
       // 1005: Expected close status, recevied none - ???
       // 4001: Session expired - via shocked
-      console.log(`Socket closed - CODE ${e.code}`);
       if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) {
         // eslint-disable-next-line no-use-before-define
         if (socket === null || socket.readyState !== WebSocket.OPEN) {
@@ -193,7 +190,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       }
 
       if (socket !== null) {
-        console.log('Closing socket from connect', new Error().stack);
         socket.close();
       }
 
@@ -218,7 +214,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
       // Since its a reconnect attempt, we will close existing socket
       if (socket !== null) {
-        console.log('Closing socket from reconnect', new Error().stack);
         socket.close();
       }
 
@@ -227,7 +222,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     },
 
     close: () => {
-      console.log('Closing socket', new Error().stack);
       if (socket) {
         socket.close();
       }

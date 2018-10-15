@@ -50,7 +50,6 @@ class TrackerClient extends EventEmitter {
   }
 
   onOpen() {
-    console.log('Emitting open event');
     this.emit('open');
   }
 
@@ -63,7 +62,6 @@ class TrackerClient extends EventEmitter {
       this.sn += 1;
       const callId = this.sn;
       const pkt = PKT_TRACKER_API(this.group, callId, name, args);
-      console.log(`Initiating call ${callId}:${name}(${args.map(a => String(a)).join(', ')})`);
       this.client.send(pkt);
 
       // Setup a timeout, to cleanup in case a responsee is not
@@ -105,8 +103,10 @@ class TrackerClient extends EventEmitter {
       if (this.serial !== null) {
         const diff = serial.num - this.serial.num;
         if (diff <= 0) {
+          // eslint-disable-next-line no-console
           console.warn(`Shocked::Tracker - The action serial number are supposed to be incremental, got ${serial} after ${this.serial}`);
         } else if (diff > 1 && action.type !== TYPE_BATCH_ACTIONS) {
+          // eslint-disable-next-line no-console
           console.warn(`Shocked::Tracker - The action serial number jumped from ${this.serial} to ${serial} but didn't get a batch action`);
         }
       }

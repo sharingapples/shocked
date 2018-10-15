@@ -39,6 +39,7 @@ module.exports = function configureBasicChannel({ queueSize = 100 } = {}) {
     publish(channel, action) {
       const obj = cache[channel];
       if (!obj) {
+        // eslint-disable-next-line no-console
         console.warn(`Trying to publish on channel ${channel} but don't have any listeners`);
         return;
       }

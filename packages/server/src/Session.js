@@ -108,7 +108,9 @@ class Session {
     });
 
     ws.on('error', (e) => {
-      console.warn(e);
+      if (this.logger) {
+        this.logger.warn(`Error on session socket ${e.message} - SESSION::${JSON.stringify(this.data, null, 2)}`);
+      }
     });
 
     ws.on('message', (msg) => {
