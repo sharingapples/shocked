@@ -7,86 +7,76 @@ import { Consumer } from './Shocked';
 function track(trackerId, reducerFactory, extend) {
   const Provider = createProvider(trackerId);
 
-  return Target => class Tracker extends Component {
-    componentWillUnmount() {
-      if (this.tracker) {
-        this.tracker.close();
+  return (Target) => {
+    class Tracker extends Component {
+      state = {
+        online: false,
+      };
 
-        // Unregister all the event handlers
-        this.tracker.removeListener('init', this.onInit);
-        this.tracker.client.off('connect', this.onConnect);
-        this.tracker.client.off('disconnect', this.onDisconnect);
+      componentWillUnmount() {
+        if (this.tracker) {
+          this.tracker.close();
 
-        // Clear up
-        this.tracker = null;
+          // Clear up
+          this.tracker = null;
+        }
       }
-    }
 
-    onInit = (data) => {
-      if (this.trackerNode && this.trackerNode.onInit) {
-        this.trackerNode.onInit(data);
+      onOpen = () => {
+        this.setState({ online: true });
       }
-    }
 
-    onConnect = () => {
-      if (this.trackerNode && this.trackerNode.onConnect) {
-        this.trackerNode.onConnect(this.tracker);
+      onClose = () => {
+        this.setState({ online: false });
       }
-    }
 
-    onDisconnect = () => {
-      if (this.trackerNode && this.trackerNode.onDisconnect) {
-        this.trackerNode.onDisconnect(this.tracker);
-      }
-    }
+      renderShocked = (client) => {
+        const { online } = this.state;
+        const { forwardedRef } = this.props;
+        if (!this.tracker) {
+          const res = reducerFactory(this.props, { enhanceReducer });
+          const store = typeof res !== 'function' ? res : createStore(
+            enhanceReducer(res),
+            // eslint-disable-next-line no-underscore-dangle, no-undef
+            window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+          );
 
-    registerNode = (node) => {
-      this.trackerNode = node;
-    }
+          // eslint-disable-next-line react/destructuring-assignment
+          this.tracker = client.createTracker(trackerId, store, this.props.params);
+          if (extend) {
+            Object.assign(store.dispatch, extend(this.tracker, this.props));
+          } else {
+            store.dispatch.createApi = name => this.tracker.createApi(name);
+          }
 
-    renderShocked = (client) => {
-      if (!this.tracker) {
-        const res = reducerFactory(this.props, { enhanceReducer });
-        const store = typeof res !== 'function' ? res : createStore(
-          enhanceReducer(res),
-          // eslint-disable-next-line no-underscore-dangle, no-undef
-          window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-        );
+          this.tracker.on('open', this.onOpen);
+          this.tracker.on('close', this.onClose);
 
-        // eslint-disable-next-line react/destructuring-assignment
-        this.tracker = client.createTracker(trackerId, store, this.props.params);
-        if (extend) {
-          Object.assign(store.dispatch, extend(this.tracker, this.props));
-        } else {
-          store.dispatch.createApi = name => this.tracker.createApi(name);
+          this.store = store;
         }
 
-        // Register listeners for connection and disconnection
-        this.tracker.on('init', this.onInit);
-        client.on('connect', this.onConnect);
-        client.on('disconnect', this.onDisconnect);
-
-        this.store = store;
+        return (
+          <Provider store={this.store}>
+            <Target
+              ref={forwardedRef}
+              {...this.props}
+              tracker={this.tracker}
+              online={online}
+            />
+          </Provider>
+        );
       }
 
-      return (
-        <Provider store={this.store}>
-          <Target
-            ref={this.registerNode}
-            {...this.props}
-            tracker={this.tracker}
-          />
-        </Provider>
-      );
+      render() {
+        return (
+          <Consumer>
+            {this.renderShocked}
+          </Consumer>
+        );
+      }
     }
 
-    render() {
-      return (
-        <Consumer>
-          {this.renderShocked}
-        </Consumer>
-      );
-    }
+    return React.forwardRef((props, ref) => <Tracker {...props} forwardedRef={ref} />);
   };
 }
 

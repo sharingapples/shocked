@@ -1,71 +1,76 @@
-const { PKT_TRACKER_ACTION, PKT_TRACKER_EMIT } = require('shocked-common');
+const {
+  PKT_TRACKER_ACTION,
+  PKT_TRACKER_EMIT,
+  PKT_TRACKER_OPEN,
+  PKT_TRACKER_CLOSE,
+  initTracker,
+} = require('shocked-common');
 
 class Tracker {
-  constructor(session, params, id) {
-    this.session = session;
-    this.paramUpdates = params;
+  constructor(id, session, params, serial) {
     this.id = id;
+    this.session = session;
+
+    this.channel = this.getChannel();
 
     this.onAction = this.onAction.bind(this);
+
+    Promise.resolve(this.channel.subscribe(this.onAction, serial)).then((token) => {
+      if (token !== null) {
+        return this.getInitialData().then((initialData) => {
+          this.onAction(initTracker(initialData), token);
+        });
+      }
+      return null;
+    }).then(() => {
+      if (this.isOpen()) {
+        if (this.onOpen) {
+          this.onOpen();
+        }
+        this.session.send(PKT_TRACKER_OPEN(this.id));
+      }
+    });
   }
 
-  start(channel, channelInstance) {
-    this.channel = channel;
-    this.channelInstance = channelInstance;
-
-    channelInstance.subscribe(this.onAction);
+  isOpen() {
+    return this.channel !== null;
   }
 
-  onAction(action) {
-    this.session.send(PKT_TRACKER_ACTION(this.id, action));
+  async getChannel() {
+    throw new Error(`The tracker ${this.constructor.name} must implement getChannel().`);
   }
 
-  // eslint-disable-next-line
-  onCreate() {
-    // Dummy place holder, overrride this method instead of creating constructor
+  async getInitialData() {
+    throw new Error(`The tracker ${this.constructor.name} must implement getInitialData().`);
   }
 
-  get serial() {
-    return this.channelInstance.getSerial();
-  }
-
-  updateParams(params) {
-    Object.assign(this.paramUpdates, params);
-  }
-
-  clearParamUpdates() {
-    const updates = this.paramUpdates;
-    this.paramUpdates = {};
-    return updates;
-  }
-
-  // Get the actions available from the channel that could
-  // update the tracker with the global state of the channel
-  async getActions(serial) {
-    return this.channelInstance.getActions(serial);
-  }
-
-  // eslint-disable-next-line class-methods-use-this, no-unused-vars
-  async getData(params) {
-    throw new Error('Tracker must implement getData() method');
+  onAction(action, serial) {
+    if (this.isOpen()) {
+      this.session.send(PKT_TRACKER_ACTION(this.id, action, serial));
+    }
   }
 
   close() {
-    this.channelInstance.unsubscribe(this.onAction);
+    if (this.isOpen()) {
+      this.session.send(PKT_TRACKER_CLOSE(this.id));
+      if (this.onClose) {
+        this.onClose();
+      }
+
+      this.channel.unsubscribe(this.onAction);
+      this.channel = null;
+    }
   }
 
   emit(event, data) {
-    this.session.send(PKT_TRACKER_EMIT(this.id, event, data));
+    if (this.isOpen()) {
+      this.session.send(PKT_TRACKER_EMIT(this.id, event, data));
+    }
   }
 
-  dispatch(action, channel) {
-    if (channel && channel !== this.channel) {
-      const instance = this.session.service.findChannelInstance(channel);
-      if (instance) {
-        instance.dispatch(action);
-      }
-    } else {
-      this.channelInstance.dispatch(action);
+  dispatch(action) {
+    if (this.isOpen()) {
+      this.channel.publish(action);
     }
   }
 }

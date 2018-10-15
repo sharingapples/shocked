@@ -34,19 +34,17 @@ class ParserError extends Error {
 
 const TYPE_TRACKER_CREATE = 13;
 const TYPE_TRACKER_ACTION = 14;
-const TYPE_TRACKER_CREATE_NEW = 15;
-const TYPE_TRACKER_CREATE_UPDATE = 16;
 const TYPE_TRACKER_API = 17;
 const TYPE_TRACKER_API_RESPONSE = 18;
 const TYPE_TRACKER_EMIT = 19;
 const TYPE_TRACKER_CLOSE = 20;
 const TYPE_TRACKER_CREATE_FAIL = 21;
+const TYPE_TRACKER_OPEN = 22;
 
 const METHOD_MAPS = {
   [TYPE_TRACKER_CREATE]: 'onTrackerCreate',
   [TYPE_TRACKER_ACTION]: 'onTrackerAction',
-  [TYPE_TRACKER_CREATE_NEW]: 'onTrackerCreateNew',
-  [TYPE_TRACKER_CREATE_UPDATE]: 'onTrackerCreateUpdate',
+  [TYPE_TRACKER_OPEN]: 'onTrackerOpen',
   [TYPE_TRACKER_API]: 'onTrackerApi',
   [TYPE_TRACKER_API_RESPONSE]: 'onTrackerApiResponse',
   [TYPE_TRACKER_EMIT]: 'onTrackerEmit',
@@ -57,20 +55,16 @@ exports.PKT_TRACKER_CREATE = (group, params, serial) => (
   JSON.stringify([TYPE_TRACKER_CREATE, group, params, serial])
 );
 
-exports.PKT_TRACKER_ACTION = (group, action) => (
-  JSON.stringify([TYPE_TRACKER_ACTION, group, action])
+exports.PKT_TRACKER_ACTION = (group, action, serial) => (
+  JSON.stringify([TYPE_TRACKER_ACTION, group, action, serial])
 );
 
 exports.PKT_TRACKER_CREATE_FAIL = (group, err) => (
   JSON.stringify([TYPE_TRACKER_CREATE_FAIL, group, err])
 );
 
-exports.PKT_TRACKER_CREATE_NEW = (group, serial, data, apis) => (
-  JSON.stringify([TYPE_TRACKER_CREATE_NEW, group, serial, data, apis])
-);
-
-exports.PKT_TRACKER_CREATE_UPDATE = (group, serial, actions) => (
-  JSON.stringify([TYPE_TRACKER_CREATE_UPDATE, group, serial, actions])
+exports.PKT_TRACKER_OPEN = group => (
+  JSON.stringify([TYPE_TRACKER_OPEN, group])
 );
 
 exports.PKT_TRACKER_API = (group, apiId, name, args) => (

@@ -17,7 +17,6 @@ const wss = new WebSocket.Server({ noServer: true });
 
 function createServer({
   pulseRate = 0,
-  channelDriver,
   httpHandler = defaultHttpHandler,
   logger = null,
 } = {}) {
@@ -42,7 +41,6 @@ function createServer({
   const server = {
     serve: (service) => {
       services.push(service);
-      service.setChannelDriver(channelDriver);
       return service;
     },
 

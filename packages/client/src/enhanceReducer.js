@@ -1,5 +1,4 @@
-import { TYPE_TRACKER_INIT } from './initStore';
-import { TYPE_BATCH_ACTIONS } from './batchActions';
+import { TYPE_TRACKER_INIT, TYPE_BATCH_ACTIONS } from 'shocked-common';
 
 export default function enhanceReduce(reducer) {
   return function enhancedReducer(state = null, action) {

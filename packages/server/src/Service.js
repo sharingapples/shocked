@@ -1,9 +1,6 @@
 const UrlPattern = require('url-pattern');
 const Session = require('./Session');
 const Tracker = require('./Tracker');
-const Channel = require('./Channel');
-
-const configureDefaultChannelDriver = require('./DefaultChannelDriver');
 
 function validateTracker(ServiceTracker) {
   if (ServiceTracker === null) {
@@ -32,19 +29,12 @@ class Service {
     this.urlMatcher = url ? new UrlPattern(url) : null;
     this.host = host;
     this.trackers = {};
-    this.channelDriver = null;
   }
 
   close() {
     // Perform cleanup when the server is closing
     if (this.onClose) {
       this.close();
-    }
-  }
-
-  setChannelDriver(channelDriver) {
-    if (!this.channelDriver) {
-      this.channelDriver = channelDriver || configureDefaultChannelDriver();
     }
   }
 
@@ -78,25 +68,7 @@ class Service {
     };
   }
 
-  findChannelInstance(channel) {
-    return this.channelDriver.findInstance(channel);
-  }
-
-  subscribe(channel, listener) {
-    const instance = this.channelDriver.getInstance(channel);
-    instance.subscribe(listener);
-    return instance;
-  }
-
-  unsubscribe(channel, listener) {
-    const instance = this.channelDriver.findInstance(channel);
-    if (instance) {
-      instance.unsubscribe(listener);
-    }
-    return instance;
-  }
-
-  async createTracker(trackerName, session, params) {
+  createTracker(trackerName, session, params, serial) {
     const info = this.trackers[trackerName];
 
     if (!info) {
@@ -104,16 +76,7 @@ class Service {
     }
 
     const { TrackerClass } = info;
-    const tracker = new TrackerClass(session, params, trackerName);
-    const channel = await tracker.onCreate();
-    if (!(channel instanceof Channel)) {
-      throw new Error(`${trackerName}Tracker must return a channel on create.`);
-    }
-
-    // Setup channel and channelInstance
-    const channelInstance = this.channelDriver.getInstance(channel);
-    tracker.start(channel, channelInstance);
-    return tracker;
+    return new TrackerClass(trackerName, session, params, serial);
   }
 
   validateTrackerApi(trackerName, api) {

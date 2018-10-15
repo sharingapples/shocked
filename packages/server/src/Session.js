@@ -1,8 +1,6 @@
 const {
   createParser,
   PKT_TRACKER_CREATE_FAIL,
-  PKT_TRACKER_CREATE_NEW,
-  PKT_TRACKER_CREATE_UPDATE,
   PKT_TRACKER_API_RESPONSE,
 } = require('shocked-common');
 const WebSocket = require('ws');
@@ -13,45 +11,39 @@ class Session {
     // Do not allow creating multiple trackers on the same group
     // for the same session. Could not think of a use case
     if (this.trackers[group]) {
-      return this.send(PKT_TRACKER_CREATE_FAIL(group, 'Another tracker is still open. Multiple trackers on the same group are not allowed for the same session'));
+      this.send(PKT_TRACKER_CREATE_FAIL(group, `Another tracker for ${group} is still open. Multiple trackers on the same group are not allowed for the same session`));
+      return;
     }
 
-    const tracker = await this.service.createTracker(group, this, params);
+    const tracker = this.service.createTracker(group, this, params, serial);
     if (!tracker) {
-      return this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group} not recoginized`));
+      this.send(PKT_TRACKER_CREATE_FAIL(group, `Tracker ${group} not recoginized`));
+      return;
     }
 
     // Keep this tracker
     this.trackers[group] = tracker;
-
-    // Check if the client needs a full refresh or just some actions
-    if (serial) {
-      // In case of re-connection it might just be enough to
-      // send some missing actions
-      const actions = await tracker.getActions(serial);
-      if (actions) {
-        return this.send(PKT_TRACKER_CREATE_UPDATE(group, await tracker.serial, actions));
-      }
-    }
-
-    // Looks like the tracker needs to be fully initialized
-    const data = await tracker.getData(params);
-    const apis = this.service.getTrackerApis(group);
-    const pkt = PKT_TRACKER_CREATE_NEW(group, await tracker.serial, data, apis);
-    return this.send(pkt);
   }
 
   async onTrackerApi(group, sn, api, args) {
+    const tracker = this.trackers[group];
     try {
-      const tracker = this.trackers[group];
       if (!tracker) {
         throw new Error(`Tracker not available for ${group}, may be already closed.`);
       }
 
-      this.service.validateTrackerApi(group, api);
+      try {
+        this.service.validateTrackerApi(group, api);
+      } catch (err) {
+        if (tracker.onApiRequest) {
+          const res = await tracker.onApiRequest(api, args);
+          return this.send(PKT_TRACKER_API_RESPONSE(group, sn, true, res));
+        }
+      }
       // const fn = tracker[api];
       const res = await tracker[api](...args);
-      return this.send(PKT_TRACKER_API_RESPONSE(group, sn, true, res, tracker.clearParamUpdates()));
+      // TODO: Figure out the use of clearParamUpdates and may be deprecate it
+      return this.send(PKT_TRACKER_API_RESPONSE(group, sn, true, res, null));
     } catch (err) {
       debug(err);
       if (this.logger) {
@@ -79,22 +71,28 @@ class Session {
     });
   }
 
+  isAlive() {
+    return this.ws.readyState === WebSocket.OPEN;
+  }
+
   send(data) {
     if (this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(data);
+      return true;
     }
+
+    return false;
   }
 
   get(name) {
     return this.data[name];
   }
 
-  constructor(service, ws, inputs, logger) {
+  constructor(service, ws, sessionData, logger) {
     this.service = service;
     this.ws = ws;
     this.logger = logger;
-    this.uniqueId = 0;
-    this.data = inputs;
+    this.data = sessionData;
 
     // Trackers created for the session
     this.trackers = {};
@@ -107,6 +105,10 @@ class Session {
 
     ws.on('close', () => {
       this.cleanUp();
+    });
+
+    ws.on('error', (e) => {
+      console.warn(e);
     });
 
     ws.on('message', (msg) => {

@@ -52,6 +52,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     }
 
     reconnectTimerHandle = setTimeout(() => {
+      console.log('Executing reconnection timeout');
       reconnectTimerHandle = null;
       // eslint-disable-next-line no-use-before-define
       client.reconnect();
@@ -79,6 +80,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     };
 
     sock.onopen = () => {
+      console.log('Socket is now open');
       // Clear any auto reconnect attempts
       clearRetry();
 
@@ -103,22 +105,22 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) {
         // eslint-disable-next-line no-use-before-define
         if (socket === null || socket.readyState !== WebSocket.OPEN) {
-        // Try to reconnect again after sometime
-        setupReconnection(RECONNECT_INTERVAL);
-      }
+          // Try to reconnect again after sometime
+          setupReconnection(RECONNECT_INTERVAL);
+        }
       }
 
       // In some cases, the close event of the previous socket might arrive later than the
       // open event of the new connection, avoid making a connection here
       // eslint-disable-next-line no-use-before-define
       if (socket === null || socket.readyState !== WebSocket.OPEN) {
-      trackers.forEach((tracker) => {
-        // Let all the trackers know that the client is not available
-        tracker.onDisconnect();
-      });
+        trackers.forEach((tracker) => {
+          // Let all the trackers know that the client is not available
+          tracker.onDisconnect();
+        });
 
-      // Fire the close event on client
-      eventManager.emit('disconnect', e.code);
+        // Fire the close event on client
+        eventManager.emit('disconnect', e.code);
       }
     };
 
@@ -130,24 +132,24 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     return sock;
   }
 
-  parser.onTrackerCreateNew = (trackerId, serial, data, apis) => {
+  parser.onTrackerOpen = (trackerId) => {
     const tracker = findTracker(trackerId);
     if (tracker) {
-      tracker.onCreate(serial, data, apis);
+      tracker.onOpen(trackerId);
     }
   };
 
-  parser.onTrackerCreateUpdate = (trackerId, serial, actions) => {
+  parser.onTrackerClose = (trackerId) => {
     const tracker = findTracker(trackerId);
     if (tracker) {
-      tracker.onUpdate(serial, actions);
+      tracker.onClose(trackerId);
     }
   };
 
-  parser.onTrackerAction = (trackerId, action) => {
+  parser.onTrackerAction = (trackerId, action, serial) => {
     const tracker = findTracker(trackerId);
     if (tracker) {
-      tracker.onAction(action);
+      tracker.onAction(action, serial);
     }
   };
 
@@ -191,6 +193,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       }
 
       if (socket !== null) {
+        console.log('Closing socket from connect', new Error().stack);
         socket.close();
       }
 
@@ -215,6 +218,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
       // Since its a reconnect attempt, we will close existing socket
       if (socket !== null) {
+        console.log('Closing socket from reconnect', new Error().stack);
         socket.close();
       }
 
@@ -223,6 +227,7 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     },
 
     close: () => {
+      console.log('Closing socket', new Error().stack);
       if (socket) {
         socket.close();
       }
@@ -254,12 +259,6 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
       // Include the tracker in the list
       trackers.push(tracker);
-
-      // Send a connect event if the client is already connect
-      if (client.isConnected()) {
-        tracker.onConnect(client);
-      }
-
       return tracker;
     },
   };

@@ -3,11 +3,10 @@ import {
   PKT_TRACKER_CLOSE,
   PKT_TRACKER_CREATE,
   PKT_TRACKER_API,
+  TYPE_BATCH_ACTIONS,
 } from 'shocked-common';
 import CloseError from './CloseError';
 import TimeoutError from './TimeoutError';
-import { initStore } from './initStore';
-import { batchActions } from './batchActions';
 
 const defaultOptions = {
   timeout: 30000,
@@ -35,6 +34,7 @@ class TrackerClient extends EventEmitter {
 
   onDisconnect() {
     this.client = null;
+    this.emit('close');
 
     // The api calls are not expected to be completed now
     // reject them with an error
@@ -49,24 +49,13 @@ class TrackerClient extends EventEmitter {
     }
   }
 
-  onCreate(serial, data, apis) {
-    this.serial = serial;
-
-    // Generate api as soon as the tracker is opened
-    this.apis = apis.map(name => this.createApi(name));
-
-    this.store.dispatch(initStore(data));
-
-    // Also emit a start event, with the initial data
-    this.emit('init', data);
-    this.emit('online');
+  onOpen() {
+    console.log('Emitting open event');
+    this.emit('open');
   }
 
-  onUpdate(serial, actions) {
-    this.serial = serial;
-
-    this.store.dispatch(batchActions(actions));
-    this.emit('online');
+  onClose() {
+    this.emit('close');
   }
 
   createApi(name) {
@@ -74,6 +63,7 @@ class TrackerClient extends EventEmitter {
       this.sn += 1;
       const callId = this.sn;
       const pkt = PKT_TRACKER_API(this.group, callId, name, args);
+      console.log(`Initiating call ${callId}:${name}(${args.map(a => String(a)).join(', ')})`);
       this.client.send(pkt);
 
       // Setup a timeout, to cleanup in case a responsee is not
@@ -109,9 +99,20 @@ class TrackerClient extends EventEmitter {
     this.finishApi(callId, status, response);
   }
 
-  onAction(action) {
-    // TODO: Validate serial number, the difference should always be 1
-    this.serial = action.$serial$;
+  onAction(action, serial) {
+    if (process.env.NODE_ENV === 'development') {
+      // Make sure the serial number is valid
+      if (this.serial !== null) {
+        const diff = serial.num - this.serial.num;
+        if (diff <= 0) {
+          console.warn(`Shocked::Tracker - The action serial number are supposed to be incremental, got ${serial} after ${this.serial}`);
+        } else if (diff > 1 && action.type !== TYPE_BATCH_ACTIONS) {
+          console.warn(`Shocked::Tracker - The action serial number jumped from ${this.serial} to ${serial} but didn't get a batch action`);
+        }
+      }
+    }
+
+    this.serial = serial;
     this.store.dispatch(action);
   }
 
