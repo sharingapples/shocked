@@ -59,6 +59,11 @@ class TrackerClient extends EventEmitter {
 
   createApi(name) {
     return (...args) => new Promise((resolve, reject) => {
+      if (!this.client) {
+        reject(new Error(`No connection to execute api: ${name}(${args.join(', ')})`));
+        return;
+      }
+
       this.sn += 1;
       const callId = this.sn;
       const pkt = PKT_TRACKER_API(this.group, callId, name, args);
