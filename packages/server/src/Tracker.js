@@ -21,20 +21,27 @@ class Tracker {
 
     this.onAction = this.onAction.bind(this);
 
-    Promise.resolve(this.channel.subscribe(this.onAction, serial)).then((token) => {
-      if (token !== null) {
+    // TODO: Handle the error that can occur during subscription
+    // Most likely send an event
+    Promise.resolve(this.channel.subscribe(this.onAction, serial))
+      .then((token) => {
+        if (token) {
         return this.getInitialData().then((initialData) => {
           this.onAction(initTracker(initialData), token);
         });
       }
       return null;
-    }).then(() => {
+      })
+      .then(() => {
       if (this.isOpen()) {
         if (this.onOpen) {
           this.onOpen();
         }
         this.session.send(PKT_TRACKER_OPEN(this.id));
       }
+      })
+      .catch((err) => {
+        this.emit('error', { message: err.message });
     });
   }
 
