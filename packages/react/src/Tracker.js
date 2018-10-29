@@ -4,6 +4,10 @@ import { createProvider } from 'react-redux';
 import { enhanceReducer } from 'shocked-client';
 import { Consumer } from './Shocked';
 
+const errorWarn = (err) => {
+  console.warn('Tracker Error', err);
+};
+
 function track(trackerId, reducerFactory, extend) {
   const Provider = createProvider(trackerId);
 
@@ -51,6 +55,7 @@ function track(trackerId, reducerFactory, extend) {
 
           this.tracker.on('open', this.onOpen);
           this.tracker.on('close', this.onClose);
+          this.tracker.on('error', onError || errorWarn);
 
           this.store = store;
         }
