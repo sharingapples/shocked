@@ -36,7 +36,7 @@ function track(trackerId, reducerFactory, extend) {
 
       renderShocked = (client) => {
         const { online } = this.state;
-        const { forwardedRef } = this.props;
+        const { forwardedRef, onError, ...other } = this.props;
         if (!this.tracker) {
           const res = reducerFactory(this.props, { enhanceReducer });
           const store = typeof res !== 'function' ? res : createStore(
@@ -64,7 +64,7 @@ function track(trackerId, reducerFactory, extend) {
           <Provider store={this.store}>
             <Target
               ref={forwardedRef}
-              {...this.props}
+              {...other}
               tracker={this.tracker}
               online={online}
             />
