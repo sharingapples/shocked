@@ -40,6 +40,7 @@ const TYPE_TRACKER_EMIT = 19;
 const TYPE_TRACKER_CLOSE = 20;
 const TYPE_TRACKER_CREATE_FAIL = 21;
 const TYPE_TRACKER_OPEN = 22;
+const TYPE_TRACKER_TIMESTAMP = 23;
 
 const METHOD_MAPS = {
   [TYPE_TRACKER_CREATE]: 'onTrackerCreate',
@@ -49,6 +50,7 @@ const METHOD_MAPS = {
   [TYPE_TRACKER_API_RESPONSE]: 'onTrackerApiResponse',
   [TYPE_TRACKER_EMIT]: 'onTrackerEmit',
   [TYPE_TRACKER_CLOSE]: 'onTrackerClose',
+  [TYPE_TRACKER_TIMESTAMP]: 'onTrackerTimestamp',
 };
 
 exports.PKT_TRACKER_CREATE = (group, params, serial) => (
@@ -81,6 +83,9 @@ exports.PKT_TRACKER_EMIT = (group, event, data) => (
 
 exports.PKT_TRACKER_CLOSE = group => (
   JSON.stringify([TYPE_TRACKER_CLOSE, group])
+
+exports.PKT_TRACKER_TIMESTAMP = (group, timestamp) => (
+  JSON.stringify([TYPE_TRACKER_TIMESTAMP, group, timestamp])
 );
 
 exports.createParser = () => {
