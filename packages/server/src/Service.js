@@ -34,7 +34,7 @@ class Service {
   close() {
     // Perform cleanup when the server is closing
     if (this.onClose) {
-      this.close();
+      this.onClose();
     }
   }
 
