@@ -26,23 +26,23 @@ class Tracker {
     Promise.resolve(this.channel.subscribe(this.onAction, serial))
       .then((token) => {
         if (token) {
-        return this.getInitialData().then((initialData) => {
-          this.onAction(initTracker(initialData), token);
-        });
-      }
-      return null;
+          return this.getInitialData().then((initialData) => {
+            this.onAction(initTracker(initialData), token);
+          });
+        }
+        return null;
       })
       .then(() => {
-      if (this.isOpen()) {
-        if (this.onOpen) {
-          this.onOpen();
+        if (this.isOpen()) {
+          if (this.onOpen) {
+            this.onOpen();
+          }
+          this.session.send(PKT_TRACKER_OPEN(this.id));
         }
-        this.session.send(PKT_TRACKER_OPEN(this.id));
-      }
       })
       .catch((err) => {
         this.emit('error', { message: err.message });
-    });
+      });
   }
 
   isOpen() {
