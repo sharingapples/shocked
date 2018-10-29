@@ -16,7 +16,7 @@ const defaultHttpHandler = (req, res) => {
 const wss = new WebSocket.Server({ noServer: true });
 
 function createServer({
-  pulseRate = 0,
+  pulseRate = 30000,
   httpHandler = defaultHttpHandler,
   logger = null,
 } = {}) {
@@ -95,8 +95,12 @@ function createServer({
 
     // Everything's ok, start the session
     return wss.handleUpgrade(request, socket, head, (ws) => {
+      debug(`New connection. Total connections: ${wss.clients.size}`);
       // Attach the ping-pong handler
       if (pulseRate > 0) {
+        // Mark the socket as alive as soon as a connection is made
+        // eslint-disable-next-line no-param-reassign
+        ws.isAlive = true;
         ws.on('pong', beat);
       }
 
@@ -108,6 +112,12 @@ function createServer({
           debug('Session socket error', err);
         }
       });
+
+      if (process.env.NODE_ENV === 'development') {
+        ws.on('close', () => {
+          debug(`Closing connection. Total connections: ${wss.clients.size}`);
+        });
+      }
 
       debug(`Start session for ${socket.remoteAddress}:${socket.remotePort}`);
       service.start(reqParams, ws, logger);
