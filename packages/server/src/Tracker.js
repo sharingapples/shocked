@@ -13,6 +13,10 @@ class Tracker {
     this.id = id;
     this.session = session;
 
+    if (this.onCreate) {
+      this.onCreate(params);
+    }
+
     this.channel = this.getChannel();
 
     this.onAction = this.onAction.bind(this);
