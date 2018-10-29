@@ -53,6 +53,10 @@ class Shocked extends Component<Props> {
     }
   }
 
+  componentWillUnmount() {
+    this.client.close();
+  }
+
   setPath(path) {
     if (path) {
       // Attempt a reconnect if path changes
