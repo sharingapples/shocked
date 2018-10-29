@@ -50,9 +50,9 @@ class Tracker {
     }
   }
 
-  close() {
+  close(code, message) {
     if (this.isOpen()) {
-      this.session.send(PKT_TRACKER_CLOSE(this.id));
+      this.session.send(PKT_TRACKER_CLOSE(this.id, code, message));
       if (this.onClose) {
         this.onClose();
       }

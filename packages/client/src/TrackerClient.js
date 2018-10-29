@@ -53,8 +53,8 @@ class TrackerClient extends EventEmitter {
     this.emit('open');
   }
 
-  onClose() {
-    this.emit('close');
+  onClose(code, message) {
+    this.emit('close', { code, message });
   }
 
   createApi(name) {

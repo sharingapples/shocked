@@ -136,10 +136,10 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
     }
   };
 
-  parser.onTrackerClose = (trackerId) => {
+  parser.onTrackerClose = (trackerId, code, message) => {
     const tracker = findTracker(trackerId);
     if (tracker) {
-      tracker.onClose(trackerId);
+      tracker.onClose(code, message);
     }
   };
 

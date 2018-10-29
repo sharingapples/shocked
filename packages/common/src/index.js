@@ -81,8 +81,9 @@ exports.PKT_TRACKER_EMIT = (group, event, data) => (
   JSON.stringify([TYPE_TRACKER_EMIT, group, event, data])
 );
 
-exports.PKT_TRACKER_CLOSE = group => (
-  JSON.stringify([TYPE_TRACKER_CLOSE, group])
+exports.PKT_TRACKER_CLOSE = (group, code, message) => (
+  JSON.stringify([TYPE_TRACKER_CLOSE, group, code, message])
+);
 
 exports.PKT_TRACKER_TIMESTAMP = (group, timestamp) => (
   JSON.stringify([TYPE_TRACKER_TIMESTAMP, group, timestamp])
