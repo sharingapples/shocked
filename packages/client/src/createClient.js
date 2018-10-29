@@ -258,6 +258,11 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
 
       // Include the tracker in the list
       trackers.push(tracker);
+
+      // If the client is already connected, make sure we start connecting the tracker as well
+      if (client.isConnected()) {
+        tracker.onConnect(client);
+      }
       return tracker;
     },
   };
