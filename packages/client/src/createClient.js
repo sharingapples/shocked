@@ -1,4 +1,4 @@
-import { createParser } from 'shocked-common';
+import { createParser, PKT_TRACKER_TIMESTAMP } from 'shocked-common';
 import TrackerClient from './TrackerClient';
 
 // Try reconnection in few second(s)
@@ -163,6 +163,11 @@ function createClient(endpoint, WebSocket = global.WebSocket) {
       tracker.emit(event, data);
     }
   };
+
+  parser.onTrackerTimestamp = trackerId => (
+    // eslint-disable-next-line no-use-before-define
+    client.send(PKT_TRACKER_TIMESTAMP(trackerId, Date.now()))
+  );
 
   // Initialize with a connection attempt
   let socket = null;
