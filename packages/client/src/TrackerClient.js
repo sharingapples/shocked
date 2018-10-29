@@ -22,19 +22,19 @@ class TrackerClient extends EventEmitter {
     this.apis = null;
     this.serial = null;
     this.options = options;
-
     this.sn = 0;
     this.calls = [];
   }
 
   onConnect(client) {
     this.client = client;
+    this.emit('connect');
     client.send(PKT_TRACKER_CREATE(this.group, this.params, this.serial));
   }
 
   onDisconnect() {
     this.client = null;
-    this.emit('close');
+    this.emit('disconnect');
 
     // The api calls are not expected to be completed now
     // reject them with an error
