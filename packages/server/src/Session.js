@@ -62,6 +62,13 @@ class Session {
     }
   }
 
+  onTrackerTimestamp(group, timestamp) {
+    const tracker = this.trackers[group];
+    if (tracker && tracker.updateTimestamp) {
+      tracker.updateTimestamp(timestamp);
+    }
+  }
+
   /**
    * Allow closing session
    */
@@ -102,6 +109,7 @@ class Session {
     parser.onTrackerCreate = this.onTrackerCreate.bind(this);
     parser.onTrackerApi = this.onTrackerApi.bind(this);
     parser.onTrackerClose = this.onTrackerClose.bind(this);
+    parser.onTrackerTimestamp = this.onTrackerTimestamp.bind(this);
 
     ws.on('close', () => {
       this.cleanUp();
