@@ -5,6 +5,7 @@ const {
   PKT_TRACKER_CLOSE,
   PKT_TRACKER_TIMESTAMP,
   initTracker,
+  batchActions,
 } = require('shocked-common');
 
 class Tracker {
@@ -47,7 +48,9 @@ class Tracker {
 
   onAction(action, serial) {
     if (this.isOpen()) {
-      this.session.send(PKT_TRACKER_ACTION(this.id, action, serial));
+      // Convert array action into batch
+      const actionToDispatch = Array.isArray(action) ? batchActions(action) : action;
+      this.session.send(PKT_TRACKER_ACTION(this.id, actionToDispatch, serial));
     }
   }
 
