@@ -3,6 +3,7 @@ const {
   PKT_TRACKER_EMIT,
   PKT_TRACKER_OPEN,
   PKT_TRACKER_CLOSE,
+  PKT_TRACKER_TIMESTAMP,
   initTracker,
 } = require('shocked-common');
 
@@ -71,6 +72,18 @@ class Tracker {
   dispatch(action) {
     if (this.isOpen()) {
       this.channel.publish(action);
+    }
+  }
+
+  // Used for calculating the latency
+  getClientTimestamp() {
+    if (process.env.NODE_ENV === 'development') {
+      if (!this.updateTimestamp) {
+        throw new Error(`${this.constructor.name} doesn't define updateTimestamp but is calling getClientTimestamp.`);
+      }
+    }
+    if (this.isOpen()) {
+      this.session.send(PKT_TRACKER_TIMESTAMP(this.id, Date.now()));
     }
   }
 }
