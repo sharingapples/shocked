@@ -8,5 +8,6 @@
     "prepare": "yarn run lint"
   },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
 }

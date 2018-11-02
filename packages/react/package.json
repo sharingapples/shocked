@@ -1,6 +1,6 @@
 {
   "name": "shocked-react",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "React client side bindings for shocked api",
   "main": "dist/index.js",
   "module": "src/index.js",
@@ -24,5 +24,6 @@
     "react": ">16"
   },
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
 }
