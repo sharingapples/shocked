@@ -124,8 +124,5 @@ module.exports = function configureRedisChannelDriver(redis, redisSubscriber, op
     }
   }
 
-  // Expose the quit method for closing the redis connections
-  RedisChannel.quit = subscriber.quit.bind(subscriber);
-
   return RedisChannel;
 };
