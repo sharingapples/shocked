@@ -3,12 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { batchActions } = require('shocked-common');
 
-module.exports = function configureRedisChannelDriver(redis, options) {
+module.exports = function configureRedisChannelDriver(redis, redisSubscriber, options) {
   const queueSize = (options && options.queueSize) || 100;
   const getActions = fs.readFileSync(path.resolve(__dirname, 'getActions.lua'), 'utf-8');
 
   const subscriptionMap = {};
-  const subscriber = redis.duplicate();
+  const subscriber = redisSubscriber;
 
   const driver = {
     getSerialToken(channelId, serialNumber) {
