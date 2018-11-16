@@ -16,7 +16,7 @@
     "prepare": "yarn run lint && yarn run clean && yarn run build"
   },
   "dependencies": {
-    "react-redux": "^5.0.7",
+    "react-redux": "^5.1.1",
     "redux": "^4.0.0",
     "shocked-client": "^1.0.11"
   },
