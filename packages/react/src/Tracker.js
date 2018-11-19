@@ -21,7 +21,6 @@ class Tracker extends Component<Props> {
     const {
       name, params, store, onInit,
     } = props;
-    console.log('Context is', context, new Error().stack);
     const client = context;
     const trackerStore = typeof store === 'function' ? store(enhanceReducer) : store;
 
@@ -46,6 +45,7 @@ class Tracker extends Component<Props> {
       ['name', 'params', 'store', 'onInit'].forEach((prop) => {
         // eslint-disable-next-line react/destructuring-assignment
         if (this.props[prop] !== prevProps[prop]) {
+          // eslint-disable-next-line no-console
           console.warn(`The prop ${prop} has changed on the Tracker component which is not supported at the moment. Make sure you don't you anonymous function call as callback parameter in the tracker`);
         }
       });
