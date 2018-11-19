@@ -1,6 +1,6 @@
 {
   "name": "shocked-react",
-  "version": "1.1.0",
+  "version": "1.0.14",
   "description": "React client side bindings for shocked api",
   "main": "dist/index.js",
   "module": "src/index.js",
