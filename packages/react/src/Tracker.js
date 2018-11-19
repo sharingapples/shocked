@@ -1,88 +1,70 @@
+/* global __DEV__ */
+// @flow
 import React, { Component } from 'react';
-import { createStore } from 'redux';
 import { createProvider } from 'react-redux';
 import { enhanceReducer } from 'shocked-client';
-import { Consumer } from './Shocked';
+import { ShockedContext } from './Shocked';
 
-const errorWarn = (err) => {
-  console.warn('Tracker Error', err);
-};
-
-function track(trackerId, reducerFactory, extend) {
-  const Provider = createProvider(trackerId);
-
-  return (Target) => {
-    class Tracker extends Component {
-      state = {
-        online: false,
-      };
-
-      componentWillUnmount() {
-        if (this.tracker) {
-          this.tracker.close();
-
-          // Clear up
-          this.tracker = null;
-        }
-      }
-
-      onOpen = () => {
-        this.setState({ online: true });
-      }
-
-      onClose = () => {
-        this.setState({ online: false });
-      }
-
-      renderShocked = (client) => {
-        const { online } = this.state;
-        const { forwardedRef, onError, ...other } = this.props;
-        if (!this.tracker) {
-          const res = reducerFactory(this.props, { enhanceReducer });
-          const store = typeof res !== 'function' ? res : createStore(
-            enhanceReducer(res),
-            // eslint-disable-next-line no-underscore-dangle, no-undef
-            window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-          );
-
-          // eslint-disable-next-line react/destructuring-assignment
-          this.tracker = client.createTracker(trackerId, store, this.props.params);
-          if (extend) {
-            Object.assign(store.dispatch, extend(this.tracker, this.props));
-          } else {
-            store.dispatch.createApi = name => this.tracker.createApi(name);
-          }
-
-          this.tracker.on('open', this.onOpen);
-          this.tracker.on('close', this.onClose);
-          this.tracker.on('error', onError || errorWarn);
-
-          this.store = store;
-        }
-
-        return (
-          <Provider store={this.store}>
-            <Target
-              ref={forwardedRef}
-              {...other}
-              tracker={this.tracker}
-              online={online}
-            />
-          </Provider>
-        );
-      }
-
-      render() {
-        return (
-          <Consumer>
-            {this.renderShocked}
-          </Consumer>
-        );
-      }
-    }
-
-    return React.forwardRef((props, ref) => <Tracker {...props} forwardedRef={ref} />);
-  };
+type Props = {
+  name: string,
+  params: {},
+  store: {} | () => {},
+  onInit: (tracker: {}) => void,
 }
 
-export default track;
+class Tracker extends Component<Props> {
+  static contextType = ShockedContext;
+
+  constructor(props, context) {
+    super(props, context);
+
+    const {
+      name, params, store, onInit,
+    } = props;
+    console.log('Context is', context, new Error().stack);
+    const client = context;
+    const trackerStore = typeof store === 'function' ? store(enhanceReducer) : store;
+
+    const tracker = client.createTracker(name, trackerStore, params);
+
+    // Expose the createApi method via dispatch
+    trackerStore.dispatch.createApi = tracker.createApi.bind(tracker);
+
+    if (onInit) {
+      onInit(tracker);
+    }
+
+    this.state = {
+      tracker,
+      store: trackerStore,
+      Provider: createProvider(name),
+    };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (__DEV__) {
+      ['name', 'params', 'store', 'onInit'].forEach((prop) => {
+        // eslint-disable-next-line react/destructuring-assignment
+        if (this.props[prop] !== prevProps[prop]) {
+          console.warn(`The prop ${prop} has changed on the Tracker component which is not supported at the moment. Make sure you don't you anonymous function call as callback parameter in the tracker`);
+        }
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    const { tracker } = this.state;
+    tracker.close();
+  }
+
+  render() {
+    const { name, params, ...other } = this.props;
+    const { Provider, store } = this.state;
+
+    return (
+      <Provider store={store} {...other} />
+    );
+  }
+}
+
+export default Tracker;

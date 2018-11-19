@@ -11,7 +11,7 @@ type Props = {
   children: any,
 };
 
-const ShockedContext = React.createContext();
+export const ShockedContext = React.createContext();
 
 class Shocked extends Component<Props> {
   constructor(props) {
@@ -73,7 +73,5 @@ class Shocked extends Component<Props> {
     return <ShockedContext.Provider value={this.client} children={children} />;
   }
 }
-
-export const { Consumer } = ShockedContext;
 
 export default Shocked;

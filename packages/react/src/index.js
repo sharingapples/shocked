@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { TYPE_TRACKER_INIT, TYPE_BATCH_ACTIONS } from 'shocked-client';
 import Shocked from './Shocked';
-import track from './Tracker';
+import Tracker from './Tracker';
 
 
 const connectTracker = tracker => (mapStateToProps, mapApiToProps, mergeProps, options) => (
@@ -15,7 +15,8 @@ export {
   TYPE_TRACKER_INIT,
   TYPE_BATCH_ACTIONS,
 
-  track,
+  Tracker,
   Shocked,
+
   connectTracker as connect,
 };
