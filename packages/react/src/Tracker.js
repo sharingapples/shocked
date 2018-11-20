@@ -8,6 +8,7 @@ import { ShockedContext } from './Shocked';
 type Props = {
   name: string,
   params: {},
+  apiProvider: (tracker: {}) => {},
   store: {} | () => {},
   onInit: (tracker: {}) => void,
 }
@@ -19,7 +20,7 @@ class Tracker extends Component<Props> {
     super(props, context);
 
     const {
-      name, params, store, onInit,
+      name, apiProvider, params, store, onInit,
     } = props;
     const client = context;
     const trackerStore = typeof store === 'function' ? store(enhanceReducer) : store;
@@ -29,8 +30,16 @@ class Tracker extends Component<Props> {
     // Expose the createApi method via dispatch
     trackerStore.dispatch.createApi = tracker.createApi.bind(tracker);
 
+    const api = apiProvider(tracker);
+    if (typeof api !== 'object') {
+      throw new Error('The tracker api must be an object with key as api name and value as api function call');
+    }
+
+    // Decorate the dispatch method with the api calls
+    Object.assign(trackerStore.dispatch, api);
+
     if (onInit) {
-      onInit(tracker);
+      onInit(tracker, trackerStore);
     }
 
     this.state = {
