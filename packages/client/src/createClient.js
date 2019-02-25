@@ -4,6 +4,14 @@ import {
 
 const EventEmitter = require('events');
 
+export function createApi(name) {
+  return payload => ({
+    type: API,
+    name,
+    payload,
+  });
+}
+
 function getHost(endpoint) {
   if (endpoint === null || endpoint === undefined) {
     return null;
@@ -150,6 +158,8 @@ function createClient(endpoint, {
       disconnect();
     }
   };
+
+  client.isConnected = isConnected;
 
   client.setEndpoint = (endPoint) => {
     const newHost = getHost(endPoint);
