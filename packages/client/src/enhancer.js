@@ -38,8 +38,8 @@ const enableShocking = reducer => (
   }
 );
 
-export default function shockedEnhancer() {
-  const client = createClient();
+export default function shockedEnhancer(url = null, options = {}) {
+  const client = createClient(url, options);
   let serial = null;
   let context = null;
 
