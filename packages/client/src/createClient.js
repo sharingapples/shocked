@@ -123,11 +123,8 @@ function createClient(endpoint, sessionId = null, {
     }
 
     client.emit('connecting', attempts);
-    ws = new WebSocket(host, {
-      headers: {
-        Cookie: `${SESSION}=${currentSessionId || nanoid()}`,
-      },
-    });
+    const cookie = `${SESSION}=${currentSessionId}`;
+    ws = new WebSocket(host, [], { headers: { cookie } });
     ws.onopen = onOpen;
     ws.onclose = onClose;
     ws.onmessage = onMessage;

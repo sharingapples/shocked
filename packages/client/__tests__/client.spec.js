@@ -1,5 +1,8 @@
 import { Server } from 'ws';
-import { API_RESPONSE, EVENT } from 'shocked-common';
+import { API_RESPONSE, EVENT, SESSION } from 'shocked-common';
+import WebSocket from 'isomorphic-ws';
+import nanoid from 'nanoid';
+
 import { createClient } from '../src';
 
 const port = process.env.PORT || 9999;
@@ -16,8 +19,9 @@ function setupEvent(source, event, timeout = 100) {
 }
 
 let mockClient = null;
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   mockClient = ws;
+  mockClient.upgradeReq = req;
 });
 
 const mockServer = {
@@ -25,6 +29,20 @@ const mockServer = {
     mockClient.once('message', () => {
       mockClient.send(JSON.stringify(obj));
     });
+  },
+  getCookie: () => {
+    const { cookie } = mockClient.upgradeReq.headers;
+    if (!cookie) {
+      return null;
+    }
+
+    const key = `${SESSION}=`;
+    return cookie.split(';').reduce((res, v) => {
+      if (v.startsWith(key)) {
+        return v.substr(key.length);
+      }
+      return res;
+    }, null);
   },
   sendEvent: (name, data) => {
     mockClient.send(JSON.stringify([EVENT, name, data]));
@@ -58,8 +76,10 @@ const mockStatus = createMockNetStatus();
 
 describe('createClient specification', () => {
   it('createClient integration', async () => {
-    const client = createClient(`ws://localhost:${port}`);
+    const sessionId = nanoid();
+    const client = createClient(`ws://localhost:${port}`, sessionId, { WebSocket });
     await expect(setupEvent(client, 'open')).resolves.toEqual([]);
+    expect(mockServer.getCookie()).toBe(sessionId);
     mockServer.setResponse([API_RESPONSE, 1, null, 3]);
     const res = await client.execute('add', [1, 2]);
     expect(res).toBe(3);
@@ -73,7 +93,7 @@ describe('createClient specification', () => {
   });
 
   it('reconnection check', async () => {
-    const client = createClient(`ws://localhost:${port}`, { netStatus: mockStatus });
+    const client = createClient(`ws://localhost:${port}`, null, { netStatus: mockStatus, WebSocket });
     const connecting = setupEvent(client, 'connecting');
     const open = setupEvent(client, 'open');
     const close = setupEvent(client, 'close');
