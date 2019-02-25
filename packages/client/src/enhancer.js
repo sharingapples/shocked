@@ -14,7 +14,7 @@ export function getConnectivity(state) {
   return state.connectivity;
 }
 
-export function updateRemoteUrl(url) {
+export function setUrl(url) {
   return {
     type: UPDATE_REMOTE_URL,
     payload: url,
@@ -38,7 +38,7 @@ const enableShocking = reducer => (
   }
 );
 
-export function shockedEnhancer() {
+export default function shockedEnhancer() {
   const client = createClient();
   let serial = null;
   let context = null;
