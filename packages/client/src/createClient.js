@@ -1,12 +1,14 @@
-import { createParser, PKT_TRACKER_TIMESTAMP } from 'shocked-common';
-import TrackerClient from './TrackerClient';
-
-// Try reconnection in few second(s)
-const RECONNECT_INTERVAL = 2500;
+import {
+  API, API_RESPONSE, EVENT,
+} from 'shocked-common';
 
 const EventEmitter = require('events');
 
 function getHost(endpoint) {
+  if (endpoint === null || endpoint === undefined) {
+    return null;
+  }
+
   // convert http to ws
   if (endpoint.startsWith('https:') || endpoint.startsWith('http:')) {
     return 'ws'.concat(endpoint.substr(4));
@@ -21,252 +23,179 @@ function getHost(endpoint) {
   throw new Error(`Invalid endpoint ${endpoint}. It should start with one of http:, https:, ws: or wss:`);
 }
 
-function createClient(endpoint, WebSocket = global.WebSocket) {
-  const host = getHost(endpoint);
+function createClient(endpoint, {
+  netStatus = null,
+  WebSocket = global.WebSocket,
+  apiTimeout = 1000,
+  timeout = 1000,
+  maxAttempts = 10,
+} = {}) {
+  let host = getHost(endpoint);
+  let ws = null;
+  let unlisten = null;
+  let apiId = 0;
+  let attempts = 0;
+  let timerHandle = null;
 
-  // Using an array, since the number of trackers is not expected
-  // to be very high, typically 2 trackers at a time
-  const trackers = [];
-  function findTracker(trackerId) {
-    return trackers.find(tracker => tracker.group === trackerId);
+  const client = new EventEmitter();
+  const apiCalls = {};
+
+  const parsers = {
+    [API_RESPONSE]: (type, id, err, res) => {
+      const call = apiCalls[id];
+      if (call) {
+        delete apiCalls[id];
+        clearTimeout(call[2]);
+        if (err) {
+          call[1](new Error(err));
+        } else {
+          call[0](res);
+        }
+      }
+    },
+    [EVENT]: (type, event, data) => {
+      client.emit(event, data);
+    },
+  };
+
+  const onOpen = () => {
+    attempts = 0;
+    client.emit('open');
+  };
+
+  const onClose = (e) => {
+    // Clear the websocket instance
+    ws = null;
+
+    // Reject all open apis
+    Object.keys(apiCalls).forEach((id) => {
+      const [, reject] = apiCalls[id];
+      delete apiCalls[id];
+      reject(new Error('Connection is terminated'));
+    });
+
+    if (e.code === 4001) {
+      client.emit('rejected', e.code);
+    } else {
+      client.emit('close', e.code);
+    }
+
+    // eslint-disable-next-line no-use-before-define
+    if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) reconnect();
+  };
+
+  const onMessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      const parser = parsers[msg[0]];
+      // eslint-disable-next-line prefer-spread
+      if (parser) parser.apply(null, msg);
+    } catch (err) {
+      console.warn('Unknown message received', err.message);
+    }
+  };
+
+  function isConnected() {
+    return ws !== null && ws.readyState === WebSocket.OPEN;
   }
 
-  const parser = createParser();
+  function connect() {
+    if (timerHandle) {
+      clearTimeout(timerHandle);
+      timerHandle = null;
+    }
 
-  const eventManager = new EventEmitter();
-
-  // There is a bug. Even when the connection is successful, the timer closes the connection
-  // and proceeds to make another connection, which is again closed by the timer and this
-  // goes on and on.
-  // The issue seems to be this:
-  //    1. During a reconnection or connection event
-  //       i. The previous connection is shutdown
-  //      ii. A new connection is established
-  //     iii. In certain cases, the old socket close event arrives later than the
-  //          the new connection open event
-
-  let reconnectTimerHandle = null;
-  function setupReconnection(interval) {
-    if (reconnectTimerHandle) {
+    // Attempt to connect only when we have a end point to connect to
+    if (!host) {
       return;
     }
 
-    reconnectTimerHandle = setTimeout(() => {
-      reconnectTimerHandle = null;
-      // eslint-disable-next-line no-use-before-define
-      client.reconnect();
-    }, interval);
+    client.emit('connecting', attempts);
+    ws = new WebSocket(host);
+    ws.onopen = onOpen;
+    ws.onclose = onClose;
+    ws.onmessage = onMessage;
+    ws.onerror = (e) => {
+      console.warn('WebSocket Error', e);
+    };
   }
 
-  function clearRetry() {
-    if (reconnectTimerHandle) {
-      clearTimeout(reconnectTimerHandle);
-      reconnectTimerHandle = null;
+  function reconnect() {
+    attempts += 1;
+    if (attempts < maxAttempts) {
+      console.log('Reconnecting in', timeout);
+      timerHandle = setTimeout(connect, timeout);
+    } else {
+      client.emit('maximum', attempts);
     }
   }
 
-  function connection(remoteUrl) {
-    if (remoteUrl === null) {
-      return null;
+  function disconnect() {
+    if (timerHandle) {
+      clearTimeout(timerHandle);
+      timerHandle = null;
     }
 
-    const sock = new WebSocket(remoteUrl);
-    sock.onerror = (e) => {
-      // the onclose event would be hit after the onerror, so just warn about the error for
-      // development mode
-      // eslint-disable-next-line no-console
-      console.warn(e.message);
-    };
-
-    sock.onopen = () => {
-      // Clear any auto reconnect attempts
-      clearRetry();
-
-      // Let all the trackers know tha we are now connected
-      trackers.forEach((tracker) => {
-        // eslint-disable-next-line no-use-before-define
-        tracker.onConnect(client);
-      });
-
-      // Trigger the connect event
-      eventManager.emit('connect');
-    };
-
-    sock.onclose = (e) => {
-      // do not try to reconnect for specific errors
-      // 1000: regular socket shutdown
-      // 1001: TODO: This seems to be the code when the client initiates close.
-      //             Should the retry be avoided in this case as well
-      // 1005: Expected close status, recevied none - ???
-      // 4001: Session expired - via shocked
-      if (e.code !== 1000 && e.code !== 1005 && e.code !== 4001) {
-        // eslint-disable-next-line no-use-before-define
-        if (socket === null || socket.readyState !== WebSocket.OPEN) {
-          // Try to reconnect again after sometime
-          setupReconnection(RECONNECT_INTERVAL);
-        }
-      }
-
-      // In some cases, the close event of the previous socket might arrive later than the
-      // open event of the new connection, avoid making a connection here
-      // eslint-disable-next-line no-use-before-define
-      if (socket === null || socket.readyState !== WebSocket.OPEN) {
-        trackers.forEach((tracker) => {
-          // Let all the trackers know that the client is not available
-          tracker.onDisconnect();
-        });
-
-        // Fire the close event on client
-        eventManager.emit('disconnect', e.code);
-      }
-    };
-
-
-    sock.onmessage = (e) => {
-      parser.parse(e.data);
-    };
-
-    return sock;
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
   }
 
-  parser.onTrackerOpen = (trackerId) => {
-    const tracker = findTracker(trackerId);
-    if (tracker) {
-      tracker.onOpen(trackerId);
+  const onConnectionChange = (online) => {
+    if (online) {
+      connect();
+    } else {
+      disconnect();
     }
   };
 
-  parser.onTrackerClose = (trackerId, code, message) => {
-    const tracker = findTracker(trackerId);
-    if (tracker) {
-      tracker.onClose(code, message);
+  client.setEndpoint = (endPoint) => {
+    const newHost = getHost(endPoint);
+    if (newHost === host) {
+      return false;
     }
+
+    disconnect();
+    host = newHost;
+    connect();
+    return true;
   };
 
-  parser.onTrackerAction = (trackerId, action, serial) => {
-    const tracker = findTracker(trackerId);
-    if (tracker) {
-      tracker.onAction(action, serial);
+  client.close = () => {
+    if (unlisten) {
+      unlisten();
+      unlisten = null;
     }
+    disconnect();
+    client.removeAllListeners();
   };
 
-  parser.onTrackerApiResponse = (trackerId, apiId, status, response, params) => {
-    const tracker = findTracker(trackerId);
-    if (tracker) {
-      tracker.onApiResponse(apiId, status, response, params);
+  client.execute = async (api, payload) => {
+    if (!isConnected()) {
+      throw new Error('Not connected');
     }
+
+    return new Promise((resolve, reject) => {
+      apiId += 1;
+      ws.send(JSON.stringify([API, apiId, api, payload]));
+      apiCalls[apiId] = [
+        resolve,
+        reject,
+        setTimeout(() => reject(new Error('API call timed out')), apiTimeout),
+      ];
+    });
   };
 
-  parser.onTrackerEmit = (trackerId, event, data) => {
-    const tracker = findTracker(trackerId);
-    if (tracker) {
-      tracker.emit(event, data);
+  function open() {
+    if (netStatus) {
+      unlisten = netStatus.listen(onConnectionChange);
+    } else {
+      connect();
     }
-  };
+  }
 
-  parser.onTrackerTimestamp = trackerId => (
-    // eslint-disable-next-line no-use-before-define
-    client.send(PKT_TRACKER_TIMESTAMP(trackerId, Date.now()))
-  );
-
-  // Initialize with a connection attempt
-  let socket = null;
-  let url = null;
-
-  const client = {
-    on: (event, listener) => {
-      if (listener) {
-        eventManager.on(event, listener);
-      }
-    },
-
-    off: (event, listener) => {
-      if (listener) {
-        eventManager.removeListener(event, listener);
-      }
-    },
-
-    isConnected: () => socket && socket.readyState === WebSocket.OPEN,
-
-    connect: (path) => {
-      url = `${host}/${path}`;
-      if (client.isConnected() && socket.url === url) {
-        return true;
-      }
-
-      if (socket !== null) {
-        socket.close();
-      }
-
-      socket = connection(url);
-      return true;
-    },
-
-    clearPath: () => {
-      url = null;
-      if (socket !== null) {
-        socket.close();
-        socket = null;
-      }
-    },
-
-    reconnect: () => {
-      // Only make a reconnect event if the socket is already connected
-      if (url === null || (socket && socket.readyState === WebSocket.CONNECTING)) {
-        // No prior url to reconnect to
-        return false;
-      }
-
-      // Since its a reconnect attempt, we will close existing socket
-      if (socket !== null) {
-        socket.close();
-      }
-
-      socket = connection(url);
-      return true;
-    },
-
-    close: () => {
-      if (socket) {
-        socket.close();
-      }
-      socket = null;
-
-      clearRetry();
-    },
-
-    send: (data) => {
-      if (!client.isConnected()) {
-        return;
-      }
-
-      socket.send(data);
-    },
-
-    createTracker: (trackerId, store, params = {}, options) => {
-      // make sure this trackerId is unique for this client
-      if (trackers.find(tracker => tracker.trackerId === trackerId)) {
-        throw new Error(`A tracker for ${trackerId} already exists on the client. There can only be one tracker for one trackerId.`);
-      }
-
-      const tracker = new TrackerClient(store, trackerId, params, () => {
-        const idx = trackers.indexOf(tracker);
-        if (idx >= 0) {
-          trackers.splice(idx, 1);
-        }
-      }, options);
-
-      // Include the tracker in the list
-      trackers.push(tracker);
-
-      // If the client is already connected, make sure we start connecting the tracker as well
-      if (client.isConnected()) {
-        tracker.onConnect(client);
-      }
-      return tracker;
-    },
-  };
-
+  open();
   return client;
 }
 
