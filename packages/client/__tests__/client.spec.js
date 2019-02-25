@@ -10,7 +10,6 @@ function setupEvent(source, event, timeout = 100) {
   return new Promise((resolve, reject) => {
     setTimeout(() => reject(new Error('Timedout')), timeout);
     source.once(event, (...args) => {
-      console.log('Got event', event, args);
       resolve(args);
     });
   });
