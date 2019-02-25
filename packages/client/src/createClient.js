@@ -91,6 +91,7 @@ function createClient(endpoint, {
       // eslint-disable-next-line prefer-spread
       if (parser) parser.apply(null, msg);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('Unknown message received', err.message);
     }
   };
@@ -116,6 +117,7 @@ function createClient(endpoint, {
     ws.onclose = onClose;
     ws.onmessage = onMessage;
     ws.onerror = (e) => {
+      // eslint-disable-next-line no-console
       console.warn('WebSocket Error', e);
     };
   }
@@ -123,7 +125,6 @@ function createClient(endpoint, {
   function reconnect() {
     attempts += 1;
     if (attempts < maxAttempts) {
-      console.log('Reconnecting in', timeout);
       timerHandle = setTimeout(connect, timeout);
     } else {
       client.emit('maximum', attempts);
