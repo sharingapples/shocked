@@ -26,5 +26,11 @@
     "events": "^3.0.0",
     "shocked-common": "^1.0.11"
   },
+  "peerDependencies": {
+    "react-native": ">= 0.40"
+  },
+  "devDependencies": {
+    "ws": "^6.1.4"
+  },
   "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
 }
