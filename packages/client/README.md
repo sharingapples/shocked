@@ -1,47 +1,68 @@
-# shocked-client
-This library provides internal implementation for client
-side web socket connection. It is used by `shocked-react`
-to provide a seamless integration to connect with server
-side api.
-
-You should use `shocked-react` for your react applications.
-Use this library as a lower level api.
+# shocked
+A websocket library for seamless integration of a server with
+redux actions.
 
 ## Installation
-> `$ npm install shocked-client`
+> `$ npm install shocked`
 
 or
 
-> `$ yarn add shocked-client`
+> `$ yarn add shocked`
 
-## Available apis with shocked-client
-### `createClient(host, WebSocket)`
-Creates a long live client instance available for connecting
-to the remove host. The client has the following methods
-available:
-#### `client.connect(path)`
-Establish connection to remote host at the given path
+## Available apis with shocked
+### `createClient(host, options)`
+Create a websocket client that auto reconnects in case of
+disconnection. The client supports `api` and `event` as special
+messages.
 
-#### `client.isConnected()`
-Get current client status
+* `host`: The remote endpoint, ex: ws://example.com:8080/123 or wss://example.com:8443 or http://example.com/4534 or https://example.com/212
 
-#### `client.close()`
-Close a client connection if any
+* `options`
+    * netStatus: A net status checker like NetInfo for react-native
+    * WebSocket: WebSocket library (not required in most cases)
+    * apiTimeout: The number of milliseconds after with the api call
+                  is timedout when no response is available. (default: 1000)
+    * timeout: The reconnection timeout (default: 1000)
+    * maxAttempts: The number of connection attempts after which
+                   the client doesn't try to connect again
 
-#### `client.send()`
-Send raw data to the remote host
+## Client methods
+* `setEndPoint(url)`: Change the remote endpoint, disconnecting the existing connection and establishing a new remote end point
+* `execute(api, payload)`: Remote execute the api on the server
+* `close()`: Close the client connection. The client instance is
+             not usable once this method is invoked.
 
-#### `client.createTracker(trackerId, store, params)`
-Create a tracker to track content on server. The remote tracker
-then dispatches action directly to the given store. Provide
-initial params for the tracker if any.
-  * `tracker.close` - Close the tracker when it's not required any more.
-  * `tracker.createApi` - to bind remote api to the client
+* `isConnected()`: Get current connection status (boolean).
 
+## Client standard events
+* `open`: Socket is connected to the client.
+* `close`: Socket is closed.
+* `rejected`: Server rejected the connection.
+* `maximum`: The number of maximum reconnection attempts failed.
 
-#### `client.on(event, listener)`
-Listen for client events - connect, disconnect.
+## Redux Enhancer
+```javascript
+import { enhancer, getConnectivity, setUrl } from 'shocked';
 
-#### `client.off(event, listener)`
-Remove event listener added to clients
+const shockedRedux = enhancer(url, options);
 
+const store = createStore(reducer, shockedRedux);
+// with multiple enhancers
+const store = createStore(reducer, compose(shockedRedux, applyMiddleware()));
+
+// get the connectivity status from redux state
+const conn = getConnectivity(store.getState());
+
+// Update the remote endpoint
+store.dispatch(setUrl('ws://localhost:3000/83738'));
+
+// execute apis
+const add = createApi('add');
+const strike = createApi('strike');
+
+// Dispatch the add method
+store.dispatch(add([1, 2]));
+
+// You could event wait for the api response
+const res = await store.dispatch(strike({ user, count: 5 }));
+```
