@@ -14,10 +14,10 @@ export function getConnectivity(state) {
   return state.connectivity;
 }
 
-export function setUrl(url) {
+export function setUrl(endpoint, sessionId) {
   return {
     type: UPDATE_REMOTE_URL,
-    payload: url,
+    payload: { endpoint, sessionId },
   };
 }
 
@@ -87,10 +87,8 @@ export default function shockedEnhancer(url = null, options = {}) {
     return {
       dispatch: (action) => {
         if (action.type === UPDATE_REMOTE_URL) {
-          if (!action.payload) {
-            return client.close();
-          }
-          return client.open(action.payload);
+          const { endpoint, sessionId } = action.payload;
+          return client.setEndpoint(endpoint, sessionId);
         }
 
         if (action.type === API) {

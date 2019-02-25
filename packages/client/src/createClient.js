@@ -1,6 +1,7 @@
 import {
-  API, API_RESPONSE, EVENT,
+  API, API_RESPONSE, EVENT, SESSION,
 } from 'shocked-common';
+import nanoid from 'nanoid';
 
 const EventEmitter = require('events');
 
@@ -31,7 +32,7 @@ function getHost(endpoint) {
   throw new Error(`Invalid endpoint ${endpoint}. It should start with one of http:, https:, ws: or wss:`);
 }
 
-function createClient(endpoint, {
+function createClient(endpoint, sessionId = null, {
   netStatus = null,
   WebSocket = global.WebSocket,
   apiTimeout = 1000,
@@ -47,6 +48,8 @@ function createClient(endpoint, {
 
   const client = new EventEmitter();
   const apiCalls = {};
+
+  let currentSessionId = sessionId || nanoid();
 
   const parsers = {
     [API_RESPONSE]: (type, id, err, res) => {
@@ -120,7 +123,11 @@ function createClient(endpoint, {
     }
 
     client.emit('connecting', attempts);
-    ws = new WebSocket(host);
+    ws = new WebSocket(host, {
+      headers: {
+        Cookie: `${SESSION}=${currentSessionId || nanoid()}`,
+      },
+    });
     ws.onopen = onOpen;
     ws.onclose = onClose;
     ws.onmessage = onMessage;
@@ -161,14 +168,35 @@ function createClient(endpoint, {
 
   client.isConnected = isConnected;
 
-  client.setEndpoint = (endPoint) => {
+  function hostChanged(endPoint) {
+    if (endPoint === undefined) {
+      return false;
+    }
+
     const newHost = getHost(endPoint);
     if (newHost === host) {
       return false;
     }
 
-    disconnect();
     host = newHost;
+    return true;
+  }
+
+  function sessionChanged(newSessionId) {
+    if (!newSessionId || newSessionId === currentSessionId) {
+      return false;
+    }
+
+    currentSessionId = newSessionId;
+    return true;
+  }
+
+  client.setEndpoint = (endPoint, newSessionId) => {
+    if (!hostChanged(endPoint) && !sessionChanged(newSessionId)) {
+      return false;
+    }
+
+    disconnect();
     connect();
     return true;
   };

@@ -1,13 +1,14 @@
 {
   "name": "shocked",
   "version": "1.0.11",
-  "description": "Socket Client",
+  "description": "Websocket and redux client",
   "main": "dist/index.js",
   "module": "src/index.js",
   "react-native": "src/index.js",
   "files": [
     "dist",
-    "src"
+    "src",
+    "status"
   ],
   "scripts": {
     "test": "../../task test",
@@ -24,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "events": "^3.0.0",
+    "nanoid": "^2.0.1",
     "shocked-common": "^1.0.11"
   },
   "peerDependencies": {
