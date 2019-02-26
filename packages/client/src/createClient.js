@@ -214,13 +214,21 @@ function createClient(endpoint, sessionId = null, {
 
     return new Promise((resolve, reject) => {
       apiId += 1;
-      ws.send(JSON.stringify([API, apiId, api, payload]));
+      client.send([API, apiId, api, payload]);
       apiCalls[apiId] = [
         resolve,
         reject,
         setTimeout(() => reject(new Error('API call timed out')), apiTimeout),
       ];
     });
+  };
+
+  client.send = (data) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(data));
+      return true;
+    }
+    return false;
   };
 
   function open() {
