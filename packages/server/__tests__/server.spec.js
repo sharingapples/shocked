@@ -1,6 +1,6 @@
 const { createClient } = require('shocked');
 const WebSocket = require('isomorphic-ws');
-const { createServer } = require('../src');
+const createServer = require('../src');
 
 const echo = session => p => `${session.id}-${p}`;
 
