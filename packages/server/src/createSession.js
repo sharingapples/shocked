@@ -7,12 +7,12 @@ const Serializer = require('./Serializer');
 // Keep session expiry duration of 5 minutes
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
-async function createSession(sessionId, params, apis, serial, initSession, closeSession) {
+async function createSession(sessionId, params, apis, context, initSession, closeSession) {
   let socket = null;
   let timerHandle = null;
 
-  // Either get cached actions or create a new population
-  const serializer = new Serializer(serial);
+  // Create serializer for the session
+  const serializer = new Serializer();
 
   const send = (obj) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -69,7 +69,7 @@ async function createSession(sessionId, params, apis, serial, initSession, close
         subscription = null;
       }
     },
-    attach: (ws) => {
+    attach: async (ws, serial) => {
       clearTimeout(timerHandle);
 
       if (socket && socket.readyState === WebSocket.OPEN) {
@@ -78,8 +78,9 @@ async function createSession(sessionId, params, apis, serial, initSession, close
       socket = ws;
       socket.on('message', (msg) => {
         try {
-          handleMessage(JSON.parse(msg));
+          handleMessage(...JSON.parse(msg));
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.warn(err);
         }
       });
@@ -87,6 +88,12 @@ async function createSession(sessionId, params, apis, serial, initSession, close
         // Setup a cleanup timer
         timerHandle = setTimeout(session.close, SESSION_EXPIRY);
       });
+
+      const syncActions = serial
+        ? serializer.getCachedActions(serial)
+        // eslint-disable-next-line no-use-before-define
+        : await populate(context);
+      return send([EVENT, 'synced', syncActions, serializer.getSerial()]);
     },
   });
 
@@ -97,9 +104,6 @@ async function createSession(sessionId, params, apis, serial, initSession, close
 
   // Get the initial data populator method
   const populate = initSession(session);
-
-  // Send the synchronization event
-  send([EVENT, 'synced', await populate(), serializer.getSerial()]);
 
   return session;
 }
