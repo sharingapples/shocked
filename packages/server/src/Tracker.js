@@ -20,7 +20,8 @@ class Tracker {
     // If there is an existing session return that
     let session = this.sessions[sessionId];
     if (!session) {
-      session = createSession(sessionId, params, this.apis, init, this.closeSession);
+      session = await createSession(sessionId, params, this.apis, init);
+      session.addCloseListener(this.closeSession);
       this.sessions[sessionId] = session;
     }
     return session;

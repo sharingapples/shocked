@@ -95,6 +95,8 @@ function createServer({
               ws.on('pong', beat);
             }
           } catch (err) {
+            // eslint-disable-next-line no-console
+            console.warn(err.message);
             ws.close(4002, err.message);
           }
         });

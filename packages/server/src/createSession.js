@@ -7,7 +7,7 @@ const Serializer = require('./Serializer');
 // Keep session expiry duration of 5 minutes
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
-async function createSession(sessionId, params, apis, initSession, closeSession) {
+async function createSession(sessionId, params, apis, initSession) {
   let socket = null;
   let timerHandle = null;
 
@@ -42,14 +42,17 @@ async function createSession(sessionId, params, apis, initSession, closeSession)
     return null;
   }
 
-  let subscription = null;
+  const closeListeners = [];
 
   const session = Object.assign({}, params, {
-    subscribe: (channel, id) => {
-      if (subscription) {
-        throw new Error('Cannot subscribe to more than one channel');
-      }
-      subscription = channel.subscribe(id, session);
+    addCloseListener: (listener) => {
+      closeListeners.push(listener);
+      return closeListeners.length;
+    },
+    removeCloseListener: (listener) => {
+      const idx = closeListeners.indexOf(listener);
+      closeListeners.splice(idx, 1);
+      return idx >= 0;
     },
     emit: (event, data) => {
       send([EVENT, event, data]);
@@ -63,11 +66,9 @@ async function createSession(sessionId, params, apis, initSession, closeSession)
         socket = null;
       }
 
-      if (subscription) {
-        subscription.release();
-        closeSession(sessionId);
-        subscription = null;
-      }
+      closeListeners.forEach((listener) => {
+        listener(sessionId);
+      });
     },
     setContext: async (context) => {
       session.emit('context', context);
