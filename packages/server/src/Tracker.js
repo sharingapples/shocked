@@ -8,17 +8,19 @@ class Tracker {
     this.validateSession = validateSession;
 
     this.sessions = {};
+
+    this.closeSession = this.closeSession.bind(this);
   }
 
-  closeSession = (sessionId) => {
+  closeSession(sessionId) {
     delete this.sessions[sessionId];
   }
 
-  async getSession(sessionId, params, serial, init) {
+  async getSession(sessionId, params, context, init) {
     // If there is an existing session return that
     let session = this.sessions[sessionId];
     if (!session) {
-      session = createSession(sessionId, params, this.apis, serial, init, this.closeSession);
+      session = createSession(sessionId, params, this.apis, context, init, this.closeSession);
       this.sessions[sessionId] = session;
     }
     return session;
