@@ -1,4 +1,4 @@
-const { createClient } = require('shocked-client');
+const { createClient } = require('shocked');
 const WebSocket = require('isomorphic-ws');
 const { createServer } = require('../src');
 
@@ -9,6 +9,21 @@ const err = () => () => { throw new Error('Test for error'); };
 const noResponse = () => () => new Promise((resolve) => {
   setTimeout(resolve, 2000);
 });
+
+const apis = {
+  echo, add, err, noResponse,
+};
+
+function eventResult(source, event) {
+  return new Promise((resolve) => {
+    source.once(event, (...args) => {
+      if (args.length === 0) {
+        return resolve(null);
+      }
+      return resolve(args[0]);
+    });
+  });
+}
 
 describe('Shocked Server Specification', () => {
   const server = createServer();
@@ -23,28 +38,20 @@ describe('Shocked Server Specification', () => {
     const port = await server.listen();
     expect(typeof port).toBe('number');
 
+    const initialData = [0];
     // Add a tracker
-    server.track('/u/:id', () => ({
-      echo,
-      add,
-      err,
-      noResponse,
-    }));
+    server.track('/u/:id', apis, () => () => () => initialData);
 
-    const errClient = createClient(`ws://localhost:${port}/k`);
-    expect(new Promise((resolve) => {
-      errClient.on('close', e => resolve(e.code));
-    })).resolves.toBe(4001);
+    const errClient = createClient(`ws://localhost:${port}/k`, null, { WebSocket });
+    await expect(eventResult(errClient, 'rejected')).resolves.toBe(4001);
     errClient.close();
-
-    const client = createClient(`ws://localhost:${port}/u/21`, {
+    const client = createClient(`ws://localhost:${port}/u/21`, null, {
       WebSocket,
-      apiTimeout: 100,
+      apiTimeout: 500,
     });
-    const open = () => new Promise((resolve) => {
-      client.on('open', resolve);
-    });
-    await open();
+    await expect(eventResult(client, 'open')).resolves.toBe(null);
+    client.send([0, null]); // Send serial and context
+    await expect(eventResult(client, 'synced')).resolves.toEqual(initialData);
     await expect(client.execute('echo', '71')).resolves.toBe('21-71');
     await expect(client.execute('dummy', 'blah')).rejects.toThrow('Unknown api dummy');
     await expect(client.execute('add', [7, 2])).resolves.toBe(9);
