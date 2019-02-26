@@ -12,6 +12,13 @@ class Tracker {
     this.closeSession = this.closeSession.bind(this);
   }
 
+  close() {
+    Object.keys(this.sessions).forEach((sessionId) => {
+      const session = this.sessions[sessionId];
+      session.close();
+    });
+  }
+
   closeSession(sessionId) {
     delete this.sessions[sessionId];
   }

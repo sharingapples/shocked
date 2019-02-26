@@ -130,6 +130,9 @@ function createServer({
       // Close all the clients
       wss.clients.forEach((client) => {
         client.close();
+        trackers.forEach((tracker) => {
+          tracker.close();
+        });
       });
 
       // Close the main server

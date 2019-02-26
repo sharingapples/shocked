@@ -64,6 +64,7 @@ async function createSession(sessionId, params, apis, initSession) {
       send([EVENT, 'action', action, serializer.push(action)]);
     },
     close: () => {
+      clearTimeout(timerHandle);
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close();
         socket = null;
