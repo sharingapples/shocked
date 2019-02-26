@@ -13,6 +13,7 @@ class Serializer {
   }
 
   push(action) {
+    // TODO: Keep the size of the cache within limit to avoid memory error
     this.cache.push(action);
     this.serial += 1;
     return this.serial;
