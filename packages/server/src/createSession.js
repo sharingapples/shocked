@@ -44,7 +44,10 @@ async function createSession(sessionId, params, apis, initSession) {
 
   const closeListeners = [];
 
-  const session = Object.assign({}, params, {
+  const session = {
+    id: sessionId,
+    params,
+    context: null,
     addCloseListener: (listener) => {
       closeListeners.push(listener);
       return closeListeners.length;
@@ -71,9 +74,11 @@ async function createSession(sessionId, params, apis, initSession) {
       });
     },
     setContext: async (context) => {
+      session.context = context;
       session.emit('context', context);
     },
     attach: async (ws, serial, context) => {
+      session.context = context;
       clearTimeout(timerHandle);
 
       if (socket && socket.readyState === WebSocket.OPEN) {
@@ -99,7 +104,7 @@ async function createSession(sessionId, params, apis, initSession) {
         : await populate(context);
       return send([EVENT, 'synced', syncActions, serializer.getSerial()]);
     },
-  });
+  };
 
   const sessionApis = Object.keys(apis).reduce((res, name) => {
     res[name] = apis[name](session);
