@@ -7,9 +7,6 @@ exports.API_RESPONSE = 2;
 // Event emitted by the server
 exports.EVENT = 5;
 
-// Notification send by server, once the client is synchronized
-exports.SYNCED = 6;
-
 // Notification send by client, for proper syncing with server
 exports.SYNC = 7;
 
