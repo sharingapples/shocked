@@ -2,7 +2,7 @@ const { createClient } = require('shocked');
 const WebSocket = require('isomorphic-ws');
 const createServer = require('../src');
 
-const echo = session => p => `${session.id}-${p}`;
+const echo = session => p => `${session.params.id}-${p}`;
 
 const add = () => ([a, b]) => (a + b);
 const err = () => () => { throw new Error('Test for error'); };
