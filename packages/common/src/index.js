@@ -1,5 +1,17 @@
+// API command type, send by the client
 exports.API = 1;
+
+// API response send by the server
 exports.API_RESPONSE = 2;
-exports.ACTION = 4;
+
+// Event emitted by the server
 exports.EVENT = 5;
+
+// Notification send by server, once the client is synchronized
+exports.SYNCED = 6;
+
+// Notification send by client, for proper syncing with server
+exports.SYNC = 7;
+
+// Cookie name for identifying session
 exports.SESSION = 'SHOCKED_SESSION';
