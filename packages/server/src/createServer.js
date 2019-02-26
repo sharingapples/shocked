@@ -2,6 +2,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const { SESSION } = require('shocked-common');
 
+const Tracker = require('./Tracker');
+
 const defaultHttpHandler = (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   res.end('Noop');
@@ -79,11 +81,10 @@ function createServer({
         // Run the populate method or sync as required
         ws.once('message', async (msg) => {
           try {
-            const serial = JSON.parse(msg);
-
+            const [serial, context] = JSON.parse(msg);
             // Retreive the session
-            const session = await tracker.getSession(sessionId, reqParams, serial, initSession);
-            session.attach(ws);
+            const session = await tracker.getSession(sessionId, reqParams, context, initSession);
+            session.attach(ws, serial);
 
             // Add a heart beat only after the session has been created
             // This will make sure that the session is closed when no sync
