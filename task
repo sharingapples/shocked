@@ -1,29 +1,29 @@
 #!/usr/bin/env node
 // A helper script to run the dev scripts
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 
 const bin = b => path.resolve(__dirname, 'node_modules', '.bin', b);
 
-function execute(cmd) {
+function execute(cmd, extra) {
   switch (cmd) {
     case 'clean':
-      return spawn(bin('rimraf'),  ['./dist'], {
+      return spawn(bin('rimraf'), ['./dist'].concat(extra), {
         stdio: 'inherit',
       });
 
     case 'lint':
-      return spawn(bin('eslint'), ['./src'], {
+      return spawn(bin('eslint'), ['./src'].concat(extra), {
         stdio: 'inherit',
       });
 
     case 'build':
-      return spawn(bin('babel'), ['./src', '-d', './dist'], {
+      return spawn(bin('babel'), ['./src', '-d', './dist'].concat(extra), {
         stdio: 'inherit',
       });
 
     case 'test':
-      return spawn(bin('jest'), ['--rootDir', '.'], {
+      return spawn(bin('jest'), ['--rootDir', '.'].concat(extra), {
         stdio: 'inherit',
       });
 
@@ -34,8 +34,7 @@ function execute(cmd) {
   }
 }
 
-const proc = execute(process.argv[2]);
+const proc = execute(process.argv[2], process.argv.slice(3));
 proc.on('exit', (code) => {
   process.exit(code);
 });
-
