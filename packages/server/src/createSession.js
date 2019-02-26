@@ -7,7 +7,7 @@ const Serializer = require('./Serializer');
 // Keep session expiry duration of 5 minutes
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
-async function createSession(sessionId, params, apis, context, initSession, closeSession) {
+async function createSession(sessionId, params, apis, initSession, closeSession) {
   let socket = null;
   let timerHandle = null;
 
@@ -69,7 +69,10 @@ async function createSession(sessionId, params, apis, context, initSession, clos
         subscription = null;
       }
     },
-    attach: async (ws, serial) => {
+    setContext: async (context) => {
+      session.emit('context', context);
+    },
+    attach: async (ws, serial, context) => {
       clearTimeout(timerHandle);
 
       if (socket && socket.readyState === WebSocket.OPEN) {

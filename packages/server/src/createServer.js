@@ -83,8 +83,8 @@ function createServer({
           try {
             const [serial, context] = JSON.parse(msg);
             // Retreive the session
-            const session = await tracker.getSession(sessionId, reqParams, context, initSession);
-            session.attach(ws, serial);
+            const session = await tracker.getSession(sessionId, reqParams, initSession);
+            session.attach(ws, serial, context);
 
             // Add a heart beat only after the session has been created
             // This will make sure that the session is closed when no sync

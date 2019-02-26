@@ -1,3 +1,4 @@
+import { SYNC } from 'shocked-common';
 import createClient from './createClient';
 
 const CONNECTIVITY = 'shocked.connectivity';
@@ -69,12 +70,17 @@ export default function shockedEnhancer(url = null, options = {}) {
     });
 
     client.on('context', (serverContext) => {
-      context = serverContext;
+      if (typeof context === 'object') {
+        Object.assign(context, serverContext);
+      } else {
+        context = serverContext;
+      }
     });
 
     client.on('action', (action, serverSerial) => {
       if (serverSerial) {
         serial = serverSerial;
+        client.send([SYNC, serial]);
       }
 
       if (Array.isArray(action)) {
