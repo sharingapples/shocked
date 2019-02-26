@@ -53,7 +53,7 @@ export default function shockedEnhancer(url = null, options = {}) {
 
     client.on('open', () => {
       // Send a sync event as soon as the client connection is open
-      client.send(JSON.stringify([serial, context]));
+      client.send([serial, context]);
     });
 
     client.on('synced', () => {
