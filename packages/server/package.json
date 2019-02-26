@@ -15,10 +15,9 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "debug": "^4.0.1",
     "shocked-common": "^1.1.0",
     "url-pattern": "^1.0.3",
-    "ws": "^6.1.0"
+    "ws": "^6.1.4"
   },
   "devDependencies": {
     "isomorphic-ws": "^4.0.1",
