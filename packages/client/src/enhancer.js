@@ -32,7 +32,7 @@ const enableShocking = reducer => (
     }
 
     if (action.type === BATCHED) {
-      return action.payload.reduce(shockingReducer);
+      return action.payload.reduce(shockingReducer, state);
     }
 
     return reducer(state, action);
