@@ -46,7 +46,7 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
 
   return createStore => (reducer, preloadedState, enhancer) => {
     const store = createStore(enableShocking(reducer), preloadedState, enhancer);
-    const { dispatch, getState } = store;
+    const { dispatch } = store;
 
     client.on('connecting', () => {
       dispatch(connectivity('connecting'));
@@ -91,6 +91,7 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
     });
 
     return {
+      ...store,
       dispatch: (action) => {
         if (action.type === UPDATE_REMOTE_URL) {
           const { endpoint, sessionId } = action.payload;
@@ -103,7 +104,6 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
 
         return dispatch(action);
       },
-      getState,
     };
   };
 }
