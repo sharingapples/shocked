@@ -57,8 +57,9 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
       client.send([serial, context]);
     });
 
-    client.on('synced', () => {
-      dispatch(connectivity('online'));
+    client.on('synced', (actions, syncSerial) => {
+      serial = syncSerial;
+      dispatch({ type: BATCHED, payload: actions.concat(connectivity('online')) });
     });
 
     client.on('close', () => {
