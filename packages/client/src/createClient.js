@@ -1,7 +1,7 @@
 import {
   API, API_RESPONSE, EVENT, SESSION,
 } from 'shocked-common';
-import nanoid from 'nanoid';
+import nanoid from 'nanoid/non-secure';
 
 const EventEmitter = require('events');
 
