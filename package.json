@@ -39,6 +39,9 @@
     "fast-async": "^6.3.8",
     "jest": "^24.1.0",
     "lerna": "^3.13.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "shocked": "^1.1.0",
+    "shocked-server": "^1.1.0",
+    "shocked-local-broker": "^1.1.0"
   }
 }

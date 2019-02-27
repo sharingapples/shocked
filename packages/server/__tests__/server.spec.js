@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { createClient } = require('shocked');
 const WebSocket = require('isomorphic-ws');
 const createServer = require('../src');

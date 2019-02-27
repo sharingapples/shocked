@@ -20,8 +20,7 @@
     "ws": "^6.1.4"
   },
   "devDependencies": {
-    "isomorphic-ws": "^4.0.1",
-    "shocked": "^1.1.3"
+    "isomorphic-ws": "^4.0.1"
   },
   "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
 }
