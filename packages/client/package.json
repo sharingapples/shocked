@@ -29,9 +29,11 @@
     "shocked-common": "^1.1.0"
   },
   "peerDependencies": {
-    "react-native": ">= 0.40"
+    "react-native": ">= 0.40",
+    "shocked-server": "^1.1.4"
   },
   "devDependencies": {
+    "redux": "^4.0.1",
     "isomorphic-ws": "^4.0.1",
     "ws": "^6.1.4"
   },
