@@ -21,9 +21,10 @@ const reducer = combineReducers({
 });
 
 let port = null;
+let server = null;
 
 beforeAll(async () => {
-  const server = createServer();
+  server = createServer();
   port = await server.listen();
 });
 
@@ -39,6 +40,10 @@ function storeOnChange(store) {
     });
   });
 }
+
+afterAll(() => {
+  server.close();
+});
 
 describe('redux binding specifications', () => {
   it('checks for standard redux usage', async () => {
