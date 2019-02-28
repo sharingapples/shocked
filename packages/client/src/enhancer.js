@@ -1,4 +1,5 @@
 import { SYNC } from 'shocked-common';
+
 import createClient from './createClient';
 
 const CONNECTIVITY = 'shocked.connectivity';
@@ -11,6 +12,18 @@ const connectivity = status => ({
   payload: status,
 });
 
+export function shockedReducer(state = {}, action) {
+  switch (action.type) {
+    case CONNECTIVITY:
+      return {
+        connectivity: action.payload,
+        ...state,
+      };
+    default:
+      return state;
+  }
+}
+
 export function getConnectivity(state) {
   return state.connectivity;
 }
@@ -22,17 +35,10 @@ export function setUrl(endpoint, sessionId) {
   };
 }
 
-const enableShocking = reducer => (
-  function shockingReducer(state, action) {
-    if (action.type === CONNECTIVITY) {
-      return {
-        connectivity: action.payload,
-        ...state,
-      };
-    }
-
+const enableBatching = reducer => (
+  function batchingReducer(state, action) {
     if (action.type === BATCHED) {
-      return action.payload.reduce(shockingReducer, state);
+      return action.payload.reduce(batchingReducer, state);
     }
 
     return reducer(state, action);
@@ -42,10 +48,10 @@ const enableShocking = reducer => (
 export default function shockedEnhancer(url = null, sessId = null, options = {}) {
   const client = createClient(url, sessId, options);
   let serial = null;
-  let context = null;
+  let context = options.initialContext || null;
 
   return createStore => (reducer, preloadedState, enhancer) => {
-    const store = createStore(enableShocking(reducer), preloadedState, enhancer);
+    const store = createStore(enableBatching(reducer), preloadedState, enhancer);
     const { dispatch } = store;
 
     client.on('connecting', () => {

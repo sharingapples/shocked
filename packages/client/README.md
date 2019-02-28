@@ -42,18 +42,26 @@ messages.
 
 ## Redux Enhancer
 ```javascript
-import { enhancer, getConnectivity, setUrl } from 'shocked';
+import { enhancer, getConnectivity, setUrl, shockedReducer } from 'shocked';
 
-const shockedRedux = enhancer(url, options);
+// Create an enhancer with the remote url (optional), sessionId (options) and options(createClient)
+const shockedRedux = enhancer(url, sessionId, options);
 
 const store = createStore(reducer, shockedRedux);
 // with multiple enhancers
 const store = createStore(reducer, compose(shockedRedux, applyMiddleware()));
 
-// get the connectivity status from redux state
-const conn = getConnectivity(store.getState());
+// If you want to check the connectivity status as well, add the shockedReducer
+const reducer = {
+  conn: shockedReducer,
+  app: appReducer,
+};
 
-// Update the remote endpoint
+const store = createStore(reducer, shockedRedux);
+// Retireve the status value with the getConnectivity selector
+const status = getConnectivity(store.getState().conn);
+
+// Update the remote endpoint as and when required
 store.dispatch(setUrl('ws://localhost:3000/83738'));
 
 // execute apis
