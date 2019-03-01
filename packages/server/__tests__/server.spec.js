@@ -29,7 +29,10 @@ function eventResult(source, event) {
 describe('Shocked Server Specification', () => {
   const server = createServer();
   it('checks createServer', async () => {
-    expect(Object.keys(server)).toEqual(['listen', 'track', 'close']);
+    expect(Object.keys(server)).toEqual([
+      'use', 'get', 'post', 'put', 'delete', 'patch', 'head',
+      'listen', 'track', 'close',
+    ]);
     Object.values(server).forEach((v) => {
       expect(typeof v).toBe('function');
     });
