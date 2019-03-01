@@ -1,0 +1,73 @@
+.App {
+  display: flex;
+}
+
+.form {
+  padding: 20px;
+}
+
+.output {
+  flex: 1;
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #aaa;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10pt;
+  font-weight: bold;
+  overflow: scroll;
+}
+
+.output .time {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 1px 4px;
+  background-color: darkorange;
+  border-radius: 3px;
+  color: black;
+}
+
+.output .object {
+  cursor: pointer;
+  background-color: aqua;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.row {
+  padding-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.row label {
+  display: inline-block;
+  width: 120px;
+  font-weight: bold;
+  padding: 10px;
+}
+
+.row input {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12pt;
+}
+
+.row textarea {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12pt;
+  height: 200px;
+}
+
+.row input, .row textarea {
+  width: 400px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.row button {
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 12pt;
+  margin-left: 20px;
+}
