@@ -1,13 +1,9 @@
 const http = require('http');
 const WebSocket = require('ws');
 const { SESSION } = require('shocked-common');
+const polka = require('polka');
 
 const Tracker = require('./Tracker');
-
-const defaultHttpHandler = (req, res) => {
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Noop');
-};
 
 const wss = new WebSocket.Server({ noServer: true });
 
@@ -42,12 +38,9 @@ function getSessionId(req) {
   }, null);
 }
 
-function createServer({
-  httpHandler = defaultHttpHandler,
-  pulseRate = 30000,
-} = {}) {
+function createServer({ pulseRate = 30000 } = {}) {
   const trackers = [];
-  const httpServer = http.createServer(httpHandler);
+  const httpServer = http.createServer();
 
   const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
 
@@ -108,11 +101,20 @@ function createServer({
     }
   });
 
+  const app = polka({ server: httpServer });
   return {
+    use: app.use.bind(app),
+    get: app.get.bind(app),
+    post: app.post.bind(app),
+    put: app.put.bind(app),
+    delete: app.delete.bind(app),
+    patch: app.patch.bind(app),
+    head: app.head.bind(app),
+
     listen: (port = 0) => new Promise((resolve, reject) => {
       try {
-        const listener = httpServer.listen(port, () => {
-          resolve(listener.address().port);
+        app.listen(port, () => {
+          resolve(port);
         });
       } catch (err) {
         reject(err);
