@@ -1,5 +1,5 @@
 {
-  "name": "shocked-api-client",
+  "name": "shocked-api-debug",
   "version": "1.1.0",
   "private": true,
   "dependencies": {
@@ -8,7 +8,7 @@
     "shocked": "^1.1.0"
   },
   "scripts": {
-    "start": "webpack-dev-server --mode development --open",
+    "start": "webpack --mode development",
     "build": "webpack --mode production"
   },
   "browserslist": [
@@ -25,10 +25,8 @@
     "babel-core": "7.0.0-bridge.0",
     "babel-loader": "^8.0.5",
     "fast-async": "^6.3.8",
-    "html-webpack-inline-source-plugin": "^0.0.10",
     "html-webpack-plugin": "^3.2.0",
     "webpack": "^4.29.6",
-    "webpack-cli": "^3.2.3",
-    "webpack-dev-server": "^3.2.1"
+    "webpack-cli": "^3.2.3"
   }
 }
