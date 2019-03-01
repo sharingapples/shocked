@@ -120,7 +120,7 @@ function createServer({ pulseRate = 30000 } = {}) {
     listen: (port = 0) => new Promise((resolve, reject) => {
       try {
         app.listen(port, () => {
-          resolve(port);
+          resolve(httpServer.address().port);
         });
       } catch (err) {
         reject(err);
