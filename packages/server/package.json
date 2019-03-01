@@ -6,8 +6,13 @@
   "scripts": {
     "test": "../../task test",
     "lint": "../../task lint",
-    "prepublishOnly": "yarn run lint && yarn run test"
+    "build:debug:static": "cd ../debug-client && yarn run build && cd ../server",
+    "prepublishOnly": "yarn run lint && yarn run test && yarn run build:debug:static"
   },
+  "files": [
+    "debug",
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bhoos/socket.git"

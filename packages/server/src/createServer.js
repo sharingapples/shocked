@@ -2,6 +2,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const { SESSION } = require('shocked-common');
 const polka = require('polka');
+const setupDebugger = require('../debug');
 
 const Tracker = require('./Tracker');
 
@@ -102,6 +103,11 @@ function createServer({ pulseRate = 30000 } = {}) {
   });
 
   const app = polka({ server: httpServer });
+
+  if (process.env.NODE_ENV === 'development') {
+    setupDebugger(app, trackers);
+  }
+
   return {
     use: app.use.bind(app),
     get: app.get.bind(app),
