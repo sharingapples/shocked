@@ -22,7 +22,7 @@ export const clearTodo = (session) => (todo) => {
 ### Create server
 ```javascript
 const createServer = require('shocked-server');
-const server = createServer({ httpHandler });
+const server = createServer();
 
 server.track('/todo/:uid', ({ uid }, sessionId) => {
   // Validate the session and the parameters here
@@ -42,9 +42,18 @@ server.track('/todo/:uid', ({ uid }, sessionId) => {
 // Listen on an http port
 server.listen(9090);
 
+// You can add http route handler with the server
+// The server router is compatible with expressjs and uses Polka internally
+server.get('/', (req, res) => {
+  res.end('Welcome to awesome home page');
+});
+
 // Make sure the server closes properly
 process.on('exit', () => server.close());
 ```
+
+*NOTE: If you run the server in development mode (NODE_ENV=development), then you can test
+the server api on `/debug` path of your server*
 
 ### Connect client with redux
 ```javascript
