@@ -1,11 +1,11 @@
 {
   "name": "shocked-api-debug",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "private": true,
   "dependencies": {
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
-    "shocked": "^1.1.7"
+    "shocked": "^1.1.8"
   },
   "scripts": {
     "start": "webpack --mode development",
