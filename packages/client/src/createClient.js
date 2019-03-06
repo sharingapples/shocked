@@ -1,5 +1,5 @@
 import {
-  API, API_RESPONSE, EVENT, SESSION,
+  API_TYPE, API, API_RESPONSE, EVENT, SESSION,
 } from 'shocked-common';
 import nanoid from 'nanoid/non-secure';
 
@@ -7,7 +7,7 @@ const EventEmitter = require('events');
 
 export function createApi(name) {
   return payload => ({
-    type: API,
+    type: API_TYPE,
     name,
     payload,
   });

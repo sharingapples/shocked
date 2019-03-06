@@ -1,10 +1,9 @@
-import { SYNC } from 'shocked-common';
+import { SYNC, API_TYPE } from 'shocked-common';
 
 import createClient from './createClient';
 
 const CONNECTIVITY = 'shocked.connectivity';
 const UPDATE_REMOTE_URL = 'shocked.url';
-const API = 'shocked.api';
 const BATCHED = 'shocked.batched';
 
 const connectivity = status => ({
@@ -105,7 +104,7 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
           return client.setEndpoint(endpoint, sessionId);
         }
 
-        if (action.type === API) {
+        if (action.type === API_TYPE) {
           return client.execute(action.name, action.payload);
         }
 

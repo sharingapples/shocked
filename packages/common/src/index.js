@@ -1,5 +1,6 @@
 // API command type, send by the client
 exports.API = 1;
+exports.API_TYPE = 'shocked.api';
 
 // API response send by the server
 exports.API_RESPONSE = 2;
