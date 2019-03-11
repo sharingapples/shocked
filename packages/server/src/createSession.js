@@ -52,6 +52,7 @@ async function createSession(sessionId, params, apis, initSession) {
     params,
     context: null,
 
+    multiSet: (obj) => { Object.assign(sessionValues, obj); },
     set: (name, value) => { sessionValues[name] = value; },
     get: name => sessionValues[name],
 
