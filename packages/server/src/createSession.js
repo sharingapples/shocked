@@ -44,10 +44,17 @@ async function createSession(sessionId, params, apis, initSession) {
 
   const closeListeners = [];
 
+  // Keep provision to store session specific values
+  const sessionValues = {};
+
   const session = {
     id: sessionId,
     params,
     context: null,
+
+    set: (name, value) => { sessionValues[name] = value; },
+    get: name => sessionValues[name],
+
     addCloseListener: (listener) => {
       closeListeners.push(listener);
       return closeListeners.length;
