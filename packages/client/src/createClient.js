@@ -189,13 +189,17 @@ function createClient(endpoint, sessionId = null, {
   }
 
   client.setEndpoint = (endPoint, newSessionId) => {
-    if (!hostChanged(endPoint) && !sessionChanged(newSessionId)) {
-      return false;
+    // We need both the methods to run, since we are updating
+    // values internally.
+    const hasHostChanged = hostChanged(endPoint);
+    const hasSessionChanged = sessionChanged(newSessionId);
+    if (hasHostChanged || hasSessionChanged) {
+      disconnect();
+      connect();
+      return true;
     }
 
-    disconnect();
-    connect();
-    return true;
+    return false;
   };
 
   client.close = () => {
