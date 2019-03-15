@@ -121,7 +121,7 @@ async function createSession(sessionId, params, apis, initSession) {
   }, {});
 
   // Get the initial data populator method
-  const populate = initSession(session);
+  const populate = await initSession(session);
 
   return session;
 }
