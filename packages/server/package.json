@@ -1,6 +1,6 @@
 {
   "name": "shocked-server",
-  "version": "1.1.9",
+  "version": "1.1.11",
   "description": "Websocket server",
   "main": "src/index.js",
   "scripts": {
