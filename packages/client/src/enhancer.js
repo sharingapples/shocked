@@ -15,8 +15,8 @@ export function shockedReducer(state = {}, action) {
   switch (action.type) {
     case CONNECTIVITY:
       return {
-        connectivity: action.payload,
         ...state,
+        connectivity: action.payload,
       };
     default:
       return state;
