@@ -22,7 +22,7 @@ export default function shockedEnhancer(options = {}) {
 
   listenUrl((url) => {
     const session = getSession();
-    client.setUrl(url, session.id, session.context);
+    client.setEndpoint(url, session.id);
   });
 
   return createStore => (reducer, preloadedState, enhancer) => {
