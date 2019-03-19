@@ -76,6 +76,18 @@ export function listenUrl(listener) {
   };
 }
 
+const statusListeners = [];
+export function listenStatus(listener, status) {
+  const item = [listener, status];
+  statusListeners.push(item);
+  return () => {
+    const idx = statusListeners.indexOf(item);
+    if (idx >= 0) {
+      statusListeners.splice(idx, 1);
+    }
+  };
+}
+
 export function setUrl(url) {
   if (store.getState().url === url) return;
 
@@ -92,11 +104,19 @@ export function getUrl() {
 
 export function setStatus(status) {
   if (store.getState().status === status) return;
+
+  // Update status change listeners
+  statusListeners.forEach(([listener, rStatus]) => {
+    if (!rStatus || rStatus === status) {
+      listener(status);
+    }
+  });
+
   store.dispatch({ type: STATUS, payload: status });
 }
 
-export function useConnectionStatus() {
-  return useStore(state => state.status);
+export function useConnectionStatus(status) {
+  return useStore(state => (status ? state.status === status : state.status), [status]);
 }
 
 export function useSession() {
