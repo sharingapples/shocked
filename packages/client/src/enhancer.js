@@ -1,38 +1,10 @@
 import { SYNC, API_TYPE } from 'shocked-common';
-
+import {
+  setStatus, setSession, getSession, listenUrl,
+} from './Shocked';
 import createClient from './createClient';
 
-const CONNECTIVITY = 'shocked.connectivity';
-const UPDATE_REMOTE_URL = 'shocked.url';
 const BATCHED = 'shocked.batched';
-
-const connectivity = status => ({
-  type: CONNECTIVITY,
-  payload: status,
-});
-
-export function shockedReducer(state = {}, action) {
-  switch (action.type) {
-    case CONNECTIVITY:
-      return {
-        ...state,
-        connectivity: action.payload,
-      };
-    default:
-      return state;
-  }
-}
-
-export function getConnectivity(state) {
-  return state.connectivity;
-}
-
-export function setUrl(endpoint, sessionId) {
-  return {
-    type: UPDATE_REMOTE_URL,
-    payload: { endpoint, sessionId },
-  };
-}
 
 const enableBatching = reducer => (
   function batchingReducer(state, action) {
@@ -44,43 +16,51 @@ const enableBatching = reducer => (
   }
 );
 
-export default function shockedEnhancer(url = null, sessId = null, options = {}) {
-  const client = createClient(url, sessId, options);
+export default function shockedEnhancer(options = {}) {
+  const client = createClient(null, null, options);
   let serial = null;
-  let context = options.initialContext || null;
+
+  listenUrl((url) => {
+    const session = getSession();
+    client.setUrl(url, session.id, session.context);
+  });
 
   return createStore => (reducer, preloadedState, enhancer) => {
     const store = createStore(enableBatching(reducer), preloadedState, enhancer);
     const { dispatch } = store;
 
     client.on('connecting', () => {
-      dispatch(connectivity('connecting'));
+      setStatus('connecting');
     });
 
     client.on('open', () => {
+      const session = getSession();
       // Send a sync event as soon as the client connection is open
-      client.send([serial, context]);
+      client.send([serial, session.context]);
     });
 
     client.on('synced', (actions, syncSerial) => {
       serial = syncSerial;
-      dispatch({ type: BATCHED, payload: actions.concat(connectivity('online')) });
+      setStatus('synced');
+      dispatch({ type: BATCHED, payload: actions });
     });
 
     client.on('close', () => {
-      dispatch(connectivity('offline'));
+      setStatus('offline');
     });
 
     client.on('rejected', () => {
-      dispatch(connectivity('rejected'));
+      setStatus('rejected');
     });
 
     client.on('context', (serverContext) => {
-      if (typeof context === 'object') {
-        Object.assign(context, serverContext);
-      } else {
-        context = serverContext;
-      }
+      setSession(session => ({
+        ...session,
+        context: typeof session.context === 'object' ? {
+          ...session.context,
+          ...serverContext,
+        } : serverContext,
+      }));
     });
 
     client.on('action', (action, serverSerial) => {
@@ -99,11 +79,6 @@ export default function shockedEnhancer(url = null, sessId = null, options = {})
     return {
       ...store,
       dispatch: (action) => {
-        if (action.type === UPDATE_REMOTE_URL) {
-          const { endpoint, sessionId } = action.payload;
-          return client.setEndpoint(endpoint, sessionId);
-        }
-
         if (action.type === API_TYPE) {
           return client.execute(action.name, action.payload);
         }

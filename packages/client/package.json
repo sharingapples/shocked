@@ -29,12 +29,16 @@
     "shocked-common": "^1.1.8"
   },
   "peerDependencies": {
-    "react-native": ">= 0.40",
+    "react": ">=16.8",
+    "react-native": ">=0.59",
+    "redux": "^4.0.1",
+    "redux-hooked": "^0.1.4",
     "shocked-server": "^1.1.4"
   },
   "devDependencies": {
     "isomorphic-ws": "^4.0.1",
     "redux": "^4.0.1",
+    "redux-hooked": "^0.1.4",
     "ws": "^6.1.4"
   },
   "gitHead": "176ea2dda597174d9336674394d2739b719d99fa"

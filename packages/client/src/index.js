@@ -1,5 +1,12 @@
 import createClient, { createApi } from './createClient';
-import enhancer, { shockedReducer, getConnectivity, setUrl } from './enhancer';
+import enhancer from './enhancer';
+
+import {
+  setUrl,
+  useSession,
+  useShocked,
+  useConnectionStatus,
+} from './Shocked';
 
 export default createClient;
 export {
@@ -7,7 +14,9 @@ export {
   createApi,
 
   enhancer,
-  shockedReducer,
-  getConnectivity,
   setUrl,
+
+  useSession,
+  useShocked,
+  useConnectionStatus,
 };
