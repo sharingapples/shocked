@@ -39,9 +39,17 @@ export default function shockedEnhancer(options = {}) {
       client.send([serial, session.context]);
     });
 
-    client.on('synced', (actions, syncSerial) => {
+    client.on('SYNC', (obj) => {
+      setSession(session => ({
+        ...session,
+        ...obj,
+      }));
+    });
+
+    client.on('synced', (actions, syncSerial, session) => {
       serial = syncSerial;
       setStatus('synced');
+      setSession(session);
       dispatch({ type: BATCHED, payload: actions });
     });
 

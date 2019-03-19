@@ -1,7 +1,7 @@
 /* global __DEV__ */
 import { createStore } from 'redux';
 import { useState, useEffect } from 'react';
-import { useStore } from 'redux-hooked';
+import createApplication from 'redux-hooked';
 
 const URL = 'url';
 const STATUS = 'status';
@@ -38,6 +38,7 @@ const reducer = (state = initialState, action) => {
 // The shocked specific store for maintaining the internal state
 // of the shocked sub system
 const store = createStore(reducer);
+const { useStore } = createApplication(store);
 
 export function setSession(session) {
   if (__DEV__) {
@@ -58,6 +59,10 @@ export function clearSession() {
 
 export function getSession() {
   return store.getState().session;
+}
+
+export function isConnected() {
+  return store.getState().status === 'online';
 }
 
 const urlListeners = [];
@@ -96,7 +101,7 @@ export function useConnectionStatus() {
 
 export function useSession() {
   const session = useStore(state => state.session);
-  return [session, setSession];
+  return session;
 }
 
 export function useShocked(sessionManager) {
@@ -107,6 +112,8 @@ export function useShocked(sessionManager) {
 
     sessionManager.get().then((session) => {
       setSession(session);
+      setSessionId(session.id);
+
       let prevSession = session;
 
       unsub = store.subscribe(() => {

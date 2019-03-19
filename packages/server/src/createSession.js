@@ -10,6 +10,7 @@ const SESSION_EXPIRY = 5 * 60 * 1000;
 async function createSession(sessionId, params, apis, initSession) {
   let socket = null;
   let timerHandle = null;
+  let synced = false;
 
   // Create serializer for the session
   const serializer = new Serializer();
@@ -45,16 +46,34 @@ async function createSession(sessionId, params, apis, initSession) {
   const closeListeners = [];
 
   // Keep provision to store session specific values
-  const sessionValues = {};
+  const values = {
+    id: sessionId,
+    context: null,
+  };
+
+  function sync(data) {
+    if (synced) {
+      send([EVENT, 'SYNC', data]);
+    }
+  }
 
   const session = {
-    id: sessionId,
     params,
-    context: null,
-
-    multiSet: (obj) => { Object.assign(sessionValues, obj); },
-    set: (name, value) => { sessionValues[name] = value; },
-    get: name => sessionValues[name],
+    get id() {
+      return values.id;
+    },
+    get context() {
+      return values.context;
+    },
+    multiSet: (obj) => {
+      Object.assign(values, obj);
+      sync(obj);
+    },
+    set: (name, value) => {
+      values[name] = value;
+      sync({ [name]: value });
+    },
+    get: name => values[name],
 
     addCloseListener: (listener) => {
       closeListeners.push(listener);
@@ -83,8 +102,7 @@ async function createSession(sessionId, params, apis, initSession) {
       });
     },
     setContext: async (context) => {
-      session.context = context;
-      session.emit('context', context);
+      session.set('context', context);
     },
     attach: async (ws, serial, context) => {
       session.context = context;
@@ -103,6 +121,8 @@ async function createSession(sessionId, params, apis, initSession) {
         }
       });
       socket.on('close', () => {
+        // Clear the sync flag as soon as the socket is closed
+        synced = false;
         // Setup a cleanup timer
         timerHandle = setTimeout(session.close, SESSION_EXPIRY);
       });
@@ -111,7 +131,9 @@ async function createSession(sessionId, params, apis, initSession) {
         ? serializer.getCachedActions(serial)
         // eslint-disable-next-line no-use-before-define
         : await populate(context);
-      return send([EVENT, 'synced', syncActions, serializer.getSerial()]);
+
+      synced = true;
+      return send([EVENT, 'synced', syncActions, serializer.getSerial(), values]);
     },
   };
 

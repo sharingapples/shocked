@@ -64,8 +64,8 @@ function createClient(endpoint, sessionId = null, {
         }
       }
     },
-    [EVENT]: (type, event, data) => {
-      client.emit(event, data);
+    [EVENT]: (type, event, ...data) => {
+      client.emit(event, ...data);
     },
   };
 
