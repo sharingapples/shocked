@@ -42,7 +42,8 @@ const { useStore } = createApplication(store);
 
 export function setSession(session) {
   if (__DEV__) {
-    if (session === null || session === undefined || typeof session !== 'object') {
+    if (session === null || session === undefined
+        || (typeof session !== 'object' && typeof session !== 'function')) {
       // eslint-disable-next-line no-console
       console.error(`The session should be a valid object. You are trying to set it to ${session}`);
     }

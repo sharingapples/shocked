@@ -8,6 +8,9 @@ import {
   useConnectionStatus,
   isConnected,
   listenStatus,
+
+  getSession,
+  setSession,
 } from './Shocked';
 
 export default createClient;
@@ -24,4 +27,7 @@ export {
 
   isConnected,
   listenStatus,
+
+  getSession,
+  setSession,
 };
