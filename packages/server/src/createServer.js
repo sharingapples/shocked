@@ -20,6 +20,7 @@ function keepAlive() {
 
     // eslint-disable-next-line no-param-reassign
     client.isAlive = false;
+    if (client.readyState !== WebSocket.OPEN) return null;
     return client.ping();
   });
 }
