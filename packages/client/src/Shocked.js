@@ -1,4 +1,4 @@
-/* global WebSocket */
+/* global __DEV__, WebSocket */
 // @flow
 import React, {
   useMemo, useRef, useState, useEffect, useContext,
@@ -38,7 +38,7 @@ export default function Shocked(props: Props) {
   const {
     url, sessionId, network,
     login, retryInterval,
-    apis,
+    apis, sync,
     ...other
   } = props;
   const [online, setOnline] = useState(false);
@@ -83,6 +83,13 @@ export default function Shocked(props: Props) {
 
       ws.onopen = () => {
         setOnline(true);
+      };
+
+      ws.onerror = (evt) => {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.error(evt);
+        }
       };
 
       ws.onclose = (evt) => {
