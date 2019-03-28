@@ -1,6 +1,7 @@
-import Shocked, { useOnlineStatus } from './Shocked';
+import Shocked, { useShockedStatus, useShockedApi } from './Shocked';
 
 export {
   Shocked,
-  useOnlineStatus,
+  useShockedStatus,
+  useShockedApi,
 };

@@ -4,23 +4,22 @@ import React, {
   useRef, useState, useEffect, useContext, useMemo,
 } from 'react';
 import {
-  API, API_RESPONSE, ACTION, SYNC, SYNCED,
+  API, API_RESPONSE, ACTION, IDENT, RECONN, IDENTIFIED, CONTEXT,
 } from 'shocked-common';
 
 type Props = {
   url: string,  // Remote websocket url
-  sessionId: string, // Session id for identification
   network: boolean, // Network online status
+  ident: string, // Session id for identification
+  clearIdent: () => {}, // Callback to clear identification. Alias to logout.
 
+  context: any, // Client context to be synced with server
   dispatch: (store: any, action: {}) => void,
-
-  // A callback method to perform an automatic login when session is rejected
-  login: () => void,
 
   // List of apis that need to be supported
   apis: { [string]: () => void | null },
 
-  // A sync function that is executed continously as long as it returns truthy
+  // A sync function to synchronize offline content
   sync: () => Promise<void>,
 
   // Reconnection attempt wait interval (milliseconds, default 1000)
@@ -41,9 +40,9 @@ function fixUrl(url) {
 
 export default function Shocked(props: Props) {
   const {
-    url, sessionId, network,
-    login, retryInterval,
-    apis, sync,
+    url, network, ident, clearIdent,
+    retryInterval,
+    apis, sync, context,
     dispatch,
     ...other
   } = props;
@@ -55,13 +54,16 @@ export default function Shocked(props: Props) {
     apiId: 0,
     apiRequests: {},
     serial: 0,
+    context,
   });
 
+  // Helper function to check if an active socket is available
   function isActive() {
     const { socket } = instance.current;
     return socket && socket.readyState === WebSocket.OPEN;
   }
 
+  // Helper method to send data over the active socket
   function send(data) {
     if (isActive()) {
       const { socket } = instance.current;
@@ -72,32 +74,7 @@ export default function Shocked(props: Props) {
     return false;
   }
 
-  const parsers = {
-    // The server should treat the session dispatch
-    // differently until the client is fully synced
-    [ACTION]: (action, currentSerial) => {
-      if (online) instance.current.serial = currentSerial;
-      dispatch(action);
-    },
-    [SYNCED]: (actions, currentSerial) => {
-      instance.current.serial = currentSerial;
-      dispatch(actions);
-      setOnline(true);
-    },
-    [API_RESPONSE]: (id, error, response) => {
-      const req = instance.current.apiQueue[id];
-      if (req) {
-        const [resolve, reject] = req;
-        delete instance.current.apiQueue[id];
-        if (error) {
-          reject(new Error(response));
-        } else {
-          resolve(response);
-        }
-      }
-    },
-  };
-
+  // Helper function to keep api calls in a queue
   function queueApi(name, payload) {
     instance.current.apiId += 1;
     const id = instance.current.apiId;
@@ -111,6 +88,8 @@ export default function Shocked(props: Props) {
     });
   }
 
+  // Update context
+  instance.current.context = context;
   instance.current.apis = useMemo(() => (
     Object.keys(apis).reduce((res, name) => {
       const v = apis[name];
@@ -126,6 +105,30 @@ export default function Shocked(props: Props) {
     })
   ), [apis]);
 
+  const parsers = {
+    // The server should treat the session dispatch
+    // differently until the client is fully synced
+    [ACTION]: (action, currentSerial) => {
+      if (online) instance.current.serial = currentSerial;
+      dispatch(action);
+    },
+    [IDENTIFIED]: (sessionId) => {
+      instance.current.sessionId = sessionId;
+      setOnline(true);
+    },
+    [API_RESPONSE]: (id, error, result) => {
+      const req = instance.current.apiQueue[id];
+      if (req) {
+        delete instance.current.apiQueue[id];
+        const [resolve] = req;
+        resolve({ error, result });
+      } else if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.error(`Received an unknown API response (id=${id}, error=${error}, result=${result}`);
+      }
+    },
+  };
+
   // Setup connection manager
   useEffect(() => {
     let cleaned = false;
@@ -135,14 +138,6 @@ export default function Shocked(props: Props) {
 
     instance.current.serial = 0;
 
-    function commit(context) {
-      send([SYNC, {
-        serial: instance.current.serial,
-        context,
-        timestamp: Date.now(),
-      }]);
-    }
-
     function connect() {
       // Avoid any form of side effects, that might arise due to any unexpected scenarios
       if (cleaned) return;
@@ -151,8 +146,15 @@ export default function Shocked(props: Props) {
       ws = new WebSocket(validUrl);
 
       ws.onopen = async () => {
-        const context = sync ? (await sync()) : null;
-        commit(context);
+        instance.current.socket = ws;
+        // If we are trying to connect to an existing session
+        if (instance.current.sessionId) {
+          // Try to resync with an existing session
+          send([RECONN, instance.current.sessionId, instance.current.serial]);
+        } else {
+          // Send an identification frame
+          send([IDENT, ident, context]);
+        }
       };
 
       ws.onerror = (evt) => {
@@ -178,6 +180,8 @@ export default function Shocked(props: Props) {
       };
 
       ws.onclose = (evt) => {
+        instance.current.socket = null;
+
         // Make sure the connection is offline
         setOnline(false);
 
@@ -192,8 +196,17 @@ export default function Shocked(props: Props) {
         if (cleaned) return;
 
         // Looks like we got an invalid session, try to change the session
-        if (evt.close === 4001) {
-          if (login) login();
+        if (evt.code === 4001) {
+          // Clear the session information
+          instance.current.sessionId = null;
+          instance.current.serial = 0;
+        }
+
+        // Unknown identification
+        if (evt.code === 4002) {
+          instance.current.sessionId = null;
+          instance.current.serial = 0;
+          clearIdent();
           return;
         }
 
@@ -204,14 +217,30 @@ export default function Shocked(props: Props) {
     }
 
     // Only connect when all the required values are a truthy
-    if (url && sessionId && network) connect();
+    if (network && ident && url) connect();
 
     return function cleanUp() {
       cleaned = true;
       clearTimeout(retryHandle);
       if (ws) ws.close();
     };
-  }, [url, sessionId, network]);
+  }, [network, ident, url]);
+
+  // Handle the context change, if the context is changed.
+  // * if live session, just send a context update message
+  // * else, clear any existing session
+  useEffect(() => {
+    // Update context whenever it changes
+    if (isActive()) {
+      send([CONTEXT, context]);
+    } else {
+      // clear the session if the context changes
+      instance.current.sessionId = null;
+      instance.current.serial = 0;
+      // Just to avoid the transient conditions, close the socket
+      if (instance.current.socket) instance.current.socket.close();
+    }
+  }, [context]);
 
   return (
     <SocketApiContext.Provider value={instance.current.apis}>
@@ -220,6 +249,10 @@ export default function Shocked(props: Props) {
   );
 }
 
-export function useOnlineStatus() {
+export function useShockedStatus() {
   return useContext(SocketStatusContext);
+}
+
+export function useShockedApi() {
+  return useContext(SocketApiContext);
 }
