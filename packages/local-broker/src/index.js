@@ -6,6 +6,8 @@ module.exports = function createChannel(name) {
   const channels = {};
 
   return {
+    get name() { return name; },
+
     subscribe: (id, session) => {
       const channelId = key(id);
       const sessions = channels[channelId] || [];
@@ -14,13 +16,15 @@ module.exports = function createChannel(name) {
         channels[channelId] = sessions;
       }
 
-      // Add a close listener to remove the sessions
-      session.addCloseListener(() => {
+      return () => {
         const idx = sessions.indexOf(session);
         if (idx >= 0) {
           sessions.splice(idx, 1);
+          if (sessions.length === 0) {
+            delete channels[channelId];
+          }
         }
-      });
+      };
     },
     publish: (id, action) => {
       const channelId = key(id);

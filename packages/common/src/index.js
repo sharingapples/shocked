@@ -1,15 +1,25 @@
 // API command type, send by the client
-exports.API = 1;
-exports.API_TYPE = 'shocked.api';
 
-// API response send by the server
+// Send by client,
+exports.API = 1;
+
+// Send by server
 exports.API_RESPONSE = 2;
 
-// Event emitted by the server
-exports.EVENT = 5;
+// Send by server
+exports.ACTION = 3;
 
-// Notification send by client, for proper syncing with server
-exports.SYNC = 7;
+// Send by client
+exports.IDENT = 4;
 
-// Cookie name for identifying session
-exports.SESSION = 'SHOCKED_SESSION';
+// Send by client
+exports.RECONN = 5;
+
+// Send by server
+exports.IDENTIFIED = 6;
+
+// Send by client
+exports.CONTEXT = 7;
+
+// Send by client
+exports.SYNC = 8;

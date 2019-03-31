@@ -4,7 +4,7 @@ import React, {
   useRef, useState, useEffect, useContext, useMemo,
 } from 'react';
 import {
-  API, API_RESPONSE, ACTION, IDENT, RECONN, IDENTIFIED, CONTEXT,
+  API, API_RESPONSE, ACTION, IDENT, RECONN, IDENTIFIED, CONTEXT, SYNC,
 } from 'shocked-common';
 
 type Props = {
@@ -17,19 +17,19 @@ type Props = {
   dispatch: (store: any, action: {}) => void,
 
   // List of apis that need to be supported
-  apis: { [string]: () => void | null },
+  api: { [string]: () => void | null },
 
   // A sync function to synchronize offline content
   sync: () => Promise<void>,
 
   // Reconnection attempt wait interval (milliseconds, default 1000)
-  retryInterval: number,
+  retryInterval?: number,
 };
 
 const SocketApiContext = React.createContext({});
 const SocketStatusContext = React.createContext(false);
 
-const notOnlineError = () => throw new Error('No connection');
+const notOnlineError = () => { throw new Error('No connection'); };
 
 function fixUrl(url) {
   if (url.startsWith('http')) {
@@ -42,7 +42,7 @@ export default function Shocked(props: Props) {
   const {
     url, network, ident, clearIdent,
     retryInterval,
-    apis, sync, context,
+    api, sync, context,
     dispatch,
     ...other
   } = props;
@@ -50,9 +50,10 @@ export default function Shocked(props: Props) {
 
   const instance = useRef({
     socket: null,
-    apis: null,
+    api: null,
     apiId: 0,
     apiRequests: {},
+    sessionId: null,
     serial: 0,
     context,
   });
@@ -79,6 +80,7 @@ export default function Shocked(props: Props) {
     instance.current.apiId += 1;
     const id = instance.current.apiId;
     return new Promise((resolve, reject) => {
+      if (__DEV__) console.log(`[Shocked] Executing remote API ${name}`, payload);
       if (!send([API, id, name, payload])) {
         reject(new Error('Connection is not ready for API'));
         return;
@@ -90,20 +92,22 @@ export default function Shocked(props: Props) {
 
   // Update context
   instance.current.context = context;
+  instance.current.online = online;
   instance.current.apis = useMemo(() => (
-    Object.keys(apis).reduce((res, name) => {
-      const v = apis[name];
-      const api = typeof v === 'function' ? v(res) : v;
-      const offline = typeof api === 'function' ? api : notOnlineError;
+    Object.keys(api).reduce((res, name) => {
+      const v = api[name];
+      const apiFn = typeof v === 'function' ? v(res) : v;
+      const offline = typeof apiFn === 'function' ? apiFn : notOnlineError;
       res[name] = async (payload) => {
-        if (!online) {
+        if (__DEV__) console.log(`[Shocked] Invoked API ${name}, Online=${instance.current.online}, Payload=`, payload);
+        if (!instance.current.online) {
           return offline(payload);
         }
         return queueApi(name, payload);
       };
       return res;
-    })
-  ), [apis]);
+    }, {})
+  ), [api]);
 
   const parsers = {
     // The server should treat the session dispatch
@@ -111,20 +115,23 @@ export default function Shocked(props: Props) {
     [ACTION]: (action, currentSerial) => {
       if (online) instance.current.serial = currentSerial;
       dispatch(action);
+      // Let the server know that we have consumed the action
+      send([SYNC, currentSerial]);
     },
     [IDENTIFIED]: (sessionId) => {
+      if (__DEV__) console.log(`[Shocked] Session identified ${sessionId}`);
       instance.current.sessionId = sessionId;
       setOnline(true);
     },
     [API_RESPONSE]: (id, error, result) => {
-      const req = instance.current.apiQueue[id];
+      const req = instance.current.apiRequests[id];
       if (req) {
-        delete instance.current.apiQueue[id];
+        delete instance.current.apiRequests[id];
         const [resolve] = req;
         resolve({ error, result });
       } else if (__DEV__) {
         // eslint-disable-next-line no-console
-        console.error(`Received an unknown API response (id=${id}, error=${error}, result=${result}`);
+        console.log(`[Shocked] Received an unknown API response (id=${id}, error=${error}, result=${result}`);
       }
     },
   };
@@ -136,31 +143,42 @@ export default function Shocked(props: Props) {
     let attemptedAt = 0; // Keep track of connection attempt to calculate reconnection wait time
     let retryHandle = null; // Save timer handle for cleanup
 
-    instance.current.serial = 0;
-
     function connect() {
+      // eslint-disable-next-line no-console
+      if (__DEV__) console.log(`[Shocked] Connection attempt cleaned=${cleaned}, url=${url}, network=${network}, ident=`, ident);
+
       // Avoid any form of side effects, that might arise due to any unexpected scenarios
       if (cleaned) return;
       attemptedAt = Date.now();
       const validUrl = fixUrl(url);
+
+
       ws = new WebSocket(validUrl);
 
       ws.onopen = async () => {
         instance.current.socket = ws;
+        // eslint-disable-next-line no-console
+        if (__DEV__) console.log('[Shocked] Connection open. Preparing');
         // If we are trying to connect to an existing session
         if (instance.current.sessionId) {
+          // eslint-disable-next-line no-console
+          if (__DEV__) console.log(`[Shocked] Reconnect with session=${instance.current.sessionId}, serial=${instance.current.serial}`);
+
           // Try to resync with an existing session
           send([RECONN, instance.current.sessionId, instance.current.serial]);
         } else {
+          // eslint-disable-next-line no-console
+          if (__DEV__) console.log('[Shocked] Identify ident', ident, 'context=', instance.current.context);
+
           // Send an identification frame
-          send([IDENT, ident, context]);
+          send([IDENT, ident, instance.current.context]);
         }
       };
 
       ws.onerror = (evt) => {
         if (__DEV__) {
           // eslint-disable-next-line no-console
-          console.error(evt);
+          console.log('[Shocked] WebSocket.onError', evt);
         }
       };
 
@@ -172,15 +190,19 @@ export default function Shocked(props: Props) {
           if (!parser) throw new Error(`No parser found for message type ${msg[0]}`);
           parser(...msg.slice(1));
         } catch (err) {
-          if (__DEV__) {
-            // eslint-disable-next-line no-console
-            console.error(`${err.message}::${evt.data}`);
-          }
+          if (__DEV__) console.error('[Shocked] error.onmessage', err);
         }
       };
 
       ws.onclose = (evt) => {
-        instance.current.socket = null;
+        // eslint-disable-next-line no-console
+        if (__DEV__) console.log(`[Shocked] Connection closed. code=${evt.code}, reason=${evt.reason}`);
+
+        // There is a likelyhood that a previous socket's close event
+        // might arrive later than the open event of a new connection
+        if (instance.current.socket === ws) {
+          instance.current.socket = null;
+        }
 
         // Make sure the connection is offline
         setOnline(false);
@@ -196,33 +218,41 @@ export default function Shocked(props: Props) {
         if (cleaned) return;
 
         // Looks like we got an invalid session, try to change the session
-        if (evt.code === 4001) {
+        if (evt.code === 4001 || evt.code === 4003) {
           // Clear the session information
           instance.current.sessionId = null;
           instance.current.serial = 0;
+          // Make a reconnection attempt instantly
+          attemptedAt = 0;
         }
 
         // Unknown identification
         if (evt.code === 4002) {
           instance.current.sessionId = null;
           instance.current.serial = 0;
-          clearIdent();
+          if (clearIdent) clearIdent();
           return;
         }
 
         // Make a connection reattempt
         const interval = Math.max(1, retryInterval - (Date.now() - attemptedAt));
+        if (__DEV__) console.log(`[Shocked] Connection retry in ${interval}(${retryInterval}). Last attempt was at ${attemptedAt}`);
         retryHandle = setTimeout(connect, interval);
       };
     }
 
     // Only connect when all the required values are a truthy
-    if (network && ident && url) connect();
+    if (network && ident && url) {
+      connect();
+    } else if (__DEV__) {
+      console.log(`[Shocked] Avoiding connection network=${network}, ident=${ident}, url=${url}`);
+    }
 
     return function cleanUp() {
+      console.log(`[Shocked] Connection cleanup cycle. ActiveConnection=${!!ws}`);
       cleaned = true;
       clearTimeout(retryHandle);
-      if (ws) ws.close();
+      if (ws) ws.close(4004, 'Shocked cleanup');
     };
   }, [network, ident, url]);
 
@@ -248,6 +278,10 @@ export default function Shocked(props: Props) {
     </SocketApiContext.Provider>
   );
 }
+
+Shocked.defaultProps = {
+  retryInterval: 1000,
+};
 
 export function useShockedStatus() {
   return useContext(SocketStatusContext);

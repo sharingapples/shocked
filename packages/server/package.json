@@ -1,6 +1,6 @@
 {
   "name": "shocked-server",
-  "version": "1.1.17",
+  "version": "2.0.0",
   "description": "Websocket server",
   "main": "src/index.js",
   "scripts": {
@@ -20,6 +20,8 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
+    "debug": "^4.1.1",
+    "nanoid": "^2.0.1",
     "polka": "^0.5.2",
     "serve-static": "^1.13.2",
     "shocked-common": "^1.1.8",

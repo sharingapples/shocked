@@ -1,12 +1,14 @@
 const http = require('http');
 const WebSocket = require('ws');
-const { SESSION } = require('shocked-common');
 const polka = require('polka');
 const setupDebugger = require('../debug');
 
 const Tracker = require('./Tracker');
 
 const wss = new WebSocket.Server({ noServer: true });
+
+// Expect to receive a frame within a second
+const KILL_TIMEOUT = 1000;
 
 function beat() {
   this.isAlive = true;
@@ -25,21 +27,6 @@ function keepAlive() {
   });
 }
 
-function getSessionId(req) {
-  const { cookie } = req.headers;
-  if (!cookie) {
-    return null;
-  }
-
-  const key = `${SESSION}=`;
-  return cookie.split(';').reduce((res, v) => {
-    if (res === null && v.startsWith(key)) {
-      return v.substr(key.length);
-    }
-    return res;
-  }, null);
-}
-
 function createServer({ pulseRate = 30000 } = {}) {
   const trackers = [];
   const httpServer = http.createServer();
@@ -47,10 +34,7 @@ function createServer({ pulseRate = 30000 } = {}) {
   const heartBeat = pulseRate > 0 ? setInterval(keepAlive, pulseRate) : null;
 
   httpServer.on('upgrade', async (request, socket, head) => {
-    let reqParams = null;
-
-    // Make sure we have a valid session cookie
-    const sessionId = getSessionId(request);
+    let reqParams = {};
 
     const tracker = trackers.find((t) => {
       const params = t.match(request.url);
@@ -62,45 +46,44 @@ function createServer({ pulseRate = 30000 } = {}) {
       return true;
     });
 
-    try {
-      if (!tracker) {
-        throw new Error(`No tracker found at ${request.url}`);
+    // eslint-disable-next-line consistent-return
+    wss.handleUpgrade(request, socket, head, async (ws) => {
+      function close(code, message) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close(code, message);
+        }
       }
 
-      const initSession = await tracker.validateSession(reqParams, sessionId);
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        ws.on('error', () => {
+      // Early exit
+      if (!tracker) return close(4003, `No tracker found at ${request.url}`);
 
-        });
+      // Setup a kill timer to close the socket
+      const killTimeout = setTimeout(() => {
+        close(4003, 'KillTimeout before first frame');
+      }, KILL_TIMEOUT);
 
-        // Run the populate method or sync as required
-        ws.once('message', async (msg) => {
-          try {
-            const [serial, context] = JSON.parse(msg);
-            // Retreive the session
-            const session = await tracker.getSession(sessionId, reqParams, initSession);
-            session.attach(ws, serial, context);
-
-            // Add a heart beat only after the session has been created
-            // This will make sure that the session is closed when no sync
-            // event is received within a heart beat check interval
-            if (pulseRate > 0) {
-              // eslint-disable-next-line no-param-reassign
-              ws.isAlive = true;
-              ws.on('pong', beat);
-            }
-          } catch (err) {
-            // eslint-disable-next-line no-console
-            console.warn(err.message);
-            ws.close(4002, err.message);
+      try {
+        if (await tracker.process(ws, reqParams)) {
+          // Setup pulse tracker
+          if (pulseRate > 0) {
+            // eslint-disable-next-line no-param-reassign
+            ws.isAlive = true;
+            ws.on('pong', beat);
           }
-        });
+        }
+        clearTimeout(killTimeout);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        close(4003, err.message);
+      }
+
+      ws.on('error', (err) => {
+        clearTimeout(killTimeout);
+        // eslint-disable-next-line no-console
+        console.error('WebSocket::Error', err);
       });
-    } catch (err) {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        ws.close(4001, err.message);
-      });
-    }
+    });
   });
 
   const app = polka({ server: httpServer });
@@ -128,8 +111,10 @@ function createServer({ pulseRate = 30000 } = {}) {
       }
     }),
 
-    track: (path, apis, sessionValidator) => {
-      trackers.push(new Tracker(path, apis, sessionValidator));
+    track: (path, satellite) => {
+      const tracker = new Tracker(path);
+      satellite(tracker);
+      trackers.push(tracker);
     },
     close: () => {
       if (heartBeat) {
@@ -139,9 +124,6 @@ function createServer({ pulseRate = 30000 } = {}) {
       // Close all the clients
       wss.clients.forEach((client) => {
         client.close();
-        trackers.forEach((tracker) => {
-          tracker.close();
-        });
       });
 
       // Close the main server

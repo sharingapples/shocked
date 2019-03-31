@@ -1,37 +1,136 @@
+const { IDENT, RECONN } = require('shocked-common');
 const UrlPattern = require('url-pattern');
-const createSession = require('./createSession');
+const Session = require('./Session');
+
+// Expire abandoned sessions in 5 minutes
+const SESSION_EXPIRY = 5 * 60 * 1000;
+
+function registerHandler(source, cb) {
+  if (typeof cb !== 'function') {
+    throw new Error('Callbacks should be a function');
+  }
+
+  if (source.indexOf(cb) !== -1) {
+    throw new Error('Do not register same callback more than once');
+  }
+
+  source.push(cb);
+  return () => {
+    const idx = source.indexOf(cb);
+    if (idx >= 0) {
+      source.splice(idx, 1);
+    }
+  };
+}
 
 class Tracker {
-  constructor(path, apis, validateSession) {
+  constructor(path) {
     this.pattern = new UrlPattern(path);
-    this.apis = apis;
-    this.validateSession = validateSession;
 
-    this.sessions = {};
+    this.api = null;
+    this.orphans = {};
 
-    this.closeSession = this.closeSession.bind(this);
+    this.identifiers = [];
+    this.initializers = [];
+    this.contextHandlers = [];
+
+    this.onIdentify = this.onIdentify.bind(this);
+    this.onReconnect = this.onReconnect.bind(this);
   }
 
-  close() {
-    Object.keys(this.sessions).forEach((sessionId) => {
-      const session = this.sessions[sessionId];
-      session.close();
-    });
+  register(api) {
+    if (this.api) throw new Error('Api can only be registered once');
+    this.api = api;
   }
 
-  closeSession(sessionId) {
-    delete this.sessions[sessionId];
+  onIdent(cb) {
+    return registerHandler(this.identifiers, cb);
   }
 
-  async getSession(sessionId, params, init) {
-    // If there is an existing session return that
-    let session = this.sessions[sessionId];
-    if (!session) {
-      session = await createSession(sessionId, params, this.apis, init);
-      session.addCloseListener(this.closeSession);
-      this.sessions[sessionId] = session;
+  onStart(cb) {
+    return registerHandler(this.initializers, cb);
+  }
+
+  onContext(cb) {
+    return registerHandler(this.contextHandlers, cb);
+  }
+
+  getParser(type) {
+    if (type === IDENT) return this.onIdentify;
+    if (type === RECONN) return this.onReconnect;
+    return null;
+  }
+
+  abandon(session) {
+    this.orphans[session.id] = {
+      session,
+      timeout: setTimeout(() => {
+        this.destroy(session);
+      }, SESSION_EXPIRY),
+    };
+  }
+
+  destroy(session) {
+    session.unsubscribeAll();
+    const res = this.orphans[session.id];
+    if (res) {
+      clearTimeout(res.timeout);
+      delete this.orphans[session.id];
     }
-    return session;
+  }
+
+  async onIdentify(ws, params, ident, context) {
+    let user = null;
+    for (let i = 0; i < this.identifiers.length; i += 1) {
+      const identifier = this.identifiers[i];
+      user = identifier(ident);
+      if (user) {
+        break;
+      }
+    }
+
+    if (user) {
+      // Found a valid user for creating a session
+      const session = new Session(this, user, params);
+      session.attach(ws);
+      await session.onInit(context);
+      return session.identified();
+    }
+
+    return null;
+  }
+
+  async onReconnect(ws, params, sessionId, serial) {
+    const res = this.orphans[sessionId];
+    if (!res) {
+      ws.close(4001, 'Unknown session');
+      return false;
+    }
+
+    const { timeout, session } = res;
+    clearTimeout(timeout);
+    session.attach(ws);
+    await session.sync(serial);
+    return session.identified();
+  }
+
+  process(ws, params) {
+    return new Promise((resolve, reject) => {
+      ws.once('message', async (data) => {
+        try {
+          const msg = JSON.parse(data);
+          if (!Array.isArray(msg)) {
+            throw new Error('Invalid message type');
+          }
+          const parser = this.getParser(msg[0]);
+          if (!parser) { throw new Error('Unknown message type'); }
+          await parser(ws, params, ...msg.slice(1));
+          return resolve(true);
+        } catch (err) {
+          return reject(err);
+        }
+      });
+    });
   }
 
   match(url) {
