@@ -44,9 +44,6 @@ async function sync() {
 
 	// Extract synchronization records
   const toSync = db.getRecords();
-
-  // Return context to commit
-  return null;
 }
 
 export default function YourApp() {
