@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bhoos/socket/tree/master/client"
+    "url": "git+https://github.com/sharingapples/shocked/tree/master/packages/client"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT",
