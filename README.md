@@ -1,72 +1,125 @@
-# Shocked
-Websocket and redux based client-server synchronization library
+## Shocked Client
 
-## Server
-### Define server apis
-```javascript
-export const addTodo = (session) => (todo) => {
-  const res = await db.Todo.insert(todo);
+### Properties:
 
+1. **Connection Props**
+  Starts a new connection (when any one changes). No connection is made when either of them is falsy.
+   * `url: null | string`
+     Remote endpoint (Ex: http://example.com/your-app/params)
+   * `ident: null | {}`
+     User identification token. Ex: `{ type: 'fb', token: 'asdfsfkljsdfjasldf' }`
+   * `network: boolean`
+     Network online status
+   * `clearIdent: () => void`
+     A callback invoked when the server doesn't identify the `ident` value sent over for identification
 
-  // Dispatch the action to the client session
-  session.dispatch(db.Todo.schema.insert(res));
+ 2. **Communication Props**
+
+   * `api: { [string]: API }`
+     API structure available for execution on the shocked instance.
+   * `context: any`
+     Client context to match with server
+
+3. **Synchronization Props**
+
+   * `dispatch: (state, action) => void`
+     The dispatch method to synchronize server state with client. This should be the `dispatch` method of your [redux](redux.js.org) or redux compatible stores.
+
+   * `sync: () => Promise<void>`
+     A synchronization function that is invoked as soon as the connection goes online. Use this opportunity to synchronize all offline data with the server
+
+4. **Configuration Props**
+
+   * `retryInterval: number` default: 1000
+     Number of milliseconds before which reconnection attempts are not made. Reconnection attempts are made whenever the connection is terminated, unless the connection has been rejected by the server (4001).
+
+### Example
+```jsx
+function offlineSynchronizer() {
+
 }
 
-export const clearTodo = (session) => (todo) => {
-  const res = await db.Todo.update(todo.id, { done: true });
+async function sync() {
+  // First Commit and then perform other synchronizations
 
-  session.dispatch(db.Todo.schema.update(res));
+	// Extract synchronization records
+  const toSync = db.getRecords();
+
+  // Return context to commit
+  return null;
 }
+
+export default function YourApp() {
+  // Use simple helpers to get network status
+  const network = useNetStatus();
+
+  // Use authentication library to extract the session information
+  const { token, logout } = useAuth();
+
+  // Extract parameters from session
+  const user =
+  const sessionId = session && session.id;
+  const url = session && `ws://example.com/your-app/${session.params}`;
+
+  // If there isn't any session available, may be show a Login screen
+  const body = session ? <Home /> : <Login />;
+
+  return (
+    <Shocked
+      url={url}
+      network={network}
+      ident={token}
+      clearIdent={logout}
+
+      context={currentLodgeId}
+      dispatch={store.dispatch}
+
+      sync={sync}
+    >
+      {body}
+    </Shocked>
+  );
+}
+
 ```
 
-### Create server
-```javascript
-const createServer = require('shocked-server');
-const server = createServer();
+## Shocked Server
 
-server.track('/todo/:uid', ({ uid }, sessionId) => {
-  // Validate the session and the parameters here
+```jsx
+const createServer = require('shocked');
 
-  return (session) => {
-    // Session is initializing, register it with channels as per requirement
-
-    return (context) => {
-      // Return an initial set of data for the session here
-      return [
-        { type: POPULATE, payload: Todos.get(uid) }
-      ];
-    };
-  };
+const server = createServer({ pulseRate: 0 });
+server.track('/your-app', (tracker) => {
+  tracker.onIdent(fb);
+  tracker.onIdent(google);
+  tracker.onStart((session) => {
+    session.subscribe(UserChannel, session.user.id);
+  });
+  tracker.onContext((context) => {
+    session.dispatch({ type: POPULATE, payload: records });
+  });
 });
-
-// Listen on an http port
-server.listen(9090);
-
-// You can add http route handler with the server
-// The server router is compatible with expressjs and uses Polka internally
-server.get('/', (req, res) => {
-  res.end('Welcome to awesome home page');
-});
-
-// Make sure the server closes properly
-process.on('exit', () => server.close());
 ```
 
-*NOTE: If you run the server in development mode (NODE_ENV=development), then you can test
-the server api on `/debug` path of your server*
+## Shocked Client API
 
-### Connect client with redux
 ```javascript
-import { enhancer, setUrl, createApi } from 'shocked';
-import { createStore } from 'redux';
+// Without offline support
+export const serverOnlyApi = null;
 
-const shockedRedux = enhancer('ws://localhost:9090/todo/user');
-const store = createStore(reducer, shockedRedux);
+// With offline support
+export const createAsset = ((online) => {
+  // Add callbacks to run during sync phase of the shocked client
+  const sync = createSync('CREATE_ASSET', ({id}) => {
+    const rec = await offlineDB.findOne(id);
+    return online.createAsset(rec);
+  });
 
-// Use setUrl to update the connection url
-store.dispatch(setUrl(`ws://localhost:9090/todo/12312`));
-
-// Dispatch api created with the createApi method
-const add = createApi('addTodo');
-store.dispatch(add({ title: 'Get milk' }));
+  // Return the function to run when offline
+  return (payload) => {
+    const id = await offlineDB.insert('ASSET', payload);
+    await sync({ id });
+  }
+});
 ```
+
