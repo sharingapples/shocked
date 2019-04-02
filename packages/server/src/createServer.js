@@ -55,11 +55,11 @@ function createServer({ pulseRate = 30000 } = {}) {
       }
 
       // Early exit
-      if (!tracker) return close(4003, `No tracker found at ${request.url}`);
+      if (!tracker) return close(4004, `No tracker found at ${request.url}`);
 
       // Setup a kill timer to close the socket
       const killTimeout = setTimeout(() => {
-        close(4003, 'KillTimeout before first frame');
+        close(4004, 'KillTimeout before first frame');
       }, KILL_TIMEOUT);
 
       try {
@@ -75,7 +75,7 @@ function createServer({ pulseRate = 30000 } = {}) {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
-        close(4003, err.message);
+        close(4004, err.message);
       }
 
       ws.on('error', (err) => {
