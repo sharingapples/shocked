@@ -190,7 +190,8 @@ export default function Shocked(props: Props) {
           if (!parser) throw new Error(`No parser found for message type ${msg[0]}`);
           parser(...msg.slice(1));
         } catch (err) {
-          if (__DEV__) console.error('[Shocked] error.onmessage', err);
+          // eslint-disable-next-line no-console
+          if (__DEV__) console.error(`[Shocked] error.onmessage ${err.message}`);
         }
       };
 

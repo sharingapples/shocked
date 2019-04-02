@@ -1,7 +1,7 @@
 const nanoid = require('nanoid');
 const WebSocket = require('ws');
 const {
-  API, API_RESPONSE, CONTEXT, ACTION, SYNC, IDENTIFIED,
+  API, API_RESPONSE, CONTEXT, ACTION, SYNC, IDENTIFIED, BATCH,
 } = require('shocked-common');
 const Serializer = require('./Serializer');
 
@@ -38,7 +38,11 @@ class Session {
     try {
       const serial = this.serializer.push(action);
       if (this.socket) {
-        this.send([ACTION, action, serial]);
+        const actionObj = Array.isArray(action) ? {
+          type: BATCH,
+          payload: action,
+        } : action;
+        this.send([ACTION, actionObj, serial]);
       }
     } catch (err) {
       this.tracker.destroy(this);

@@ -23,3 +23,5 @@ exports.CONTEXT = 7;
 
 // Send by client
 exports.SYNC = 8;
+
+exports.BATCH = '$$.batch';
