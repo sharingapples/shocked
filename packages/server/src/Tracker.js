@@ -5,6 +5,13 @@ const Session = require('./Session');
 // Expire abandoned sessions in 5 minutes
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
+class IdentError extends Error {
+  constructor(ident) {
+    super(`Unknown ident - ${JSON.stringify(ident)}`);
+    this.code = 4002;
+  }
+}
+
 function registerHandler(source, cb) {
   if (typeof cb !== 'function') {
     throw new Error('Callbacks should be a function');
@@ -80,13 +87,15 @@ class Tracker {
   }
 
   async onIdentify(ws, params, ident, context) {
-    let user = null;
-    for (let i = 0; i < this.identifiers.length; i += 1) {
-      const identifier = this.identifiers[i];
-      user = identifier(ident);
-      if (user) {
-        break;
-      }
+    const user = await this.identifiers.reduce((res, identifier) => {
+      return res.then((identified) => {
+        if (identified) return identified;
+        return identifier(ident);
+      });
+    }, Promise.resolve(null));
+
+    if (!user) {
+      throw new IdentError(ident);
     }
 
     if (user) {

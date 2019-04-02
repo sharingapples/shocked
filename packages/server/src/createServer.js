@@ -75,7 +75,7 @@ function createServer({ pulseRate = 30000 } = {}) {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
-        close(4004, err.message);
+        close(err.code || 4004, err.message);
       }
 
       ws.on('error', (err) => {
