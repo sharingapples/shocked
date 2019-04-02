@@ -2,6 +2,7 @@
   "parser": "babel-eslint",
   "extends": "airbnb",
   "rules": {
+    "arrow-body-style": ["off"],
     "no-multi-spaces": ["error", { "ignoreEOLComments": true }],
     "comma-dangle": ["error", {
       "arrays": "always-multiline",
