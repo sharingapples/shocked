@@ -23,7 +23,7 @@
     "nanoid": "^2.0.1",
     "polka": "^0.5.2",
     "serve-static": "^1.13.2",
-    "shocked-common": "^1.1.8",
+    "shocked-common": "^2.0.0-alpha.1",
     "url-pattern": "^1.0.3",
     "ws": "^6.1.4"
   },
