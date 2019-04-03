@@ -129,6 +129,9 @@ export default function Shocked(props: Props) {
       if (__DEV__) console.log(`[Shocked] Session identified ${sessionId}`);
       instance.current.sessionId = sessionId;
       setOnline(true);
+
+      // Start the synchronization process
+      sync();
     },
     [API_RESPONSE]: (id, error, result) => {
       const req = instance.current.apiRequests[id];
