@@ -14,6 +14,7 @@ type Props = {
   clearIdent: () => {}, // Callback to clear identification. Alias to logout.
 
   context: any, // Client context to be synced with server
+  getContextParameters?: (any) => {},
   dispatch: (store: any, action: {}) => void,
 
   // List of apis that need to be supported
@@ -42,7 +43,7 @@ export default function Shocked(props: Props) {
   const {
     url, network, ident, clearIdent,
     retryInterval,
-    api, sync, context,
+    api, sync, context, getContextParameters,
     dispatch,
     ...other
   } = props;
@@ -56,6 +57,7 @@ export default function Shocked(props: Props) {
     sessionId: null,
     serial: 0,
     context,
+    getContextParameters,
   });
 
   // Helper function to check if an active socket is available
@@ -93,6 +95,7 @@ export default function Shocked(props: Props) {
 
   // Update context
   instance.current.context = context;
+  instance.current.getContextParameters = getContextParameters;
   instance.current.online = online;
   instance.current.apis = useMemo(() => {
     // eslint-disable-next-line no-console
@@ -190,7 +193,11 @@ export default function Shocked(props: Props) {
           if (__DEV__) console.log('[Shocked] Identify ident', ident, 'context=', instance.current.context);
 
           // Send an identification frame
-          send([IDENT, ident, instance.current.context]);
+          send([
+            IDENT, ident,
+            instance.current.context,
+            instance.current.getContextParameters(instance.current.context),
+          ]);
         }
       };
 
@@ -287,7 +294,7 @@ export default function Shocked(props: Props) {
     if (__DEV__) console.log(`[Shocked] Context changed ${JSON.stringify(context)}`);
     // Update context whenever it changes
     if (isActive()) {
-      send([CONTEXT, context]);
+      send([CONTEXT, context, instance.current.getContextParameters(context)]);
     } else {
       // clear the session if the context changes
       instance.current.sessionId = null;
@@ -306,6 +313,7 @@ export default function Shocked(props: Props) {
 
 Shocked.defaultProps = {
   retryInterval: 1000,
+  getContextParameters: () => ({}),
 };
 
 export function useShockedStatus() {

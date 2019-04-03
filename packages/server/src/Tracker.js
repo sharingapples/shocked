@@ -86,7 +86,7 @@ class Tracker {
     }
   }
 
-  async onIdentify(ws, params, ident, context) {
+  async onIdentify(ws, params, ident, context, parameters) {
     const user = await this.identifiers.reduce((res, identifier) => {
       return res.then((identified) => {
         if (identified) return identified;
@@ -109,7 +109,7 @@ class Tracker {
       }, Promise.resolve(null));
 
       // Setup context
-      await session.onInit(context);
+      await session.onInit(context, parameters);
 
       // Let the client know that we are now identified
       return session.identified();

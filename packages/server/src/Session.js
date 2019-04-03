@@ -103,11 +103,11 @@ class Session {
   }
 
   // Context change request
-  async onInit(context) {
+  async onInit(context, parameters) {
     this.serializing = false;
     try {
       await this.tracker.contextHandlers.reduce((res, onContext) => {
-        return res.then(() => onContext(context, this));
+        return res.then(() => onContext(context, parameters, this));
       }, Promise.resolve(null));
     } finally {
       this.serializing = true;
