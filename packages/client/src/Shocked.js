@@ -101,7 +101,12 @@ export default function Shocked(props: Props) {
       res[name] = async (payload) => {
         if (__DEV__) console.log(`[Shocked] Invoked API ${name}, Online=${instance.current.online}, Payload=`, payload);
         if (!instance.current.online) {
-          return offline(payload);
+          try {
+            const result = await offline(payload);
+            return { error: false, result };
+          } catch (err) {
+            return { error: err.message, result: null };
+          }
         }
         return queueApi(name, payload);
       };
