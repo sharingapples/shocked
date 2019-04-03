@@ -80,6 +80,7 @@ export default function Shocked(props: Props) {
     instance.current.apiId += 1;
     const id = instance.current.apiId;
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-console
       if (__DEV__) console.log(`[Shocked] Executing remote API ${name}`, payload);
       if (!send([API, id, name, payload])) {
         reject(new Error('Connection is not ready for API'));
@@ -93,12 +94,17 @@ export default function Shocked(props: Props) {
   // Update context
   instance.current.context = context;
   instance.current.online = online;
-  instance.current.apis = useMemo(() => (
-    Object.keys(api).reduce((res, name) => {
+  instance.current.apis = useMemo(() => {
+    // eslint-disable-next-line no-console
+    if (__DEV__) console.log('[Shocked] Creating API structure');
+    return Object.keys(api).reduce((res, name) => {
       const v = api[name];
       const apiFn = typeof v === 'function' ? v(res) : v;
       const offline = typeof apiFn === 'function' ? apiFn : notOnlineError;
+      // eslint-disable-next-line no-console
+      if (__DEV__) console.log(`[Shocked] API ${name}, offline=${typeof apiFn === 'function' ? 'YES' : 'NO'}`);
       res[name] = async (payload) => {
+        // eslint-disable-next-line no-console
         if (__DEV__) console.log(`[Shocked] Invoked API ${name}, Online=${instance.current.online}, Payload=`, payload);
         if (!instance.current.online) {
           try {
@@ -111,8 +117,8 @@ export default function Shocked(props: Props) {
         return queueApi(name, payload);
       };
       return res;
-    }, {})
-  ), [api]);
+    }, {});
+  }, [api]);
 
   const parsers = {
     // The server should treat the session dispatch
@@ -126,6 +132,7 @@ export default function Shocked(props: Props) {
       }
     },
     [IDENTIFIED]: (sessionId) => {
+      // eslint-disable-next-line no-console
       if (__DEV__) console.log(`[Shocked] Session identified ${sessionId}`);
       instance.current.sessionId = sessionId;
       setOnline(true);
@@ -148,6 +155,8 @@ export default function Shocked(props: Props) {
 
   // Setup connection manager
   useEffect(() => {
+    // eslint-disable-next-line no-console
+    if (__DEV__) console.log(`[Shocked] Setup network=${network}, url=${url}, ident=${JSON.stringify(ident)}`);
     let cleaned = false;
     let ws = null; // Save current websocket connection for cleanup
     let attemptedAt = 0; // Keep track of connection attempt to calculate reconnection wait time
@@ -247,6 +256,7 @@ export default function Shocked(props: Props) {
 
         // Make a connection reattempt
         const interval = Math.max(1, retryInterval - (Date.now() - attemptedAt));
+        // eslint-disable-next-line no-console
         if (__DEV__) console.log(`[Shocked] Connection retry in ${interval}(${retryInterval}). Last attempt was at ${attemptedAt}`);
         retryHandle = setTimeout(connect, interval);
       };
@@ -256,11 +266,13 @@ export default function Shocked(props: Props) {
     if (network && ident && url) {
       connect();
     } else if (__DEV__) {
-      console.log(`[Shocked] Avoiding connection network=${network}, ident=${ident}, url=${url}`);
+      // eslint-disable-next-line no-console
+      if (__DEV__) console.log(`[Shocked] Avoiding connection network=${network}, ident=${ident}, url=${url}`);
     }
 
     return function cleanUp() {
-      console.log(`[Shocked] Connection cleanup cycle. ActiveConnection=${!!ws}`);
+      // eslint-disable-next-line no-console
+      if (__DEV__) console.log(`[Shocked] Connection cleanup cycle. ActiveConnection=${!!ws}`);
       cleaned = true;
       clearTimeout(retryHandle);
       if (ws) ws.close(4004, 'Shocked cleanup');
@@ -271,6 +283,8 @@ export default function Shocked(props: Props) {
   // * if live session, just send a context update message
   // * else, clear any existing session
   useEffect(() => {
+    // eslint-disable-next-line no-console
+    if (__DEV__) console.log(`[Shocked] Context changed ${JSON.stringify(context)}`);
     // Update context whenever it changes
     if (isActive()) {
       send([CONTEXT, context]);
