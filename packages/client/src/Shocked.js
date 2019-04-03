@@ -113,10 +113,12 @@ export default function Shocked(props: Props) {
     // The server should treat the session dispatch
     // differently until the client is fully synced
     [ACTION]: (action, currentSerial) => {
-      if (online) instance.current.serial = currentSerial;
       dispatch(action);
-      // Let the server know that we have consumed the action
-      send([SYNC, currentSerial]);
+      if (currentSerial !== null) {
+        if (online) instance.current.serial = currentSerial;
+        // Let the server know that we have consumed the action
+        send([SYNC, currentSerial]);
+      }
     },
     [IDENTIFIED]: (sessionId) => {
       if (__DEV__) console.log(`[Shocked] Session identified ${sessionId}`);
