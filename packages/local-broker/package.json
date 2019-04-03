@@ -1,6 +1,6 @@
 {
   "name": "shocked-local-broker",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A Local Borker that works for single server only pubsub",
   "main": "src/index.js",
   "author": "Ranjan Shrestha",
