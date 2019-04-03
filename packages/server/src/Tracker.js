@@ -102,7 +102,16 @@ class Tracker {
       // Found a valid user for creating a session
       const session = new Session(this, user, params);
       session.attach(ws);
+
+      // Start the session as well
+      await this.initializers.reduce((res, onStart) => {
+        return res.then(() => onStart(session));
+      }, Promise.resolve(null));
+
+      // Setup context
       await session.onInit(context);
+
+      // Let the client know that we are now identified
       return session.identified();
     }
 
