@@ -15,6 +15,7 @@ class Session {
 
     this.context = null;
     this.socket = null;
+    this.serializing = false;
     this.serializer = new Serializer();
     this.unsubscribers = [];
 
@@ -36,7 +37,11 @@ class Session {
   dispatch(action) {
     // If the session cache increases by a large amount, destroy it
     try {
-      const serial = this.serializer.push(action);
+      // Serialize the action only after the session has been identified
+      // So that the actions dispatched duriong 'onStart' and 'onContext'
+      // aren't serialized in any form
+      const serial = this.serializing ? this.serializer.push(action) : null;
+
       if (this.socket) {
         const actionObj = Array.isArray(action) ? {
           type: BATCH,
@@ -99,7 +104,14 @@ class Session {
 
   // Context change request
   async onInit(context) {
-    await Promise.all(this.tracker.contextHandlers.map(h => h(context, this)));
+    this.serializing = false;
+    try {
+      await this.tracker.contextHandlers.reduce((res, onContext) => {
+        return res.then(() => onContext(context, this));
+      }, Promise.resolve(null));
+    } finally {
+      this.serializing = true;
+    }
   }
 
   // Action synchronized request
@@ -108,6 +120,7 @@ class Session {
   }
 
   identified() {
+    this.serializing = true;
     return this.send([IDENTIFIED, this.id, this.serializer.serial]);
   }
 
