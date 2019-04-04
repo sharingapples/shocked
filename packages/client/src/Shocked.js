@@ -156,6 +156,12 @@ export default function Shocked(props: Props) {
     },
   };
 
+  // Clear the session when ident changes
+  useEffect(() => {
+    instance.current.sessionId = null;
+    instance.current.serial = 0;
+  }, [ident]);
+
   // Setup connection manager
   useEffect(() => {
     // eslint-disable-next-line no-console
@@ -272,7 +278,7 @@ export default function Shocked(props: Props) {
     // Only connect when all the required values are a truthy
     if (network && ident && url) {
       connect();
-    } else if (__DEV__) {
+    } else {
       // eslint-disable-next-line no-console
       if (__DEV__) console.log(`[Shocked] Avoiding connection network=${network}, ident=${ident}, url=${url}`);
     }
