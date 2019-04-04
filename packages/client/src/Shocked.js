@@ -278,7 +278,7 @@ export default function Shocked(props: Props) {
     // Only connect when all the required values are a truthy
     if (network && ident && url) {
       connect();
-    } else {
+    } else if (__DEV__) {
       // eslint-disable-next-line no-console
       if (__DEV__) console.log(`[Shocked] Avoiding connection network=${network}, ident=${ident}, url=${url}`);
     }
