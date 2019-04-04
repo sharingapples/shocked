@@ -97,7 +97,8 @@ class Session {
       const result = await api(payload, this);
       this.send([API_RESPONSE, id, false, result]);
     } catch (err) {
-      console.error(err);
+      // eslint-disable-next-line no-console
+      console.warn(err);
       this.send([API_RESPONSE, id, true, err.message, err.stack]);
     }
   }
@@ -135,6 +136,7 @@ class Session {
         if (!parser) throw new Error('Invalid message type');
         parser(...msg.slice(1));
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.warn(err);
         ws.close(4003, err.message);
       }
