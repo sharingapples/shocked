@@ -80,7 +80,7 @@ class Session {
   // Serialize with actions available in the server cache
   async sync(serial) {
     const actions = this.serializer.sync(serial);
-    this.send([ACTION, actions, this.serializer.getSerial()]);
+    this.send([ACTION, { type: BATCH, payload: actions }, this.serializer.getSerial()]);
   }
 
   getParser(type) {
