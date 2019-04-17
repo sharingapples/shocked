@@ -7,9 +7,6 @@ const Tracker = require('./Tracker');
 
 const wss = new WebSocket.Server({ noServer: true });
 
-// Expect to receive a frame within a second
-const KILL_TIMEOUT = 1000;
-
 function beat() {
   this.isAlive = true;
 }
@@ -27,7 +24,7 @@ function keepAlive() {
   });
 }
 
-function createServer({ pulseRate = 30000 } = {}) {
+function createServer({ pulseRate = 30000, killTimeout = 1000 } = {}) {
   const trackers = [];
   const httpServer = http.createServer();
 
@@ -58,9 +55,9 @@ function createServer({ pulseRate = 30000 } = {}) {
       if (!tracker) return close(4004, `No tracker found at ${request.url}`);
 
       // Setup a kill timer to close the socket
-      const killTimeout = setTimeout(() => {
+      const killTimer = setTimeout(() => {
         close(4004, 'KillTimeout before first frame');
-      }, KILL_TIMEOUT);
+      }, killTimeout);
 
       try {
         if (await tracker.process(ws, reqParams)) {
@@ -71,7 +68,7 @@ function createServer({ pulseRate = 30000 } = {}) {
             ws.on('pong', beat);
           }
         }
-        clearTimeout(killTimeout);
+        clearTimeout(killTimer);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
@@ -79,7 +76,7 @@ function createServer({ pulseRate = 30000 } = {}) {
       }
 
       ws.on('error', (err) => {
-        clearTimeout(killTimeout);
+        clearTimeout(killTimer);
         // eslint-disable-next-line no-console
         console.error('WebSocket::Error', err);
       });
