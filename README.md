@@ -86,8 +86,24 @@ export default function YourApp() {
 const createServer = require('shocked');
 
 const server = createServer({ pulseRate: 0 });
+
+const apis = {
+  me: (payload, session) => {
+    // Do some actions
+    return 'John doe';
+  },
+  someComplicatedApi: async (payload, session) => {
+    // Do some complicated actions
+
+    // throw some error, eh
+
+    // No need to return anything if you do not want to
+  },
+};
+
 server.track('/your-app', (tracker) => {
   tracker.onIdent(fb);
+  tracker.register(apis);
   tracker.onIdent(google);
   tracker.onStart((session) => {
     session.subscribe(UserChannel, session.user.id);
@@ -96,6 +112,20 @@ server.track('/your-app', (tracker) => {
     session.dispatch({ type: POPULATE, payload: records });
   });
 });
+
+// You could also include express like get/post handlers
+server.post('/rest/getUser', (req, res) => {
+  // Well this is where you would handle your rest api
+  res.end('Some response');
+});
+
+server.get('/me', (req, res) => {
+  res.end('John Doe');
+});
+
+// Start listening for requests on http port
+server.listen(8080);
+
 ```
 
 ## Shocked Client API
