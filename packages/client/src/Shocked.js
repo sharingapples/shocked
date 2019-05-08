@@ -13,6 +13,9 @@ type Props = {
   ident: string, // Session id for identification
   clearIdent: () => {}, // Callback to clear identification. Alias to logout.
 
+  // Callback called when custom error (4003) occurs
+  onError: ({ code: number, reason: string }) => void,
+
   context: any, // Client context to be synced with server
   getContextParameters?: (any) => {},
   dispatch: (store: any, action: {}) => void,
@@ -41,7 +44,7 @@ function fixUrl(url) {
 
 export default function Shocked(props: Props) {
   const {
-    url, network, ident, clearIdent,
+    url, network, ident, clearIdent, onError,
     retryInterval,
     api, sync, context, getContextParameters,
     dispatch,
@@ -257,6 +260,10 @@ export default function Shocked(props: Props) {
           instance.current.serial = 0;
           // Make a reconnection attempt instantly
           attemptedAt = 0;
+          if (evt.code === 4003) {
+            // Looks like custom error send by server
+            if (onError) onError(evt);
+          }
         }
 
         // Unknown identification
