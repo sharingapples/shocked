@@ -3,10 +3,11 @@
   "version": "2.0.6",
   "description": "Websocket and redux client",
   "main": "dist/index.js",
-  "module": "src/index.js",
+  "module": "es6/index.js",
   "react-native": "src/index.js",
   "files": [
     "dist",
+    "es6",
     "src",
     "status"
   ],
@@ -15,7 +16,8 @@
     "lint": "../../task lint",
     "clean": "../../task clean",
     "build": "../../task build",
-    "prepare": "yarn run lint && yarn run test && yarn run clean && yarn run build"
+    "build:es6": "../../task build:es6",
+    "prepare": "yarn run lint && yarn run test && yarn run clean && yarn run build && yarn run build:es6"
   },
   "repository": {
     "type": "git",

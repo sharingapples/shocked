@@ -22,6 +22,11 @@ function execute(cmd, extra) {
         stdio: 'inherit',
       });
 
+    case 'build:es6':
+      return spawn(bin('babel'), ['./src', '-d', './es6', '--config-file', './babel.es6.config.js'].concat(extra), {
+        stdio: 'inherit',
+      });
+
     case 'test':
       return spawn(bin('jest'), ['--rootDir', '.'].concat(extra), {
         stdio: 'inherit',

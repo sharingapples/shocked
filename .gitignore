@@ -3,6 +3,7 @@ node_modules/
 __dist__
 cjs
 dist
+es6
 lerna-debug.log
 yarn-error.log
 npm-debug.log
