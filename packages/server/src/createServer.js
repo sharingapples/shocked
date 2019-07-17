@@ -4,6 +4,7 @@ const polka = require('polka');
 const setupDebugger = require('../debug');
 
 const Tracker = require('./Tracker');
+const WebSockError = require('./WebSockError');
 
 const wss = new WebSocket.Server({ noServer: true });
 
@@ -72,7 +73,8 @@ function createServer({ pulseRate = 30000, killTimeout = 1000 } = {}) {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
-        close(err.code || 4004, err.message);
+        const code = err instanceof WebSockError ? err.code : 4004;
+        close(code, err.message);
       }
 
       ws.on('error', (err) => {

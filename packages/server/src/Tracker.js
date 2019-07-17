@@ -1,14 +1,13 @@
 const { IDENT, RECONN } = require('shocked-common');
 const UrlPattern = require('url-pattern');
 const Session = require('./Session');
-
+const WebSockError = require('./WebSockError');
 // Expire abandoned sessions in 5 minutes
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
-class IdentError extends Error {
+class IdentError extends WebSockError {
   constructor(ident) {
-    super(`Unknown ident - ${JSON.stringify(ident)}`);
-    this.code = 4002;
+    super(4002, `Unknown ident - ${JSON.stringify(ident)}`);
   }
 }
 
