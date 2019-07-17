@@ -6,8 +6,8 @@ const WebSockError = require('./WebSockError');
 const SESSION_EXPIRY = 5 * 60 * 1000;
 
 class IdentError extends WebSockError {
-  constructor(ident) {
-    super(4002, `Unknown ident - ${JSON.stringify(ident)}`);
+  constructor(message) {
+    super(4002, message);
   }
 }
 
@@ -86,15 +86,20 @@ class Tracker {
   }
 
   async onIdentify(ws, params, ident, context, parameters) {
-    const user = await this.identifiers.reduce((res, identifier) => {
-      return res.then((identified) => {
-        if (identified) return identified;
-        return identifier(ident);
-      });
-    }, Promise.resolve(null));
+    let user = null;
+    try {
+      user = await this.identifiers.reduce((res, identifier) => {
+        return res.then((identified) => {
+          if (identified) return identified;
+          return identifier(ident);
+        });
+      }, Promise.resolve(null));
+    } catch (err) {
+      throw new IdentError(err.message);
+    }
 
     if (!user) {
-      throw new IdentError(ident);
+      throw new IdentError(`Unknown identity ${JSON.stringify(ident)}`);
     }
 
     if (user) {
@@ -102,16 +107,20 @@ class Tracker {
       const session = new Session(this, user, params);
       session.attach(ws);
 
-      // Start the session as well
-      await this.initializers.reduce((res, onStart) => {
-        return res.then(() => onStart(session));
-      }, Promise.resolve(null));
+      try {
+        // Start the session as well
+        await this.initializers.reduce((res, onStart) => {
+          return res.then(() => onStart(session));
+        }, Promise.resolve(null));
 
-      // Setup context
-      await session.onInit(context, parameters);
+        // Setup context
+        await session.onInit(context, parameters);
 
-      // Let the client know that we are now identified
-      return session.identified();
+        // Let the client know that we are now identified
+        return session.identified();
+      } catch (err) {
+        throw new IdentError(err.message);
+      }
     }
 
     return null;
