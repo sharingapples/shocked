@@ -39,6 +39,7 @@ class Tracker {
     this.identifiers = [];
     this.initializers = [];
     this.contextHandlers = [];
+    this.matcher = null;
 
     this.onIdentify = this.onIdentify.bind(this);
     this.onReconnect = this.onReconnect.bind(this);
@@ -47,6 +48,10 @@ class Tracker {
   register(api) {
     if (this.api) throw new Error('Api can only be registered once');
     this.api = api;
+  }
+
+  onMatch(matcher) {
+    this.matcher = matcher;
   }
 
   onIdent(cb) {
@@ -91,7 +96,7 @@ class Tracker {
       user = await this.identifiers.reduce((res, identifier) => {
         return res.then((identified) => {
           if (identified) return identified;
-          return identifier(ident);
+          return identifier(ident, params);
         });
       }, Promise.resolve(null));
     } catch (err) {
@@ -159,8 +164,13 @@ class Tracker {
     });
   }
 
-  match(url) {
-    return this.pattern.match(url);
+  match(url, req) {
+    const params = this.pattern.match(url);
+    if (!params || !this.matcher) return params;
+
+    const extraParams = this.matcher(req);
+    if (!extraParams) return false;
+    return Object.assign(params, extraParams);
   }
 }
 

@@ -35,7 +35,7 @@ function createServer({ pulseRate = 30000, killTimeout = 1000 } = {}) {
     let reqParams = {};
 
     const tracker = trackers.find((t) => {
-      const params = t.match(request.url);
+      const params = t.match(request.url, request);
       if (!params) {
         return false;
       }
