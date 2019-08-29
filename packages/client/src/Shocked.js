@@ -336,3 +336,14 @@ export function useShockedStatus() {
 export function useShockedApi() {
   return useContext(SocketApiContext);
 }
+
+export function useShockedEffect(cb, dependencies) {
+  const api = useShockedApi();
+  const status = useShockedStatus();
+
+  useEffect(() => {
+    if (status) {
+      cb(api);
+    }
+  }, [status, ...dependencies]);
+}
