@@ -1,6 +1,6 @@
 {
   "name": "shocked",
-  "version": "2.0.10",
+  "version": "3.0.0",
   "description": "Websocket and redux client",
   "main": "dist/index.js",
   "module": "es6/index.js",
@@ -28,20 +28,11 @@
   "dependencies": {
     "events": "^3.0.0",
     "nanoid": "^2.0.1",
-    "shocked-common": "^2.0.0"
+    "shocked-common": "^3.0.0"
   },
   "peerDependencies": {
     "react": ">=16.8",
-    "react-native": ">=0.59",
-    "redux": "^4.0.1",
-    "redux-hooked": "^0.1.4",
-    "shocked-server": "^1.1.4"
-  },
-  "devDependencies": {
-    "isomorphic-ws": "^4.0.1",
-    "redux": "^4.0.1",
-    "redux-hooked": "^0.1.4",
-    "ws": "^6.1.4"
+    "react-native": ">=0.59"
   },
   "gitHead": "176ea2dda597174d9336674394d2739b719d99fa"
 }

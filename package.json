@@ -1,7 +1,7 @@
 {
   "name": "shocked-workspace",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "A Websocket app development library",
   "workspaces": [
     "packages/*",
@@ -22,26 +22,9 @@
   },
   "homepage": "https://github.com/sharingapples/shocked#readme",
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.3.4",
-    "@babel/preset-env": "^7.3.4",
-    "@babel/preset-flow": "^7.0.0",
-    "@babel/preset-react": "^7.0.0",
-    "babel-core": "7.0.0-bridge.0",
-    "babel-eslint": "^9.0.0",
-    "babel-jest": "^23.6.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "eslint": "5.12.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.1",
-    "eslint-plugin-react": "^7.11.0",
-    "fast-async": "^6.3.8",
-    "jest": "^23.6.0",
-    "lerna": "^3.13.0",
-    "rimraf": "^2.6.2",
-    "shocked": "^1.1.0",
-    "shocked-local-broker": "^1.1.0",
-    "shocked-server": "^1.1.0"
+    "lerna": "^3.16.4",
+    "rimraf": "^3.0.0",
+    "shocked": "^1.1.16",
+    "typescript": "^3.6.3"
   }
 }
