@@ -3,6 +3,9 @@
   "version": "3.0.0",
   "description": "A Local Borker that works for single server only pubsub",
   "main": "dist/index.js",
+  "dependencies": {
+    "shocked-types": "^3.0.0"
+  },
   "files": [
     "dist"
   ],

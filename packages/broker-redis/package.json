@@ -8,6 +8,9 @@
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn clean && yarn build"
   },
+  "dependencies": {
+    "shocked-types": "^3.0.0"
+  },
   "devDependencies": {
     "@types/redis": "^2.8.13"
   },

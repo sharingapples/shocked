@@ -22,7 +22,8 @@
   "dependencies": {
     "events": "^3.0.0",
     "nanoid": "^2.0.1",
-    "shocked-common": "^3.0.0"
+    "shocked-common": "^3.0.0",
+    "shocked-types": "^3.0.0"
   },
   "peerDependencies": {
     "react": ">=16.8",
@@ -31,7 +32,6 @@
   "gitHead": "176ea2dda597174d9336674394d2739b719d99fa",
   "devDependencies": {
     "@types/react": "^16.9.2",
-    "react": "^16.9.0",
-    "shocked-types": "^3.0.0"
+    "react": "^16.9.0"
   }
 }
