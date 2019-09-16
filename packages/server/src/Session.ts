@@ -1,166 +1,92 @@
-const nanoid = require('nanoid');
-const WebSocket = require('ws');
-const {
-  API, API_RESPONSE, CONTEXT, ACTION, SYNC, IDENTIFIED, BATCH,
-} = require('shocked-common');
-const Serializer = require('./Serializer');
+import { EventEmitter } from 'events';
+import { WebSocketBehavior, WebSocket } from 'uWebSockets.js';
+import { API, API_RESPONSE, DISPATCH } from 'shocked-common';
+import { Tracker } from './Tracker';
 
-class Session {
-  constructor(tracker, user, params) {
-    this.id = nanoid();
-    this.tracker = tracker;
+export default class Session<U> extends EventEmitter implements WebSocketBehavior {
+  readonly user: U;
+  private readonly tracker: Tracker<U>;
+  private socket: WebSocket | null;
+  private readonly messageQueue: string[];
 
+  constructor(tracker: Tracker<U>, user: U, socket: WebSocket) {
+    super();
     this.user = user;
-    this.params = params;
-
-    this.context = null;
-    this.socket = null;
-    this.serializing = false;
-    this.serializer = new Serializer();
-    this.unsubscribers = [];
-
-    // Bind all the parser specific callback
-    this.onInit = this.onInit.bind(this);
-    this.onExecute = this.onExecute.bind(this);
-    this.onSync = this.onSync.bind(this);
+    this.tracker = tracker;
+    this.socket = socket;
+    this.messageQueue = [];
   }
 
-  send(data) {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
-      return true;
+  close() {
+    if (!this.socket) return;
+    // Close the socket on the next free cycle. This allows
+    // apis to send their responses
+    setTimeout(this.socket.close.bind(this.socket), 1);
+  }
+
+  drain(socket: WebSocket) {
+    while (this.messageQueue.length > 0) {
+      const message = this.messageQueue.shift() as string;
+      if (!socket.send(message)) {
+        this.messageQueue.unshift();
+        return;
+      }
     }
-    return false;
+  }
+
+  // Session cleanup method called by the tracker
+  destroy() {
+    // The session is not usable after this
+    this.emit('close');
+    this.socket = null;
+  }
+
+  send(payload: any) {
+    if (!this.socket) return;
+
+    const message = JSON.stringify(payload);
+    // If we already have a queue, just queue it
+    if (this.messageQueue.length) {
+      this.messageQueue.push(message);
+    } else {
+      // Try to send it, failing with keep it on the queue
+      // this could happen when the socket buffer is not available
+      // at the moment, the drain event will give an oppertunity to
+      // clean it up
+      const ok = this.socket.send(message);
+      if (!ok) this.messageQueue.push(message);
+    }
+  }
+
+  async parse(payload: any[]) {
+    const type = payload[0];
+    if (type === API) {
+      const id = payload[1];
+      try {
+        const result = await this.execute(payload[2], payload[3]);
+        this.send([API_RESPONSE, id, false, result]);
+      } catch (err) {
+        this.send([API_RESPONSE, id, true, err]);
+      } finally {
+        return;
+      }
+    }
+
+    throw new Error(`Unknown payload type ${type}`);
+  }
+
+  async execute(name: string, args: []) {
+    const api = this.tracker.getApi(name);
+    if (!api) {
+      throw new Error(`Unknown API ${name}`);
+    }
+
+    return api.apply(null, args);
   }
 
   // The dispatch method may be called even when there is no connection
-  dispatch(action) {
-    // If the session cache increases by a large amount, destroy it
-    try {
-      // Serialize the action only after the session has been identified
-      // So that the actions dispatched duriong 'onStart' and 'onContext'
-      // aren't serialized in any form
-      const serial = this.serializing ? this.serializer.push(action) : null;
-
-      if (this.socket) {
-        const actionObj = Array.isArray(action) ? {
-          type: BATCH,
-          payload: action,
-        } : action;
-        this.send([ACTION, actionObj, serial]);
-      }
-    } catch (err) {
-      this.tracker.destroy(this);
-    }
-  }
-
-  subscribe(channel, id) {
-    const unsub = channel.subscribe(id, this);
-    this.unsubscribers.push([unsub, channel, id]);
-  }
-
-  unsubscribe(channel, id) {
-    for (let i = this.unsubscribers.length - 1; i >= 0; i -= 1) {
-      const [unsub, schannel, sid] = this.unsubscribers[i];
-      if (channel === schannel && (!id || id === sid)) {
-        this.unsubscribers.splice(i, 1);
-        unsub();
-      }
-    }
-  }
-
-  unsubscribeAll() {
-    for (let i = this.unsubscribers.length - 1; i >= 0; i -= 1) {
-      const [unsub] = this.unsubscribers[i];
-      unsub();
-    }
-    this.unsubscribers.length = 0;
-  }
-
-  // Serialize with actions available in the server cache
-  async sync(serial) {
-    const actions = this.serializer.sync(serial);
-    this.send([ACTION, { type: BATCH, payload: actions }, this.serializer.getSerial()]);
-  }
-
-  getParser(type) {
-    if (type === API) return this.onExecute;
-    if (type === CONTEXT) return this.onInit;
-    if (type === SYNC) return this.onSync;
-    return null;
-  }
-
-  async onExecute(id, name, payload) {
-    const api = this.tracker.api[name];
-    try {
-      if (!api) throw new Error(`Unknown API ${name}`);
-      const result = await api(payload, this);
-      this.send([API_RESPONSE, id, false, result]);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn(err);
-      this.send([API_RESPONSE, id, true, err.message, err.stack]);
-    }
-  }
-
-  // Context change request
-  async onInit(context, parameters) {
-    this.serializing = false;
-    try {
-      await this.tracker.contextHandlers.reduce((res, onContext) => {
-        return res.then(() => onContext(context, parameters, this));
-      }, Promise.resolve(null));
-    } finally {
-      this.serializing = true;
-    }
-  }
-
-  // Action synchronized request
-  onSync(serial) {
-    this.serializer.synced(serial);
-  }
-
-  identified() {
-    this.serializing = true;
-    return this.send([IDENTIFIED, this.id, this.serializer.serial]);
-  }
-
-  attach(ws) {
-    this.socket = ws;
-
-    ws.on('message', (data) => {
-      try {
-        const msg = JSON.parse(data);
-        if (!Array.isArray(msg)) throw new Error('Invalid message format');
-        const parser = this.getParser(msg[0]);
-        if (!parser) throw new Error('Invalid message type');
-        parser(...msg.slice(1));
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(err);
-        ws.close(4003, err.message);
-      }
-    });
-
-    ws.on('close', (code) => {
-      this.socket = null;
-      if (code < 4000) {
-        this.tracker.abandon(this);
-      } else {
-        this.tracker.destroy(this);
-      }
-    });
-  }
-
-  close(message) {
-    if (this.socket) {
-      this.socket.close(4003, message);
-    }
-  }
-
-  set(name, value) {
-    Object.defineProperty(this, name, { value, configurable: true, writable: false });
+  dispatch(action: any) {
+    if (this.socket) throw new Error('Session is already closed');
+    this.send([DISPATCH, action]);
   }
 }
-
-module.exports = Session;
