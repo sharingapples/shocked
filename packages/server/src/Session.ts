@@ -18,11 +18,19 @@ export default class Session<U> extends EventEmitter implements WebSocketBehavio
     this.messageQueue = [];
   }
 
-  close() {
+  close(clearIdent?: boolean) {
     if (!this.socket) return;
     // Close the socket on the next free cycle. This allows
     // apis to send their responses
-    setTimeout(this.socket.close.bind(this.socket), 1);
+    setTimeout(() => {
+      if (this.socket) {
+        if (clearIdent) {
+          this.socket.end(CLEAR_IDENT);
+        } else {
+          this.socket.close();
+        }
+      }
+    });
   }
 
   drain(socket: WebSocket) {

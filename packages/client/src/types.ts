@@ -6,7 +6,7 @@ export type NetworkProvider = (cb: NetworkCallback) => Unsubscribe;
 export type ShockedProps = {
   url: string,  // Remote websocket url
   ident: string, // Session identification
-  clearIdent: () => void, // Callback to clear identification. Alias to logout.
+  clearIdent: (reason?: string) => void, // Callback to clear identification. Alias to logout.
 
   networkProvider?: NetworkProvider,
 

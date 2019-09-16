@@ -1,6 +1,6 @@
 import { WebSocketBehavior, WebSocket, HttpRequest } from 'uWebSockets.js';
 import { ServerApi } from 'shocked-types';
-import { IDENT, API, API_RESPONSE } from 'shocked-common';
+import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
 import nanoid = require('nanoid');
 
 import Session from './Session';
@@ -68,8 +68,15 @@ export class Tracker<U> implements WebSocketBehavior {
 
       // handle the ident
       if (type === IDENT) {
-        // identify the session user
-        const user = await this.behaviour.onIdent(payload[1]);
+        let user: U;
+        try {
+          // identify the session user
+          user = await this.behaviour.onIdent(payload[1]);
+        } catch (err) {
+          // Send a 'clearIdent' error
+          ws.end(CLEAR_IDENT, err.message);
+          return;
+        }
 
         // Generate a sessino id
         const sessionId = nanoid();

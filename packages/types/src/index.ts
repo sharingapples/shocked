@@ -4,7 +4,7 @@ type Listener = () => void;
 export interface Session<U> {
   user: U,
   dispatch: Dispatch,
-  close: () => void,
+  close: (clearIdent?: boolean) => void,
   on: (event: SessionEvents, listener: Listener) => void,
   off: (event: SessionEvents, listener: Listener) => void,
 };
