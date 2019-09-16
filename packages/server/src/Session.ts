@@ -40,6 +40,9 @@ export default class Session<U> extends EventEmitter implements WebSocketBehavio
     // The session is not usable after this
     this.emit('close');
     this.socket = null;
+
+    // Remove all the listeners
+    this.removeAllListeners('close');
   }
 
   send(payload: any) {
