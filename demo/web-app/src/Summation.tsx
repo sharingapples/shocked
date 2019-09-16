@@ -16,14 +16,13 @@ export default function Summation() {
     return api.add([a, b]);
   }, [a, b]);
 
-  console.log('Sum is', sum);
   return (
     <div>
       <input type="text" value={a} onChange={handleChange(setA)} />
       +
       <input type="text" value={b} onChange={handleChange(setB)} />
       =
-      <input type="text" readOnly value={sum} />
+      <input type="text" readOnly value={sum === undefined ? 'Calculating..' : sum} />
     </div>
   );
 }

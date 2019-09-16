@@ -16,10 +16,13 @@ const demoApi = {
 const server = new Server<User>();
 server.track('/a', {
   api: demoApi,
-  onIdent: async (token: string) => {
-    return new Promise((resolve) => {
-      // Simulate a 500 ms delay on identification
-      setTimeout(() => resolve({ id: token, name: token }), 500);
+  onIdent: (token: string) => {
+    return new Promise((resolve, reject) => {
+      if (token !== 'demo') {
+        reject(new Error('Invalid identity. Use demo'));
+      } else {
+        resolve({ id: token, name: token });
+      }
     });
   },
   onStart: async (session) => {
