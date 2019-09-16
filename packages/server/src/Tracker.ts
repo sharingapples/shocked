@@ -6,8 +6,8 @@ import nanoid from 'nanoid';
 import Session from './Session';
 
 export interface TrackerBehaviour<U> {
-  api: ServerApi,
-  onIdent: <I>(ident: I) => Promise<U>,
+  api: ServerApi<U>,
+  onIdent: (ident: any) => Promise<U>,
   onStart: (session: Session<U>) => Promise<void>,
 
   createSession?: (tracker: Tracker<U>, user: U, socket: WebSocket) => Promise<Session<U>>,
