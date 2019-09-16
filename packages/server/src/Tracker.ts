@@ -34,18 +34,18 @@ export class Tracker<U> implements WebSocketBehavior {
   }
 
   // Websocket open event
-  open(ws: WebSocket, req: HttpRequest) {
+  open = (ws: WebSocket, req: HttpRequest) => {
     // Start a timer to kill the websocket if not identified
   }
 
   // Websocket drain event
-  drain(ws: WebSocket) {
+  drain = (ws: WebSocket) => {
     const session = this.getSession(ws);
     if (session) session.drain(ws);
   }
 
   // Websocket close event
-  close(ws: WebSocket) {
+  close = (ws: WebSocket, code: number) => {
     const sessionId = ws.sessionId;
     const session = this.sessions[sessionId];
     if (session) {
@@ -54,7 +54,7 @@ export class Tracker<U> implements WebSocketBehavior {
     }
   }
 
-  async message(ws: WebSocket, msg: ArrayBuffer) {
+  message = async (ws: WebSocket, msg: ArrayBuffer) => {
     try {
       const payload = JSON.parse(Buffer.from(msg).toString());
       const type = payload[0];
