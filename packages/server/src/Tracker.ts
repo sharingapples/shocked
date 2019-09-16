@@ -9,8 +9,6 @@ export interface TrackerBehaviour<U> {
   api: ServerApi<U>,
   onIdent: (ident: any) => Promise<U>,
   onStart: (session: Session<U>) => Promise<void>,
-
-  createSession?: (tracker: Tracker<U>, user: U, socket: WebSocket) => Promise<Session<U>>,
 }
 
 export class Tracker<U> implements WebSocketBehavior {
@@ -80,9 +78,7 @@ export class Tracker<U> implements WebSocketBehavior {
 
         // Generate a sessino id
         const sessionId = nanoid();
-        const session = this.behaviour.createSession
-          ? (await this.behaviour.createSession(this, user, ws))
-          : new Session(this, user, ws);
+        const session = new Session(this, user, ws);
 
         this.sessions[sessionId] = session;
         ws.sessionId = sessionId;
