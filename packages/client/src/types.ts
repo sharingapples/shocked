@@ -19,8 +19,8 @@ export type ShockedProps = {
 
 export enum ConnectionStatus {
   offline = 0,
-  connecting = 1,
-  connected = 2,
+  connected = 1,
+  connecting = 2,
 };
 
 export type Dispatch = (action: any) => void;
