@@ -24,12 +24,9 @@
     "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.18",
     "@types/nanoid": "^2.0.0",
     "isomorphic-ws": "^4.0.1",
-    "jest": "^24.9.0",
     "shocked-types": "^3.0.0",
-    "ts-jest": "^24.1.0",
     "ws": "^7.1.2"
   },
   "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
