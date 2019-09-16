@@ -17,6 +17,13 @@ export class Tracker<U> implements WebSocketBehavior {
   private readonly behaviour: TrackerBehaviour<U>;
   private readonly sessions: { [id: string]: Session<U> };
 
+  // Without maxPayloadLength, the connection will be closed abruptly
+  maxPayloadLength = 1024 * 1024;
+
+  // Set a idleTimeout at 30 seconds, The client will be disconnected if no data is sent within
+  // this period
+  idleTimeout = 30;
+
   constructor(behaviour: TrackerBehaviour<U>) {
     this.behaviour = behaviour;
     this.sessions = {};
