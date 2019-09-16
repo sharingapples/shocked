@@ -85,6 +85,14 @@ export class Tracker<U> implements WebSocketBehavior {
 
         // Send the identity
         session.send([IDENT, sessionId]);
+
+        // Initialize the session
+        try {
+          await this.behaviour.onStart(session);
+        } catch (err) {
+          ws.close();
+        }
+
         return;
       }
 
