@@ -1,7 +1,7 @@
 import { WebSocketBehavior, WebSocket, HttpRequest } from 'uWebSockets.js';
 import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE } from 'shocked-common';
-import nanoid from 'nanoid';
+import nanoid = require('nanoid');
 
 import Session from './Session';
 
