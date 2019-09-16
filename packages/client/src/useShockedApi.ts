@@ -26,8 +26,7 @@ export default function useShockedApi(call?: Callback, args:any[] = []) {
   useEffect(() => {
     if (!call) return;
 
-    let handleResult: null | typeof setResult = setResult;
-    let handleError: null | typeof setResult = setResult;
+    let mounted = true;
     let unsub: Unsubscribe | null;
 
     function exec(status: ConnectionStatus) {
@@ -37,7 +36,11 @@ export default function useShockedApi(call?: Callback, args:any[] = []) {
 
       if (status === ConnectionStatus.connected) {
         const fn: Callback = call as Callback;
-        fn(controller.getApis()).then(handleResult, handleError);
+        setResult(undefined);
+        fn(controller.getApis()).then(
+          res => mounted && setResult(res),
+          err => mounted && setResult(err)
+        );
       } else if (status === ConnectionStatus.offline) {
         setResult(new Error('No connection'));
       }
@@ -56,8 +59,7 @@ export default function useShockedApi(call?: Callback, args:any[] = []) {
     }
 
     return () => {
-      handleResult = null;
-      handleError = null;
+      mounted = false;
       if (unsub) unsub();
     }
   }, args);
