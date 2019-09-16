@@ -1,7 +1,12 @@
+type SessionEvents = 'close';
+type Listener = () => void;
+
 export interface Session<U> {
   user: U,
   dispatch: Dispatch,
   close: () => void,
+  on: (event: SessionEvents, listener: Listener) => void,
+  off: (event: SessionEvents, listener: Listener) => void,
 };
 
 export type ClientApi = {

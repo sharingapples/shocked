@@ -8,7 +8,6 @@ import Summation from './Summation';
 
 function logout() {
   console.log('Logout');
-  return {};
 }
 
 function dispatch(action: any) {
