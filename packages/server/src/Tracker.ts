@@ -98,7 +98,7 @@ export class Tracker<U> implements WebSocketBehavior {
           const result = await session.execute(payload[2], payload[3]);
           ws.send(JSON.stringify([API_RESPONSE, id, false, result]));
         } catch (err) {
-          ws.send(JSON.stringify([API_RESPONSE, id, true, err]));
+          ws.send(JSON.stringify([API_RESPONSE, id, true, err.message]));
         }
       }
     } catch (err) {
