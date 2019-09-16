@@ -5,15 +5,16 @@ import nanoid = require('nanoid');
 
 import Session from './Session';
 
-export interface TrackerBehaviour<U> {
-  api: ServerApi<U>,
-  onIdent: (ident: any) => Promise<U>,
-  onStart: (session: Session<U>) => Promise<void>,
+export interface TrackerBehaviour<U, P> {
+  api: ServerApi<U, P>,
+  onIdent: (ident: any, params: P) => Promise<U>,
+  onStart: (session: Session<U, P>) => Promise<void>,
+  preprocess?: (req: HttpRequest) => P,
 }
 
-export class Tracker<U> implements WebSocketBehavior {
-  private readonly behaviour: TrackerBehaviour<U>;
-  private readonly sessions: { [id: string]: Session<U> };
+export class Tracker<U, P> implements WebSocketBehavior {
+  private readonly behaviour: TrackerBehaviour<U, P>;
+  private readonly sessions: { [id: string]: Session<U, P> };
 
   // Without maxPayloadLength, the connection will be closed abruptly
   maxPayloadLength = 1024 * 1024;
@@ -22,7 +23,7 @@ export class Tracker<U> implements WebSocketBehavior {
   // this period
   idleTimeout = 30;
 
-  constructor(behaviour: TrackerBehaviour<U>) {
+  constructor(behaviour: TrackerBehaviour<U, P>) {
     this.behaviour = behaviour;
     this.sessions = {};
   }
@@ -41,6 +42,9 @@ export class Tracker<U> implements WebSocketBehavior {
   // Websocket open event
   open = (ws: WebSocket, req: HttpRequest) => {
     // Start a timer to kill the websocket if not identified
+    if (this.behaviour.preprocess) {
+      ws.params = this.behaviour.preprocess(req);
+    }
   }
 
   // Websocket drain event
@@ -69,7 +73,7 @@ export class Tracker<U> implements WebSocketBehavior {
         let user: U;
         try {
           // identify the session user
-          user = await this.behaviour.onIdent(payload[1]);
+          user = await this.behaviour.onIdent(payload[1], ws.params);
         } catch (err) {
           // Send a 'clearIdent' error
           ws.end(CLEAR_IDENT, err.message);

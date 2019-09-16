@@ -4,18 +4,20 @@ import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT } from 'shocked-common';
 import { Session as SessionInterface } from 'shocked-types';
 import { Tracker } from './Tracker';
 
-export default class Session<U> extends EventEmitter implements SessionInterface<U> {
+export default class Session<U, P> extends EventEmitter implements SessionInterface<U, P> {
   readonly user: U;
-  private readonly tracker: Tracker<U>;
+  readonly params: P;
+  private readonly tracker: Tracker<U, P>;
   private socket: WebSocket | null;
   private readonly messageQueue: string[];
 
-  constructor(tracker: Tracker<U>, user: U, socket: WebSocket) {
+  constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket) {
     super();
     this.user = user;
     this.tracker = tracker;
     this.socket = socket;
     this.messageQueue = [];
+    this.params = socket.params;
   }
 
   close(clearIdent?: boolean) {

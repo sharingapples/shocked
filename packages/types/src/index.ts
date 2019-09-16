@@ -1,8 +1,9 @@
 type SessionEvents = 'close';
 type Listener = () => void;
 
-export interface Session<U> {
+export interface Session<U, P> {
   user: U,
+  params: P,
   dispatch: Dispatch,
   close: (clearIdent?: boolean) => void,
   on: (event: SessionEvents, listener: Listener) => void,
@@ -13,8 +14,8 @@ export type ClientApi = {
   [name: string]: null,
 };
 
-export type ServerApi<U> = {
-  [name: string]: (payload: any, session: Session<U>) => any,
+export type ServerApi<U, P> = {
+  [name: string]: (payload: any, session: Session<U, P>) => any,
 }
 
 export type RemoteApi = {

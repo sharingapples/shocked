@@ -8,7 +8,7 @@ function compat(handler: (req: HttpRequest, res: HttpResponse) => void) {
   }
 }
 
-class Server<U> {
+class Server<U, P> {
   app: TemplatedApp;
 
   constructor() {
@@ -25,7 +25,7 @@ class Server<U> {
     return this.app.post(path, compat(handler));
   }
 
-  track(path: string, behaviour: TrackerBehaviour<U>) {
+  track(path: string, behaviour: TrackerBehaviour<U, P>) {
     const tracker = new Tracker(behaviour);
     this.app.ws(path, tracker);
     return this;
