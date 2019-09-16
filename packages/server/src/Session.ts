@@ -86,7 +86,6 @@ export default class Session<U> extends EventEmitter implements WebSocketBehavio
 
   // The dispatch method may be called even when there is no connection
   dispatch(action: any) {
-    if (this.socket) throw new Error('Session is already closed');
     this.send([DISPATCH, action]);
   }
 }
