@@ -75,13 +75,13 @@ export default class Session<U> extends EventEmitter implements WebSocketBehavio
     throw new Error(`Unknown payload type ${type}`);
   }
 
-  async execute(name: string, args: []) {
+  async execute(name: string, args: any) {
     const api = this.tracker.getApi(name);
     if (!api) {
       throw new Error(`Unknown API ${name}`);
     }
 
-    return api.apply(null, args);
+    return api(args, this);
   }
 
   // The dispatch method may be called even when there is no connection

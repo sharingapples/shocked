@@ -41,7 +41,7 @@ export class Controller {
 
     // Bind the api with the connection
     this.apis = Object.keys(api).reduce((res, name) => {
-      res[name] = (...args: any[]) => {
+      res[name] = (payload: any) => {
         if (this.send === null) {
           throw new Error('No connection');
         }
@@ -50,7 +50,7 @@ export class Controller {
         const id = this.callId;
 
         // Send the api
-        this.send([API, id, name, ...args]);
+        this.send([API, id, name, payload]);
         return new Promise((resolve, reject) => {
           this.activeApis[id] = [resolve, reject];
         });
