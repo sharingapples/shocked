@@ -1,0 +1,16 @@
+{
+  "name": "shocked-local-broker",
+  "version": "3.0.0",
+  "description": "A Local Borker that works for single server only pubsub",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "yarn clean && yarn build"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT"
+}
