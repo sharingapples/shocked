@@ -163,7 +163,9 @@ export class Controller {
   }
 
   setStatus(status: ConnectionStatus) {
+    // TODO: Defer status changes to implement debounce
     if (this.status === status) return;
+    this.status = status;
     this.fireStatus(status);
   }
 }
