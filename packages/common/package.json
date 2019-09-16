@@ -2,10 +2,11 @@
   "name": "shocked-common",
   "version": "3.0.0",
   "description": "A common package for client and server packages",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "lint": "../../task lint",
-    "prepare": "yarn run lint"
+    "clean": "rimraf dist",
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "yarn clean && yarn build"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT",
