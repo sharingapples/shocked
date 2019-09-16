@@ -1,0 +1,17 @@
+{
+  "name": "@demo/server",
+  "version": "3.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "shocked-server": "^3.0.0"
+  },
+  "scripts": {
+    "start": "ts-node-dev --respawn --watch '../../packages/server/src' --transpileOnly src/index.ts"
+  },
+  "author": "Ranjan Shrestha",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "ts-node-dev": "^1.0.0-pre.42"
+  }
+}
