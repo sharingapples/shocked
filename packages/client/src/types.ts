@@ -14,6 +14,7 @@ export type ShockedProps = {
 
   // List of remote apis that need to be supported
   api: ClientApi,
+  children: React.ReactElement,
 };
 
 export enum ConnectionStatus {
