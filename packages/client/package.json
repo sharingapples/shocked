@@ -8,6 +8,7 @@
     "dist"
   ],
   "scripts": {
+    "test": "jest",
     "clean": "rimraf dist",
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn test && yarn clean && yarn build"
