@@ -12,12 +12,10 @@
     "status"
   ],
   "scripts": {
-    "test": "../../task test",
-    "lint": "../../task lint",
-    "clean": "../../task clean",
-    "build": "../../task build",
-    "build:es6": "../../task build:es6",
-    "prepare": "yarn run lint && yarn run test && yarn run clean && yarn run build && yarn run build:es6"
+    "test": "jest",
+    "clean": "rimraf dist",
+    "build": "yarn tsc -p tsconfig.json",
+    "prepublishOnly": "yarn test && yarn clean && yarn build"
   },
   "repository": {
     "type": "git",
@@ -34,5 +32,10 @@
     "react": ">=16.8",
     "react-native": ">=0.59"
   },
-  "gitHead": "176ea2dda597174d9336674394d2739b719d99fa"
+  "gitHead": "176ea2dda597174d9336674394d2739b719d99fa",
+  "devDependencies": {
+    "@types/react": "^16.9.2",
+    "react": "^16.9.0",
+    "shocked-types": "^3.0.0"
+  }
 }
