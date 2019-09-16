@@ -8,7 +8,10 @@ type User = {
 const demoApi = {
   add: ([a, b]: [number, number], session: Session<User>) => {
     session.dispatch(a * b);
-    return (a + b);
+    // Simulate processing
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(a + b), 1000);
+    });
   },
   echo: (msg: any, session: Session<User>) => msg,
 };
