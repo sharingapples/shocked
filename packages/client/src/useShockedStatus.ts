@@ -17,11 +17,9 @@ import { useController } from './Controller';
  */
 export default function useShockedStatus(status: ConnectionStatus = ConnectionStatus.connected): ConnectionStatus | boolean {
   const controller = useController();
-  const [state, setState] = useState<boolean|ConnectionStatus>(
-    controller.status === undefined
-    ? controller.status
-    : (controller.status === status)
-  );
+
+  const initialState = status === undefined ? controller.status : (controller.status === status);
+  const [state, setState] = useState<boolean|ConnectionStatus>(initialState);
 
   useEffect(() => {
     return controller.listenStatus((newStatus: ConnectionStatus) => {
