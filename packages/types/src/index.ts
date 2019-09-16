@@ -1,3 +1,9 @@
+export interface Session<U> {
+  user: U,
+  dispatch: Dispatch,
+  close: () => void,
+};
+
 export type ClientApi = {
   [name: string]: null,
 };

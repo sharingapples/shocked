@@ -1,9 +1,10 @@
 import { EventEmitter } from 'events';
 import { WebSocketBehavior, WebSocket } from 'uWebSockets.js';
 import { API, API_RESPONSE, DISPATCH } from 'shocked-common';
+import { Session as SessionInterface } from 'shocked-types';
 import { Tracker } from './Tracker';
 
-export default class Session<U> extends EventEmitter implements WebSocketBehavior {
+export default class Session<U> extends EventEmitter implements WebSocketBehavior, SessionInterface<U> {
   readonly user: U;
   private readonly tracker: Tracker<U>;
   private socket: WebSocket | null;
