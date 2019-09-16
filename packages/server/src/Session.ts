@@ -48,8 +48,8 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   // Session cleanup method called by the tracker
   destroy() {
     // The session is not usable after this
-    this.emit('close');
     this.socket = null;
+    this.emit('close');
 
     // Remove all the listeners
     this.removeAllListeners('close');
