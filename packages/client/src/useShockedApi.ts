@@ -51,7 +51,7 @@ export default function useShockedApi(call?: Callback, args:any[] = []) {
       return true;
     }
 
-    if (exec(controller.status)) {
+    if (exec(controller.status) === false) {
       unsub = controller.listenStatus(exec);
     }
 
