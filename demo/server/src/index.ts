@@ -34,7 +34,7 @@ server.track('/a', {
       }
     });
   },
-  onStart: async (session) => {
+  onStart: async (session: DemoSession) => {
     console.log('Session started');
     session.dispatch({ user: session.user, params: session.params });
   },
