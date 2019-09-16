@@ -1,14 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { ClientApi, Unsubscribe } from 'shocked-types';
-import { ShockedProps, ConnectionStatus, Dispatch } from './types';
+import { ShockedProps, ConnectionStatus, Dispatch, ClearIdent } from './types';
 import { Controller, ControllerContext } from './Controller';
 
 type Disconnect = () => void;
 
-function useControllerRef(api: ClientApi, dispatch: Dispatch): Controller {
+function useControllerRef(api: ClientApi, dispatch: Dispatch, clearIdent: ClearIdent): Controller {
   const ref = useRef<Controller>();
   if (!ref.current) {
-    ref.current = new Controller(api, dispatch);
+    ref.current = new Controller(api, dispatch, clearIdent);
   }
 
   return ref.current;
@@ -23,7 +23,7 @@ export default function Shocked(props: ShockedProps) {
     ...other
   } = props;
 
-  const controller = useControllerRef(api, dispatch);
+  const controller = useControllerRef(api, dispatch, clearIdent);
 
   useEffect(() => {
     // No need to connect if there isn't any

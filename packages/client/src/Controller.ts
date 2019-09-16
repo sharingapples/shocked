@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import { IDENT, API, API_RESPONSE, DISPATCH } from 'shocked-common';
+import { IDENT, API, API_RESPONSE, DISPATCH, CLEAR_IDENT } from 'shocked-common';
 import { RemoteApi, ClientApi } from 'shocked-types';
 import fixUrl from './fixUrl';
-import { ConnectionStatus, Dispatch } from './types';
+import { ConnectionStatus, Dispatch, ClearIdent } from './types';
 import RemoteError from './RemoteError';
 
 // @ts-ignore
@@ -27,6 +27,7 @@ export class Controller {
   private send: null | ((payload: any) => void) = null;
   private attemptedAt: number = 0;
   private dispatch: Dispatch;
+  private clearIdent: ClearIdent;
 
   private get retryInterval() {
     // Return a random interval between 1 and 5 seconds
@@ -36,8 +37,9 @@ export class Controller {
     return interval - prev;
   }
 
-  constructor(api: ClientApi, dispatch: Dispatch) {
+  constructor(api: ClientApi, dispatch: Dispatch, clearIdent: ClearIdent) {
     this.dispatch = dispatch;
+    this.clearIdent = clearIdent;
 
     // Bind the api with the connection
     this.apis = Object.keys(api).reduce((res, name) => {
@@ -62,6 +64,7 @@ export class Controller {
   connect(url: string, ident: string) {
     let ws: WebSocket;
     let retryTimer: null | ReturnType<typeof setTimeout> = null;
+    let cleaned = false;
 
     function clearRetry() {
       if (retryTimer !== null) {
@@ -91,12 +94,14 @@ export class Controller {
       }
 
       ws.onclose = (evt) => {
+        if (cleaned) return;
         this.setStatus(ConnectionStatus.offline);
         cleanup();
         // Unless the close was deliberate from the server
         // Perform a reconnection attempt
-        if (evt.code === 4000) {
+        if (evt.code === CLEAR_IDENT) {
           // Fire the close event
+          this.clearIdent(evt.reason);
         } else {
           // Setup a retry
           retryTimer = setTimeout(connection, this.retryInterval);
@@ -136,6 +141,7 @@ export class Controller {
     connection();
 
     return () => {
+      cleaned = true;
       clearRetry();
       this.send = null;
       this.setStatus(ConnectionStatus.offline);

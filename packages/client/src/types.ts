@@ -3,10 +3,12 @@ import { ClientApi, Unsubscribe } from 'shocked-types';
 export type NetworkCallback = (network: boolean) => void;
 export type NetworkProvider = (cb: NetworkCallback) => Unsubscribe;
 
+export type ClearIdent = (reason?: string) => void;
+
 export type ShockedProps = {
   url: string,  // Remote websocket url
   ident: string, // Session identification
-  clearIdent: (reason?: string) => void, // Callback to clear identification. Alias to logout.
+  clearIdent: ClearIdent, // Callback to clear identification. Alias to logout.
 
   networkProvider?: NetworkProvider,
 
