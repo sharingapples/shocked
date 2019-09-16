@@ -1,34 +1,49 @@
-import { Channel, Dispatcher, Dispatch } from 'shocked-types';
+import { Channel, Dispatcher } from 'shocked-types';
 
 // A PoC local broker that works only on a single server system
 // Use somthing like redis for a more distributed pub/sub brokering
 export default function createChannel(name: string): Channel {
-  const dispatchers: {
-    [id: string]: Dispatch[],
+  const listeners: {
+    [id: string]: Dispatcher[],
   } = {};
 
-  return {
+  const channel = {
     get name() { return name; },
 
     subscribe(id: string, dispatcher: Dispatcher) {
-      const list = dispatchers[id] || [];
-      dispatchers[id] = list;
+      let dispatchers = listeners[id];
+      if (!dispatchers) {
+        dispatchers = [];
+        listeners[id] = dispatchers;
+      }
 
-      const dispatch = typeof dispatcher === 'function' ? dispatcher : dispatcher.dispatch.bind(dispatcher);
-
-      list.push(dispatch);
+      dispatchers.push(dispatcher);
       return () => {
-        const idx = list.indexOf(dispatch);
-        if (idx >= 0) {
-          list.splice(idx, 1);
-        }
+        return channel.unsubscribe(id, dispatcher);
+      };
+    },
+    unsubscribe(id: string, dispatcher: Dispatcher) {
+      const dispatchers = listeners[id];
+      if (!dispatchers) return;
+
+      const idx = dispatchers.indexOf(dispatcher);
+      if (idx >= 0) {
+        dispatchers.splice(idx, 1);
       }
     },
     publish(id: string, message: any) {
-      const list = dispatchers[id];
-      if (!list || !list.length) return;
-      list.forEach(dispatch => dispatch(message));
+      const dispatchers = listeners[id];
+      if (!dispatchers || !dispatchers.length) return;
+      dispatchers.forEach((dispatcher) => {
+        if (typeof dispatcher === 'function') {
+          dispatcher(message);
+        } else {
+          dispatcher.dispatch(message);
+        }
+      });
     },
-  }
+  };
+
+  return channel;
 }
 

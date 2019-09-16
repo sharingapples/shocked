@@ -1,46 +1,62 @@
 import { RedisClient } from 'redis';
-import { Dispatch, Channel, Dispatcher, Unsubscribe } from 'shocked-types';
+import { Channel, Dispatcher, Unsubscribe } from 'shocked-types';
 
 function createSubscriber(client: RedisClient) {
   const redis = client.duplicate();
   const listeners: {
-    [channelId: string]: Dispatch[]
+    [channelId: string]: Dispatcher[]
   } = {};
 
   redis.on('message', (channelId: string, message: any) => {
-    const subscribers = listeners[channelId];
-    if (!subscribers || !subscribers.length) return;
+    const dispatchers = listeners[channelId];
+    if (!dispatchers) return;
     try {
       const action = JSON.parse(message);
-      subscribers.forEach(dispatch => dispatch(action));
+      dispatchers.forEach((dispatcher) => {
+        if (typeof dispatcher === 'function') {
+          dispatcher(action);
+        } else  {
+          dispatcher.dispatch(action);
+        }
+      });
     } catch (err) {
       // Looks like we got an invalid publish
       console.error(`PubSub error on channel ${channelId}`, err);
     }
   });
 
-  return (channelId: string, dispatch: Dispatch) => {
-    let subscribers = listeners[channelId];
-    if (!subscribers) {
-      subscribers = [];
-      listeners[channelId] = subscribers;
-      redis.subscribe(channelId);
-    }
-
-    subscribers.push(dispatch);
-
-    return () => {
-      const idx = subscribers.indexOf(dispatch);
-      if (idx >= 0) {
-        subscribers.splice(idx, 1);
+  const subscriber = {
+    add: (channelId: string, dispatcher: Dispatcher) => {
+      let dispatchers = listeners[channelId];
+      if (!dispatchers) {
+        dispatchers = [];
+        listeners[channelId] = dispatchers;
+        redis.subscribe(channelId);
       }
 
-      if (subscribers.length === 0) {
+      dispatchers.push(dispatcher);
+
+      return () => {
+        subscriber.remove(channelId, dispatcher);
+      };
+    },
+    remove: (channelId: string, dispatcher: Dispatcher) => {
+      const dispatchers = listeners[channelId];
+      if (!dispatchers) return;
+
+      const idx = dispatchers.indexOf(dispatcher);
+      if (idx >= 0) {
+        dispatchers.splice(idx, 1);
+      }
+
+      if (dispatchers.length === 0) {
         delete listeners[channelId];
         redis.unsubscribe(channelId);
       }
-    };
-  }
+    },
+  };
+
+  return subscriber;
 }
 
 let subscriber: ReturnType<typeof createSubscriber>;
@@ -55,8 +71,11 @@ export default function createChannel(name: string, client: RedisClient): Channe
     get name() { return name; },
 
     subscribe(id: string, dispatcher: Dispatcher): Unsubscribe {
-      const dispatch = typeof dispatcher === 'function' ? dispatcher : dispatcher.dispatch.bind(dispatcher);
-      return subscriber(key(id), dispatch);
+      return subscriber.add(key(id), dispatcher);
+    },
+
+    unsubscribe(id: string, dispatcher: Dispatcher) {
+      return subscriber.remove(key(id), dispatcher);
     },
 
     publish(id: string, message: any) {

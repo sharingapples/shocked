@@ -32,5 +32,6 @@ export type Unsubscribe = () => void;
 export interface Channel {
   readonly name: string,
   subscribe: (id: string, dispatcher: Dispatcher) => Unsubscribe;
+  unsubscribe: (id: string, dispatcher: Dispatcher) => void;
   publish: (id: string, message: any) => void;
 }
