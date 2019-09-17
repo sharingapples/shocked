@@ -20,7 +20,7 @@ export default function Shocked(props: ShockedProps) {
     networkProvider,
     api,
     dispatch,
-    ...other
+    children,
   } = props;
 
   const controller = useControllerRef(api, dispatch, clearIdent);
@@ -50,6 +50,8 @@ export default function Shocked(props: ShockedProps) {
   }, [ident, url, networkProvider]);
 
   return (
-    <ControllerContext.Provider value={controller} {...other} />
+    <ControllerContext.Provider value={controller}>
+      {children}
+    </ControllerContext.Provider>
   );
 }
