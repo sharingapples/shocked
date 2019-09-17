@@ -1,10 +1,10 @@
 {
   "name": "shocked-local-broker",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A Local Borker that works for single server only pubsub",
   "main": "dist/index.js",
   "dependencies": {
-    "shocked-types": "^3.0.3"
+    "shocked-types": "^3.0.4"
   },
   "files": [
     "dist"
