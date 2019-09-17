@@ -1,5 +1,13 @@
 import { Server, Session } from 'shocked-server';
 import { HttpRequest } from 'uWebSockets.js';
+import localChannel from 'shocked-local-broker';
+import redisChannel from 'shocked-redis-broker';
+import redis = require('redis');
+
+const UserChannel = process.env.USE_REDIS ? (function() {
+  const client = redis.createClient();
+  return redisChannel('user', client);
+}()) : localChannel('user');
 
 type User = {
   id: string,
@@ -36,7 +44,14 @@ server.track('/a', {
   },
   onStart: async (session: DemoSession) => {
     console.log('Session started');
-    session.dispatch({ user: session.user, params: session.params });
+    // Let everyone know of a new login
+    // When using redis it channel, the published messaged is received even when the subscription happens after the publish
+    UserChannel.publish(session.user.id, `Before sub: New user session via user channel (USER_REDIS:${process.env.USE_REDIS})`);
+
+    session.subscribe(UserChannel, session.user.id);
+
+    // Let everyone know of a new login
+    UserChannel.publish(session.user.id, `After sub: New user session via user channel (USER_REDIS:${process.env.USE_REDIS})`);
   },
 });
 

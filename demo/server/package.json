@@ -3,6 +3,9 @@
   "version": "3.0.0",
   "main": "src/index.ts",
   "dependencies": {
+    "redis": "^2.8.0",
+    "shocked-local-broker": "^3.0.0",
+    "shocked-redis-broker": "^3.0.0",
     "shocked-server": "^3.0.0"
   },
   "scripts": {
@@ -12,6 +15,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
+    "@types/redis": "^2.8.13",
     "ts-node-dev": "^1.0.0-pre.42"
   }
 }
