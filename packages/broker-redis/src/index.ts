@@ -1,10 +1,10 @@
 import { RedisClient } from 'redis';
-import { Channel, Dispatcher, Unsubscribe } from 'shocked-types';
+import { Channel, Dispatch, Unsubscribe } from 'shocked-types';
 
 function createSubscriber(client: RedisClient) {
   const redis = client.duplicate();
   const listeners: {
-    [channelId: string]: Dispatcher[]
+    [channelId: string]: Dispatch[]
   } = {};
 
   redis.on('message', (channelId: string, message: any) => {
@@ -12,13 +12,7 @@ function createSubscriber(client: RedisClient) {
     if (!dispatchers) return;
     try {
       const action = JSON.parse(message);
-      dispatchers.forEach((dispatcher) => {
-        if (typeof dispatcher === 'function') {
-          dispatcher(action);
-        } else  {
-          dispatcher.dispatch(action);
-        }
-      });
+      dispatchers.forEach((dispatcher) => dispatcher(action));
     } catch (err) {
       // Looks like we got an invalid publish
       console.error(`PubSub error on channel ${channelId}`, err);
@@ -26,7 +20,7 @@ function createSubscriber(client: RedisClient) {
   });
 
   const subscriber = {
-    add: (channelId: string, dispatcher: Dispatcher) => {
+    add: (channelId: string, dispatch: Dispatch) => {
       let dispatchers = listeners[channelId];
       if (!dispatchers) {
         dispatchers = [];
@@ -34,17 +28,17 @@ function createSubscriber(client: RedisClient) {
         redis.subscribe(channelId);
       }
 
-      dispatchers.push(dispatcher);
+      dispatchers.push(dispatch);
 
       return () => {
-        subscriber.remove(channelId, dispatcher);
+        subscriber.remove(channelId, dispatch);
       };
     },
-    remove: (channelId: string, dispatcher: Dispatcher) => {
+    remove: (channelId: string, dispatch: Dispatch) => {
       const dispatchers = listeners[channelId];
       if (!dispatchers) return;
 
-      const idx = dispatchers.indexOf(dispatcher);
+      const idx = dispatchers.indexOf(dispatch);
       if (idx >= 0) {
         dispatchers.splice(idx, 1);
       }
@@ -70,12 +64,14 @@ export default function createChannel(name: string, client: RedisClient): Channe
   return {
     get name() { return name; },
 
-    subscribe(id: string, dispatcher: Dispatcher): Unsubscribe {
-      return subscriber.add(key(id), dispatcher);
+    subscribe(id: string, dispatch: Dispatch): Unsubscribe {
+      const channelId = key(id);
+      subscriber.add(channelId, dispatch);
+      return () => subscriber.remove(channelId, dispatch);
     },
 
-    unsubscribe(id: string, dispatcher: Dispatcher) {
-      return subscriber.remove(key(id), dispatcher);
+    unsubscribe(id: string, dispatch: Dispatch) {
+      subscriber.remove(key(id), dispatch);
     },
 
     publish(id: string, message: any) {
