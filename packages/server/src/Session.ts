@@ -99,7 +99,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   }
 
   // The dispatch method may be called even when there is no connection
-  dispatch(action: any) {
+  dispatch = (action: any) => {
     this.send([DISPATCH, action]);
   }
 }
