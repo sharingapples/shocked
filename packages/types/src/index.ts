@@ -8,6 +8,9 @@ export interface Session<U, P> {
   close: (clearIdent?: boolean) => void,
   on: (event: SessionEvents, listener: Listener) => void,
   off: (event: SessionEvents, listener: Listener) => void,
+
+  subscribe: (channel: Channel, id: string) => void,
+  unsubscribe: (channel: Channel, id: string) => void,
 };
 
 export type ClientApi = {

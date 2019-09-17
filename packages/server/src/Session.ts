@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { WebSocket } from 'uWebSockets.js';
 import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT } from 'shocked-common';
-import { Session as SessionInterface } from 'shocked-types';
+import { Session as SessionInterface, Channel, Unsubscribe } from 'shocked-types';
 import { Tracker } from './Tracker';
 
 export default class Session<U, P> extends EventEmitter implements SessionInterface<U, P> {
@@ -10,6 +10,8 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   private readonly tracker: Tracker<U, P>;
   private socket: WebSocket | null;
   private readonly messageQueue: string[];
+
+  private readonly subscriptions: {[channelId: string]: Unsubscribe } = {};
 
   constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket) {
     super();
@@ -49,6 +51,14 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   destroy() {
     // The session is not usable after this
     this.socket = null;
+
+    // Clean up all the subscribed channels, since the dispatches won't work any more
+    Object.keys(this.subscriptions).forEach(key => {
+      this.subscriptions[key]();
+      delete this.subscriptions[key];
+    });
+
+    // Send a close event
     this.emit('close');
 
     // Remove all the listeners
@@ -96,6 +106,28 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
     }
 
     return api(args, this);
+  }
+
+  subscribe(channel: Channel, id: string) {
+    const channelId = `${channel.name}-${id}`;
+    const unsub = this.subscriptions[channelId];
+    if (unsub) {
+      // already subscribe to this channel id, no need for double subscript
+      return;
+    }
+
+    this.subscriptions[channelId] = channel.subscribe(id, this.dispatch);
+  }
+
+  unsubscribe(channel: Channel, id: string) {
+    const channelId = `${channel.name}-${id}`;
+    const unsub = this.subscriptions[channelId];
+    if (!unsub) {
+      console.warn(`Trying to unsubscribe from ${channel.name} - ${id} without a prior subscription`);
+      return;
+    }
+
+    unsub();
   }
 
   // The dispatch method may be called even when there is no connection
