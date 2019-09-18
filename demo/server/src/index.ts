@@ -6,7 +6,8 @@ import redis = require('redis');
 
 const UserChannel = process.env.USE_REDIS ? (function() {
   const client = redis.createClient();
-  return redisChannel('user', client);
+  const subscriber = client.duplicate();
+  return redisChannel('user', client, subscriber);
 }()) : localChannel('user');
 
 type User = {

@@ -1,8 +1,7 @@
 import { RedisClient } from 'redis';
 import { Channel, Dispatch, Unsubscribe } from 'shocked-types';
 
-function createSubscriber(client: RedisClient) {
-  const redis = client.duplicate();
+function createSubscriber(redis: RedisClient) {
   const listeners: {
     [channelId: string]: Dispatch[]
   } = {};
@@ -55,10 +54,10 @@ function createSubscriber(client: RedisClient) {
 
 let subscriber: ReturnType<typeof createSubscriber>;
 
-export default function createChannel(name: string, client: RedisClient): Channel {
+export default function createChannel(name: string, client: RedisClient, subscriberClient: RedisClient): Channel {
   const key = (id: string) => `${name}:${id}`;
   if (!subscriber) {
-    subscriber = createSubscriber(client);
+    subscriber = createSubscriber(subscriberClient);
   }
 
   return {
