@@ -1,6 +1,6 @@
 {
   "name": "shocked-redis-broker",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Redis Pub Sub channel for shocked",
   "main": "dist/index.js",
   "scripts": {
