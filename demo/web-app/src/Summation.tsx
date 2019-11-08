@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, Dispatch } from 'react';
-import { useShockedApi } from 'shocked';
+import { useShockedResponse } from 'shocked';
 
 function handleChange(setter: Dispatch<number>) {
   return (e: ChangeEvent<HTMLInputElement>) => {
@@ -12,7 +12,7 @@ export default function Summation() {
   const [a, setA] = useState(0);
   const [b, setB] = useState(0);
 
-  const sum = useShockedApi((api) => {
+  const sum = useShockedResponse((api) => {
     return api.add([a, b]);
   }, [a, b]);
 

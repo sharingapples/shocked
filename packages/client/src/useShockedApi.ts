@@ -19,13 +19,11 @@ type Callback = (api: RemoteApi) => Promise<any>;
  * @param args
  */
 
-export default function useShockedApi(call?: Callback, args:any[] = []) {
+export function useShockedResponse(call: Callback, args:any[] = []) {
   const [result, setResult] = useState<any>(undefined);
   const controller = useController();
 
   useEffect(() => {
-    if (!call) return;
-
     let mounted = true;
     let unsub: Unsubscribe | null;
 
@@ -65,4 +63,9 @@ export default function useShockedApi(call?: Callback, args:any[] = []) {
   }, args);
 
   return result;
+}
+
+export function useShockedApi() {
+  const controller = useController();
+  return controller.getApis();
 }
