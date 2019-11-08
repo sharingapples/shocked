@@ -51,7 +51,8 @@ export class Controller {
             // @ts-ignore
             return Promise.resolve(offlineCall(payload));
           }
-          throw new Error('No connection');
+
+          return Promise.reject(new Error('No connection and no offline fallback'));
         }
 
         this.callId += 1;
