@@ -45,6 +45,12 @@ export class Controller {
     this.apis = Object.keys(api).reduce((res, name) => {
       res[name] = (payload: any) => {
         if (this.send === null) {
+          // See if there is an offline call available, then do that
+          const offlineCall = api[name];
+          if (typeof offlineCall === 'function') {
+            // @ts-ignore
+            return Promise.resolve(offlineCall(payload));
+          }
           throw new Error('No connection');
         }
 

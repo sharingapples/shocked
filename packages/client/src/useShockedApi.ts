@@ -32,15 +32,13 @@ export function useShockedResponse(call: Callback, args:any[] = []) {
         return false;
       }
 
-      if (status === ConnectionStatus.connected) {
+      if (status === ConnectionStatus.connected || status === ConnectionStatus.offline) {
         const fn: Callback = call as Callback;
         setResult(undefined);
         fn(controller.getApis()).then(
           res => mounted && setResult(res),
           err => mounted && setResult(err)
         );
-      } else if (status === ConnectionStatus.offline) {
-        setResult(new Error('No connection'));
       }
 
       // Stop listening as soon as the execution is complete
