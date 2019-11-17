@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { IDENT, API, API_RESPONSE, DISPATCH, CLEAR_IDENT } from 'shocked-common';
+import { IDENT, API, API_RESPONSE, DISPATCH, CLEAR_IDENT, EVENT } from 'shocked-common';
 import { RemoteApi, ClientApi } from 'shocked-types';
 import fixUrl from './fixUrl';
 import { ConnectionStatus, Dispatch, ClearIdent } from './types';
@@ -16,6 +16,8 @@ export function useController(): Controller {
   return useContext(ControllerContext);
 }
 
+export type EventHandler<T = any> = (eventName: string, payload: T) => void;
+
 export class Controller {
   status: ConnectionStatus = ConnectionStatus.connecting;
   statusListeners: Array<SetStatus> = [];
@@ -28,6 +30,8 @@ export class Controller {
   private attemptedAt: number = 0;
   private dispatch: Dispatch;
   private clearIdent: ClearIdent;
+
+  private eventHandlers: {[eventName: string]: Array<EventHandler>} = {};
 
   private get retryInterval() {
     // Return a random interval between 1 and 5 seconds
@@ -140,6 +144,8 @@ export class Controller {
           }
         } else if (type === DISPATCH) {
           this.dispatch(res[1]);
+        } else if (type === EVENT) {
+          this.fireEvent(res[1], res[2]);
         }
       }
     }
@@ -180,6 +186,41 @@ export class Controller {
     if (this.status === status) return;
     this.status = status;
     this.fireStatus(status);
+  }
+
+  addEventListener(eventName: string, handler: EventHandler) {
+    let handlers = this.eventHandlers[eventName];
+    if (!handlers) {
+      handlers = [];
+      this.eventHandlers[eventName] = handlers;
+    }
+
+    handlers.push(handler);
+  }
+
+  removeEventListener(eventName: string, handler: EventHandler) {
+    let handlers = this.eventHandlers[eventName];
+    if (!handlers) return;
+    const idx = handlers.indexOf(handler);
+    if (idx >= 0) {
+      if (idx === 1) {
+        delete this.eventHandlers[eventName];
+      } else {
+        // Replace the handlers with a new instance, in case the handler is being
+        // removed due to an event itself
+        handlers = handlers.slice();
+        handlers.splice(idx, 1);
+        this.eventHandlers[eventName] = handlers;
+      }
+    }
+  }
+
+  fireEvent(eventName: string, payload: any) {
+    const handlers = this.eventHandlers[eventName];
+    if (!handlers) return;
+    for (let i = 0; i < handlers.length; i += 1) {
+      handlers[i](eventName, payload);
+    }
   }
 }
 

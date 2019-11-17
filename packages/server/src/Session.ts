@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { WebSocket } from 'uWebSockets.js';
-import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT } from 'shocked-common';
+import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT, EVENT } from 'shocked-common';
 import { Session as SessionInterface, Channel, Unsubscribe } from 'shocked-types';
 import { Tracker } from './Tracker';
 
@@ -133,5 +133,9 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   // The dispatch method may be called even when there is no connection
   dispatch = (action: any) => {
     this.send([DISPATCH, action]);
+  }
+
+  fire = (eventName: string, payload: any) => {
+    this.send([EVENT, eventName, payload]);
   }
 }
