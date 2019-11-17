@@ -143,7 +143,11 @@ export class Controller {
             activeApi[0](result);
           }
         } else if (type === DISPATCH) {
-          this.dispatch(res[1]);
+          if (res[1].type === 'event') {
+            this.fireEvent(res[1].name, res[1].payload);
+          } else {
+            this.dispatch(res[1]);
+          }
         } else if (type === EVENT) {
           this.fireEvent(res[1], res[2]);
         }
