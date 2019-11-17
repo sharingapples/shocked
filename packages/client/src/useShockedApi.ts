@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RemoteApi, Unsubscribe } from 'shocked-types';
 import { useController } from './Controller';
 import { ConnectionStatus } from './types';
@@ -67,3 +67,10 @@ export function useShockedApi() {
   const controller = useController();
   return controller.getApis();
 }
+
+export function useShockedCallback(fn: (api: RemoteApi) => void, deps: readonly any[]) {
+  const controller = useController();
+  return useCallback(() => {
+    fn(controller.getApis());
+  }, deps);
+};
