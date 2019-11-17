@@ -1,6 +1,6 @@
 {
   "name": "shocked",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "description": "Websocket and redux client",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "nanoid": "^2.0.1",
-    "shocked-common": "^3.0.0",
+    "shocked-common": "^3.0.10",
     "shocked-types": "^3.0.4"
   },
   "peerDependencies": {

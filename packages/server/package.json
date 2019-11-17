@@ -1,6 +1,6 @@
 {
   "name": "shocked-server",
-  "version": "3.0.4",
+  "version": "3.0.10",
   "description": "Websocket server",
   "main": "dist/index.js",
   "scripts": {
@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "nanoid": "^2.0.1",
-    "shocked-common": "^3.0.0",
+    "shocked-common": "^3.0.10",
     "shocked-types": "^3.0.4",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
   },
