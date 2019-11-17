@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "description": "A common package for client and server packages",
   "main": "dist/index.js",
+  "react-native": "src/index.ts",
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsc -p tsconfig.json",

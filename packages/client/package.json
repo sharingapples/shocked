@@ -4,6 +4,7 @@
   "description": "Websocket and redux client",
   "main": "dist/index.js",
   "module": "dist/index.js",
+  "react-native": "src/index.ts",
   "files": [
     "dist"
   ],
@@ -20,7 +21,6 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "events": "^3.0.0",
     "nanoid": "^2.0.1",
     "shocked-common": "^3.0.0",
     "shocked-types": "^3.0.4"
