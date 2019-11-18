@@ -7,7 +7,7 @@ export type ClearIdent = (reason?: string) => void;
 
 export type ShockedProps = {
   url: string,  // Remote websocket url
-  ident: string, // Session identification
+  ident: any, // Session identification
   clearIdent: ClearIdent, // Callback to clear identification. Alias to logout.
 
   networkProvider?: NetworkProvider,

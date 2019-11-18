@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RemoteApi, Unsubscribe } from 'shocked-types';
-import { useController } from './Controller';
+import { useController, Controller } from './Controller';
 import { ConnectionStatus } from './types';
 
-type Callback = (api: RemoteApi) => Promise<any>;
+type Callback = (api: RemoteApi, controller: Controller) => Promise<any>;
 
 // TODO: Return special Error object that allows retry
 
@@ -35,7 +35,7 @@ export function useShockedResponse(call: Callback, args:any[] = []) {
       if (status === ConnectionStatus.connected || status === ConnectionStatus.offline) {
         const fn: Callback = call as Callback;
         setResult(undefined);
-        fn(controller.getApis()).then(
+        fn(controller.getApis(), controller).then(
           res => mounted && setResult(res),
           err => mounted && setResult(err)
         );
@@ -68,9 +68,9 @@ export function useShockedApi() {
   return controller.getApis();
 }
 
-export function useShockedCallback(fn: (api: RemoteApi) => void, deps: readonly any[]) {
+export function useShockedCallback(fn: Callback, deps: readonly any[]) {
   const controller = useController();
   return useCallback(() => {
-    fn(controller.getApis());
+    fn(controller.getApis(), controller);
   }, deps);
 };
