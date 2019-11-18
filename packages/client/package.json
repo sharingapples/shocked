@@ -6,7 +6,8 @@
   "module": "dist/index.js",
   "react-native": "src/index.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "test": "jest",
