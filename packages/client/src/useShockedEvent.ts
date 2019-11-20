@@ -1,9 +1,10 @@
+import { useEffect } from 'react';
 import { useController, EventHandler } from './Controller';
 
-export default function useShockedEvent(name: string) {
+export default function useShockedEvent<T>(name: string, handler: EventHandler<T>) {
   const controller = useController();
-  return <T>(cb: EventHandler<T>) => {
-    controller.addEventListener(name, cb);
-    return () => controller.removeEventListener(name, cb);
-  }
+  useEffect(() => {
+    controller.addEventListener(name, handler);
+    return () => controller.removeEventListener(name, handler);
+  }, [name, handler]);
 }

@@ -16,7 +16,7 @@ export function useController(): Controller {
   return useContext(ControllerContext);
 }
 
-export type EventHandler<T = any> = (eventName: string, payload: T) => void;
+export type EventHandler<T = any> = (payload: T) => void;
 
 export class Controller {
   status: ConnectionStatus = ConnectionStatus.connecting;
@@ -223,7 +223,7 @@ export class Controller {
     const handlers = this.eventHandlers[eventName];
     if (!handlers) return;
     for (let i = 0; i < handlers.length; i += 1) {
-      handlers[i](eventName, payload);
+      handlers[i](payload);
     }
   }
 }
