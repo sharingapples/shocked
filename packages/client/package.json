@@ -1,6 +1,6 @@
 {
   "name": "shocked",
-  "version": "3.0.13",
+  "version": "3.0.14",
   "description": "Websocket and redux client",
   "main": "dist/index.js",
   "module": "dist/index.js",
