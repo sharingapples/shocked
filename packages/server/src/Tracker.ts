@@ -19,9 +19,8 @@ export class Tracker<U, P> implements WebSocketBehavior {
   // Without maxPayloadLength, the connection will be closed abruptly
   maxPayloadLength = 1024 * 1024;
 
-  // Set a idleTimeout at 30 seconds, The client will be disconnected if no data is sent within
-  // this period
-  idleTimeout = 30;
+  // Set an idle timeout of 10 minutes by default. Override this value in the tracker
+  idleTimeout = 10 * 60;
 
   constructor(behaviour: TrackerBehaviour<U, P>) {
     this.behaviour = behaviour;
