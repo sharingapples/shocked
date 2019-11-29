@@ -41,7 +41,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift() as string;
       if (!socket.send(message)) {
-        this.messageQueue.unshift();
+        this.messageQueue.unshift(message);
         return;
       }
     }
