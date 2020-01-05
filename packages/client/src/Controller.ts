@@ -182,7 +182,9 @@ export class Controller {
   }
 
   fireStatus(status: ConnectionStatus) {
-    this.statusListeners.forEach(setStatus => setStatus(status));
+    for (let i = this.statusListeners.length - 1; i >= 0; i--) {
+      this.statusListeners[i](status);
+    }
   }
 
   setStatus(status: ConnectionStatus) {
