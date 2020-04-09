@@ -14,7 +14,7 @@ function useControllerRef(api: ClientApi, dispatch: Dispatch, clearIdent: ClearI
   return ref.current;
 }
 
-export default function Shocked(props: ShockedProps) {
+export default function Shocked<I=string>(props: ShockedProps<I>) {
   const {
     url, ident, clearIdent,
     networkProvider,

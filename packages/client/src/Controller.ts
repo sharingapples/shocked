@@ -72,7 +72,7 @@ export class Controller {
     }, {} as RemoteApi);
   }
 
-  connect(url: string, ident: string) {
+  connect(url: string, getIdent: any | (() => any)) {
     let ws: WebSocket;
     let retryTimer: null | ReturnType<typeof setTimeout> = null;
     let cleaned = false;
@@ -101,7 +101,7 @@ export class Controller {
 
       ws.onopen = () => {
         clearRetry();
-        ws.send(JSON.stringify([IDENT, ident]));
+        ws.send(JSON.stringify([IDENT, typeof getIdent === 'function' ? getIdent() : getIdent]));
       }
 
       ws.onclose = (evt) => {
