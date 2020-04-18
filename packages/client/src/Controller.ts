@@ -209,7 +209,7 @@ export class Controller {
     if (!handlers) return;
     const idx = handlers.indexOf(handler);
     if (idx >= 0) {
-      if (idx === 1) {
+      if (handlers.length === 1) {
         delete this.eventHandlers[eventName];
       } else {
         // Replace the handlers with a new instance, in case the handler is being
