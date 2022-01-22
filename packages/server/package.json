@@ -19,7 +19,7 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "nanoid": "^2.0.1",
+    "nanoid": "^3.1.31",
     "shocked-common": "^3.0.10",
     "shocked-types": "^3.0.4",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
