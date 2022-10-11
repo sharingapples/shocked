@@ -1,6 +1,6 @@
 {
   "name": "shocked-common",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A common package for client and server packages",
   "main": "dist/index.js",
   "module": "es6/index.js",
