@@ -2753,7 +2753,7 @@ async-each@^1.0.1:
   resolved "https://registry.yarnpkg.com/async-each/-/async-each-1.0.3.tgz#b727dbf87d7651602f06f4d4ac387f47d91b0cbf"
   integrity sha512-z/WhQ5FPySLdvREByI2vZiTWwCnF0moMJ1hK9YQwDTHKh6I7/uSckMetoRGb5UBZPC1z0jlw+n/XCgjeH7y1AQ==
 
-async-limiter@^1.0.0, async-limiter@~1.0.0:
+async-limiter@~1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.1.tgz#dd379e94f0db8310b08291f9d64c3209766617fd"
   integrity sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==
@@ -10776,6 +10776,49 @@ shellwords@^0.1.1:
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha512-vFwSUfQvqybiICwZY5+DAWIPLKsWO31Q91JSKl3UYv+K5c2QRPzn0qzec6QPu1Qc9eHYItiP3NdJqNVqetYAww==
 
+shocked-common@^3.0.10:
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/shocked-common/-/shocked-common-3.0.10.tgz#97fe3f9092a46db4ceda2528d87897af6eae7289"
+  integrity sha512-GU4HKr2/Zk8vxozOZNCn7uj6XrqFPzBx5ep1G9YeAAUHCw6XUGLQE5vkp+iRiyBnaBQuWjv+7ZLx8g6rtwvEwQ==
+
+shocked-local-broker@^3.0.0:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-local-broker/-/shocked-local-broker-3.0.4.tgz#135cf7d6124ba256fca03dfd8c60927e6fc925a4"
+  integrity sha512-btGIvqGzpXq/lmZm/nvULC+45GKAliYvNQjxJv3tKl+tseLVegVCIoRhfu/LC36Tg848qtx27b4GBqjxEMAABQ==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-redis-broker@^3.0.0:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/shocked-redis-broker/-/shocked-redis-broker-3.0.5.tgz#47ce13cabeef36ef24c2a7170a0cd45d991e2ed6"
+  integrity sha512-C3YbIw+RGewFm7d1oIGnWsmbYEfeOEJaNsJ4115MsYd4u6qApZXcHQoXvLKCopdzjG0o/WkQMa1YCTtaT3UoeA==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-server@^3.0.0:
+  version "3.0.16"
+  resolved "https://registry.yarnpkg.com/shocked-server/-/shocked-server-3.0.16.tgz#1d69aee4917a6967568279646b4275fa12bed645"
+  integrity sha512-LLFDjXwaD1gmmxcfpF25BkI5LJZhw0zQ2rHOPUMnAL6OVzU6SbHiiyLD6//ICVX5XfIzGwViIJ+LsGW5YZ89XQ==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+    uWebSockets.js "github:uNetworking/uWebSockets.js#v15.11.0"
+
+shocked-types@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-types/-/shocked-types-3.0.4.tgz#d831cbba024606e46251c59753eba7c56c31932b"
+  integrity sha512-KTo61jzv1ezdd7j1rDFkxrt+jCRiBbyBO897MVWqCfytR2es6lhYOfWX5QZHK5WC9TDpkHfcTr6oJFjHSZNdYg==
+
+shocked@^3.0.0:
+  version "3.0.19"
+  resolved "https://registry.yarnpkg.com/shocked/-/shocked-3.0.19.tgz#0a05c28c889527916e7579d7bc9541d8d8731d2d"
+  integrity sha512-COd8tbbXFThMMsgAs3V+Y23shfUG8ropTVIHpEsdX29SNxO6fl2IQ7ryh7bGJcQsYSOX19T8gcPVy4zWlr7Vxw==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -11680,6 +11723,11 @@ typescript@3.6.3, typescript@^3.6.3:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
   integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
 
+"uWebSockets.js@github:uNetworking/uWebSockets.js#v15.11.0":
+  version "15.11.0"
+  uid e7552889a50a7ffa654c41c99a9bad46dd0024c5
+  resolved "https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/e7552889a50a7ffa654c41c99a9bad46dd0024c5"
+
 uWebSockets.js@uNetworking/uWebSockets.js#v20.10.0:
   version "20.10.0"
   resolved "https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/806df48c9da86af7b3341f3e443388c7cd15c3de"
@@ -12427,11 +12475,9 @@ ws@^6.1.2:
     async-limiter "~1.0.0"
 
 ws@^7.1.2:
-  version "7.1.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.1.2.tgz#c672d1629de8bb27a9699eb599be47aeeedd8f73"
-  integrity sha512-gftXq3XI81cJCgkUiAVixA0raD9IVmXqsylCrjRygw4+UOOGzPoxnQ6r/CnVL9i+mDncJo94tSkyrtuuQVBmrg==
-  dependencies:
-    async-limiter "^1.0.0"
+  version "7.4.6"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.6.tgz#5654ca8ecdeee47c33a9a4bf6d28e2be2980377c"
+  integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"
