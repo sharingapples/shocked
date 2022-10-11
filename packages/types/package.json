@@ -4,5 +4,6 @@
   "description": "Common types for the package",
   "main": "src/index.ts",
   "author": "Ranjan Shrestha",
-  "license": "MIT"
+  "license": "MIT",
+  "gitHead": "6e00d26a0306e057eddab41d6df03b13639a7c60"
 }

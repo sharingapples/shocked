@@ -14,11 +14,11 @@
   "scripts": {
     "clean": "rimraf es6 && rimraf dist",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' >> es6/package.json && tsc -p tsconfig.json",
+    "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' > es6/package.json && tsc -p tsconfig.json",
     "build": "yarn build:cjs && yarn build:es6",
     "prepublishOnly": "yarn clean && yarn build"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT",
-  "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
+  "gitHead": "6e00d26a0306e057eddab41d6df03b13639a7c60"
 }
