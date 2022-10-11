@@ -3,10 +3,19 @@
   "version": "3.0.10",
   "description": "A common package for client and server packages",
   "main": "dist/index.js",
+  "module": "es6/index.js",
+  "exports": {
+    ".": {
+      "import": "./es6/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "react-native": "src/index.ts",
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf es6 && rimraf dist",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es6": "mkdir -p es6 && echo '{\"type\":\"module\"}' >> es6/package.json && tsc -p tsconfig.json",
+    "build": "yarn build:cjs && yarn build:es6",
     "prepublishOnly": "yarn clean && yarn build"
   },
   "author": "Ranjan Shrestha",

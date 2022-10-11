@@ -11,11 +11,11 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
-    "outDir": "es6",
+    "outDir": "dist",
     "jsx": "react"
   },
   "include": [

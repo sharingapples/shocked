@@ -1,9 +1,9 @@
 import { WebSocketBehavior, WebSocket, HttpRequest, HttpResponse, us_socket_context_t } from 'uWebSockets.js';
 import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
-import nanoid = require('nanoid');
+import nanoid from 'nanoid';
 
-import Session from './Session';
+import Session from './Session.js';
 
 export interface TrackerBehaviour<U, P> {
   api: ServerApi<U, P>,
@@ -83,7 +83,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
           user = await this.behaviour.onIdent(payload[1], ws.params);
         } catch (err) {
           // Send a 'clearIdent' error
-          ws.end(CLEAR_IDENT, err.message);
+          ws.end(CLEAR_IDENT, err instanceof Error ? err.message : err as string);
           return;
         }
 
@@ -120,7 +120,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
           const result = await session.execute(payload[2], payload[3]);
           ws.send(JSON.stringify([API_RESPONSE, id, false, result]));
         } catch (err) {
-          ws.send(JSON.stringify([API_RESPONSE, id, true, err.message]));
+          ws.send(JSON.stringify([API_RESPONSE, id, true, err instanceof Error ? err.message: err]));
         }
       }
     } catch (err) {

@@ -2,7 +2,7 @@ import { Server, Session } from 'shocked-server';
 import { HttpRequest } from 'uWebSockets.js';
 import localChannel from 'shocked-local-broker';
 import redisChannel from 'shocked-redis-broker';
-import redis = require('redis');
+import redis from 'redis';
 
 const UserChannel = process.env.USE_REDIS ? (function() {
   const client = redis.createClient();
@@ -28,14 +28,14 @@ const demoApi = {
   echo: (msg: any, session: DemoSession) => msg,
 };
 
-const server = new Server<User, string>();
+const server = new Server();
 server.track('/a', {
   api: demoApi,
   preprocess: (req: HttpRequest) => {
     return req.getUrl();
   },
   onIdent: (token: string, params: string) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<User>((resolve, reject) => {
       if (token !== 'demo') {
         reject(new Error('Invalid identity. Use demo'));
       } else {

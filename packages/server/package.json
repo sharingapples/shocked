@@ -3,14 +3,24 @@
   "version": "3.0.16",
   "description": "Websocket server",
   "main": "dist/index.js",
+  "module": "es6/index.js",
+  "exports": {
+    ".": {
+      "import": "./es6/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
     "test": "yarn jest",
-    "clean": "rimraf dist",
-    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist && rimraf es6",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es6": "mkdir -p es6 && echo '{\"type\": \"module\"}' >> es6/package.json && tsc -p tsconfig.json",
+    "build": "yarn build:cjs && yarn build:es6",
     "prepublishOnly": "yarn test && yarn clean && yarn build"
   },
   "files": [
-    "dist"
+    "dist",
+    "es6"
   ],
   "repository": {
     "type": "git",

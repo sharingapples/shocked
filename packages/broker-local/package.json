@@ -3,16 +3,26 @@
   "version": "3.0.4",
   "description": "A Local Borker that works for single server only pubsub",
   "main": "dist/index.js",
-  "dependencies": {
-    "shocked-types": "^3.0.4"
+  "module": "es6/index.js",
+  "exports": {
+    ".": {
+      "import": "./es6/index.js",
+      "require": "./dist/index.js"
+    }
   },
   "files": [
-    "dist"
+    "dist",
+    "es6"
   ],
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist && rimraf es6",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es6": "mkdir -p es6 && echo '{\"type\": \"module\"}' >> es6/package.json && tsc -p tsconfig.json",
+    "build": "yarn build:cjs && yarn build:es6",
     "prepublishOnly": "yarn clean && yarn build"
+  },
+  "dependencies": {
+    "shocked-types": "^3.0.4"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT"

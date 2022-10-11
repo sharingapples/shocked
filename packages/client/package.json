@@ -3,16 +3,25 @@
   "version": "3.0.19",
   "description": "Websocket and redux client",
   "main": "dist/index.js",
-  "module": "dist/index.js",
+  "module": "es6/index.js",
   "react-native": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./es6/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
+    "es6",
     "src"
   ],
   "scripts": {
     "test": "jest",
-    "clean": "rimraf dist",
-    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist && rimraf es6",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es6": "mkdir -p es6 && echo '{\"type\": \"module\"}' >> es6/package.json && tsc",
+    "build": "yarn build:cjs && yarn build:es6",
     "prepublishOnly": "yarn test && yarn clean && yarn build"
   },
   "repository": {

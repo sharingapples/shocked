@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { WebSocket } from 'uWebSockets.js';
 import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT, EVENT } from 'shocked-common';
 import { Session as SessionInterface, Channel, Unsubscribe } from 'shocked-types';
-import { Tracker } from './Tracker';
+import { Tracker } from './Tracker.js';
 
 export default class Session<U, P> extends EventEmitter implements SessionInterface<U, P> {
   readonly user: U;
@@ -110,8 +110,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
 
   subscribe(channel: Channel, id: string) {
     const channelId = `${channel.name}-${id}`;
-    const unsub = this.subscriptions[channelId];
-    if (unsub) {
+    if (channelId in this.subscriptions) {
       // already subscribe to this channel id, no need for double subscript
       return;
     }
