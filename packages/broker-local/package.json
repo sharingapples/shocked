@@ -1,6 +1,6 @@
 {
   "name": "shocked-local-broker",
-  "version": "3.0.4",
+  "version": "4.0.0",
   "description": "A Local Borker that works for single server only pubsub",
   "main": "dist/index.js",
   "module": "es6/index.js",
@@ -22,7 +22,7 @@
     "prepublishOnly": "yarn clean && yarn build"
   },
   "dependencies": {
-    "shocked-types": "^3.0.4"
+    "shocked-types": "^4.0.0"
   },
   "author": "Ranjan Shrestha",
   "license": "MIT"

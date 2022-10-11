@@ -1,6 +1,6 @@
 {
   "name": "shocked-types",
-  "version": "3.0.4",
+  "version": "4.0.0",
   "description": "Common types for the package",
   "main": "src/index.ts",
   "author": "Ranjan Shrestha",
