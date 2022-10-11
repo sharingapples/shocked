@@ -22,7 +22,7 @@
     "nanoid": "^2.0.1",
     "shocked-common": "^3.0.10",
     "shocked-types": "^3.0.4",
-    "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
+    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.10.0"
   },
   "devDependencies": {
     "@types/nanoid": "^2.0.0",

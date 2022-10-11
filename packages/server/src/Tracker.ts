@@ -1,4 +1,4 @@
-import { WebSocketBehavior, WebSocket, HttpRequest } from 'uWebSockets.js';
+import { WebSocketBehavior, WebSocket, HttpRequest, HttpResponse, us_socket_context_t } from 'uWebSockets.js';
 import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
 import nanoid = require('nanoid');
@@ -38,12 +38,20 @@ export class Tracker<U, P> implements WebSocketBehavior {
     return this.behaviour.api[name];
   }
 
-  // Websocket open event
-  open = (ws: WebSocket, req: HttpRequest) => {
-    // Start a timer to kill the websocket if not identified
+  upgrade = (res: HttpResponse, req: HttpRequest, context: us_socket_context_t) => {
+    console.log('Got upgrade request');
     if (this.behaviour.preprocess) {
-      ws.params = this.behaviour.preprocess(req);
+      this.behaviour.preprocess(req);
     }
+
+    res.upgrade({
+        params: this.behaviour.preprocess ? this.behaviour.preprocess(req) : null,
+      }, 
+      req.getHeader('sec-websocket-key'),
+      req.getHeader('sec-websocket-protocol'),
+      req.getHeader('sec-websocket-extensions'),
+      context
+    );
   }
 
   // Websocket drain event
