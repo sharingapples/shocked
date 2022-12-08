@@ -9808,9 +9808,9 @@ qs@6.7.0:
   integrity sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==
 
 qs@~6.5.2:
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
-  integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
+  version "6.5.3"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.3.tgz#3aeeffc91967ef6e35c0e488ef46fb296ab76aad"
+  integrity sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==
 
 querystring-es3@^0.2.0:
   version "0.2.1"
@@ -10776,6 +10776,49 @@ shellwords@^0.1.1:
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha512-vFwSUfQvqybiICwZY5+DAWIPLKsWO31Q91JSKl3UYv+K5c2QRPzn0qzec6QPu1Qc9eHYItiP3NdJqNVqetYAww==
 
+shocked-common@^3.0.10:
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/shocked-common/-/shocked-common-3.0.10.tgz#97fe3f9092a46db4ceda2528d87897af6eae7289"
+  integrity sha512-GU4HKr2/Zk8vxozOZNCn7uj6XrqFPzBx5ep1G9YeAAUHCw6XUGLQE5vkp+iRiyBnaBQuWjv+7ZLx8g6rtwvEwQ==
+
+shocked-local-broker@^3.0.0:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-local-broker/-/shocked-local-broker-3.0.4.tgz#135cf7d6124ba256fca03dfd8c60927e6fc925a4"
+  integrity sha512-btGIvqGzpXq/lmZm/nvULC+45GKAliYvNQjxJv3tKl+tseLVegVCIoRhfu/LC36Tg848qtx27b4GBqjxEMAABQ==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-redis-broker@^3.0.0:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/shocked-redis-broker/-/shocked-redis-broker-3.0.5.tgz#47ce13cabeef36ef24c2a7170a0cd45d991e2ed6"
+  integrity sha512-C3YbIw+RGewFm7d1oIGnWsmbYEfeOEJaNsJ4115MsYd4u6qApZXcHQoXvLKCopdzjG0o/WkQMa1YCTtaT3UoeA==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-server@^3.0.0:
+  version "3.0.16"
+  resolved "https://registry.yarnpkg.com/shocked-server/-/shocked-server-3.0.16.tgz#1d69aee4917a6967568279646b4275fa12bed645"
+  integrity sha512-LLFDjXwaD1gmmxcfpF25BkI5LJZhw0zQ2rHOPUMnAL6OVzU6SbHiiyLD6//ICVX5XfIzGwViIJ+LsGW5YZ89XQ==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+    uWebSockets.js "github:uNetworking/uWebSockets.js#v15.11.0"
+
+shocked-types@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-types/-/shocked-types-3.0.4.tgz#d831cbba024606e46251c59753eba7c56c31932b"
+  integrity sha512-KTo61jzv1ezdd7j1rDFkxrt+jCRiBbyBO897MVWqCfytR2es6lhYOfWX5QZHK5WC9TDpkHfcTr6oJFjHSZNdYg==
+
+shocked@^3.0.0:
+  version "3.0.19"
+  resolved "https://registry.yarnpkg.com/shocked/-/shocked-3.0.19.tgz#0a05c28c889527916e7579d7bc9541d8d8731d2d"
+  integrity sha512-COd8tbbXFThMMsgAs3V+Y23shfUG8ropTVIHpEsdX29SNxO6fl2IQ7ryh7bGJcQsYSOX19T8gcPVy4zWlr7Vxw==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -11679,6 +11722,11 @@ typescript@3.6.3, typescript@^3.6.3:
   version "3.6.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
   integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
+
+"uWebSockets.js@github:uNetworking/uWebSockets.js#v15.11.0":
+  version "15.11.0"
+  uid e7552889a50a7ffa654c41c99a9bad46dd0024c5
+  resolved "https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/e7552889a50a7ffa654c41c99a9bad46dd0024c5"
 
 uWebSockets.js@uNetworking/uWebSockets.js#v20.10.0:
   version "20.10.0"
