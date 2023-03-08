@@ -54,7 +54,7 @@ function createSubscriber(redis: RedisClient) {
 
 let subscriber: ReturnType<typeof createSubscriber>;
 
-export default function createChannel(name: string, client: RedisClient, subscriberClient: RedisClient): Channel {
+export function createChannel(name: string, client: RedisClient, subscriberClient: RedisClient): Channel {
   const key = (id: string) => `${name}:${id}`;
   if (!subscriber) {
     subscriber = createSubscriber(subscriberClient);

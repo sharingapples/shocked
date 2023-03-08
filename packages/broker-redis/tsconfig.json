@@ -1,9 +1,23 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "compileOnSave": true,
   "compilerOptions": {
-    "outDir": "dist",
-    "baseUrl": "./src",
-    "allowSyntheticDefaultImports": true
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "esModuleInterop": true,
+    "preserveConstEnums": true,
+    "declaration": true,
+    "outDir": "es6",
+    "sourceMap": true
   },
-  "include": ["src/index.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
 }
