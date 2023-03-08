@@ -84,9 +84,9 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
         try {
           // identify the session user
           user = await this.behaviour.onIdent(payload[1], ws.getUserData().params);
-        } catch (err: any) {
+        } catch (err) {
           // Send a 'clearIdent' error
-          ws.end(CLEAR_IDENT, err.message);
+          ws.end(CLEAR_IDENT, err instanceof Error ? err.message : 'Unknown err');
           return;
         }
 
@@ -122,8 +122,8 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
         try {
           const result = await session.execute(payload[2], payload[3]);
           ws.send(JSON.stringify([API_RESPONSE, id, false, result]));
-        } catch (err: any) {
-          ws.send(JSON.stringify([API_RESPONSE, id, true, err.message]));
+        } catch (err) {
+          ws.send(JSON.stringify([API_RESPONSE, id, true, err instanceof Error ? err.message : 'Unknown Error']));
         }
       }
     } catch (err) {
