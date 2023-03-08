@@ -2,24 +2,24 @@ import { EventEmitter } from 'events';
 import { WebSocket } from 'uWebSockets.js';
 import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT, EVENT } from 'shocked-common';
 import { Session as SessionInterface, Channel, Unsubscribe } from 'shocked-types';
-import { Tracker } from './Tracker';
+import { Tracker, UserData } from './Tracker';
 
 export default class Session<U, P> extends EventEmitter implements SessionInterface<U, P> {
   readonly user: U;
   readonly params: P;
   private readonly tracker: Tracker<U, P>;
-  private socket: WebSocket | null;
+  private socket: WebSocket<UserData> | null;
   private readonly messageQueue: string[];
 
-  private readonly subscriptions: {[channelId: string]: Unsubscribe } = {};
+  private readonly subscriptions: Record<string, Unsubscribe> = {};
 
-  constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket) {
+  constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket<UserData>) {
     super();
     this.user = user;
     this.tracker = tracker;
     this.socket = socket;
     this.messageQueue = [];
-    this.params = socket.params;
+    this.params = socket.getUserData().params;
   }
 
   close(clearIdent?: boolean) {
@@ -37,7 +37,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
     });
   }
 
-  drain(socket: WebSocket) {
+  drain(socket: WebSocket<UserData>) {
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift() as string;
       if (!socket.send(message)) {
@@ -110,11 +110,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
 
   subscribe(channel: Channel, id: string) {
     const channelId = `${channel.name}-${id}`;
-    const unsub = this.subscriptions[channelId];
-    if (unsub) {
-      // already subscribe to this channel id, no need for double subscript
-      return;
-    }
+    if (channelId in this.subscriptions) return;
 
     this.subscriptions[channelId] = channel.subscribe(id, this.dispatch);
   }

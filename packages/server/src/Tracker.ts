@@ -1,7 +1,7 @@
-import { WebSocketBehavior, WebSocket, HttpRequest } from 'uWebSockets.js';
+import { WebSocketBehavior, WebSocket, HttpRequest, HttpResponse, us_socket_context_t } from 'uWebSockets.js';
 import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
-import nanoid = require('nanoid');
+import { nanoid } from 'nanoid';
 
 import Session from './Session';
 
@@ -12,7 +12,13 @@ export interface TrackerBehaviour<U, P> {
   preprocess?: (req: HttpRequest) => P,
 }
 
-export class Tracker<U, P> implements WebSocketBehavior {
+export type UserData = { 
+  sessionId: string,
+  params: any,
+};
+
+
+export class Tracker<U, P> implements WebSocketBehavior<UserData> {
   private readonly behaviour: TrackerBehaviour<U, P>;
   private readonly sessions: { [id: string]: Session<U, P> };
 
@@ -27,8 +33,8 @@ export class Tracker<U, P> implements WebSocketBehavior {
     this.sessions = {};
   }
 
-  private getSession(ws: WebSocket) {
-    const sessionId = ws.sessionId;
+  private getSession(ws: WebSocket<UserData>) {
+    const sessionId = ws.getUserData().sessionId;
     if (!sessionId) return null;
     const session = this.sessions[sessionId];
     return session;
@@ -39,22 +45,27 @@ export class Tracker<U, P> implements WebSocketBehavior {
   }
 
   // Websocket open event
-  open = (ws: WebSocket, req: HttpRequest) => {
-    // Start a timer to kill the websocket if not identified
-    if (this.behaviour.preprocess) {
-      ws.params = this.behaviour.preprocess(req);
-    }
+  upgrade = (res: HttpResponse, req: HttpRequest, context: us_socket_context_t) => {
+    res.upgrade({ 
+        sessionId: '',
+        params: this.behaviour.preprocess ? this.behaviour.preprocess(req) : null
+      }, 
+      req.getHeader('sec-websocket-key'),
+      req.getHeader('sec-websocket-protocol'),
+      req.getHeader('sec-websocket-extensions'),
+      context
+    );
   }
 
   // Websocket drain event
-  drain = (ws: WebSocket) => {
+  drain = (ws: WebSocket<UserData>) => {
     const session = this.getSession(ws);
     if (session) session.drain(ws);
   }
 
   // Websocket close event
-  close = (ws: WebSocket, code: number) => {
-    const sessionId = ws.sessionId;
+  close = (ws: WebSocket<UserData>, code: number) => {
+    const sessionId = ws.getUserData().sessionId;
     const session = this.sessions[sessionId];
     if (session) {
       delete this.sessions[sessionId];
@@ -62,7 +73,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
     }
   }
 
-  message = async (ws: WebSocket, msg: ArrayBuffer) => {
+  message = async (ws: WebSocket<UserData>, msg: ArrayBuffer) => {
     try {
       const payload = JSON.parse(Buffer.from(msg).toString());
       const type = payload[0];
@@ -72,8 +83,8 @@ export class Tracker<U, P> implements WebSocketBehavior {
         let user: U;
         try {
           // identify the session user
-          user = await this.behaviour.onIdent(payload[1], ws.params);
-        } catch (err) {
+          user = await this.behaviour.onIdent(payload[1], ws.getUserData().params);
+        } catch (err: any) {
           // Send a 'clearIdent' error
           ws.end(CLEAR_IDENT, err.message);
           return;
@@ -84,7 +95,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
         const session = new Session(this, user, ws);
 
         this.sessions[sessionId] = session;
-        ws.sessionId = sessionId;
+        ws.getUserData().sessionId = sessionId;
 
         // Send the identity
         session.send([IDENT, sessionId]);
@@ -100,7 +111,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
       }
 
       // All other message must be targetted towards a session
-      const sessionId = ws.sessionId;
+      const sessionId = ws.getUserData().sessionId;
       const session = this.sessions[sessionId];
       if (!session) {
         throw new Error('Session not found');
@@ -111,7 +122,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
         try {
           const result = await session.execute(payload[2], payload[3]);
           ws.send(JSON.stringify([API_RESPONSE, id, false, result]));
-        } catch (err) {
+        } catch (err: any) {
           ws.send(JSON.stringify([API_RESPONSE, id, true, err.message]));
         }
       }

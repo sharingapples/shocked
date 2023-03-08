@@ -1,8 +1,8 @@
 {
   "name": "shocked-server",
-  "version": "3.0.16",
+  "version": "3.1.0",
   "description": "Websocket server",
-  "main": "dist/index.js",
+  "main": "es6/index.js",
   "scripts": {
     "test": "yarn jest",
     "clean": "rimraf dist",
@@ -10,7 +10,7 @@
     "prepublishOnly": "yarn test && yarn clean && yarn build"
   },
   "files": [
-    "dist"
+    "es6"
   ],
   "repository": {
     "type": "git",
@@ -19,13 +19,12 @@
   "author": "Ranjan Shrestha",
   "license": "MIT",
   "dependencies": {
-    "nanoid": "^2.0.1",
+    "nanoid": "^4.0.1",
     "shocked-common": "^3.0.10",
     "shocked-types": "^3.0.4",
-    "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
+    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.19.0"
   },
   "devDependencies": {
-    "@types/nanoid": "^2.0.0",
     "isomorphic-ws": "^4.0.1",
     "ws": "^7.1.2"
   },
