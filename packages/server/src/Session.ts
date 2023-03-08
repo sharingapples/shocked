@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { WebSocket } from 'uWebSockets.js';
 import { API, API_RESPONSE, DISPATCH, CLEAR_IDENT, EVENT } from 'shocked-common';
 import { Session as SessionInterface, Channel, Unsubscribe } from 'shocked-types';
-import { Tracker, UserData } from './Tracker';
+import { Tracker, UserData } from './Tracker.js';
 
 export default class Session<U, P> extends EventEmitter implements SessionInterface<U, P> {
   readonly user: U;
@@ -34,7 +34,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
           this.socket.close();
         }
       }
-    });
+    }, 1);
   }
 
   drain(socket: WebSocket<UserData>) {

@@ -3,7 +3,7 @@ import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
 import { nanoid } from 'nanoid';
 
-import Session from './Session';
+import Session from './Session.js';
 
 export interface TrackerBehaviour<U, P> {
   api: ServerApi<U, P>,

@@ -1,5 +1,5 @@
 import { App, TemplatedApp, us_listen_socket_close, HttpRequest, HttpResponse } from 'uWebSockets.js';
-import { Tracker, TrackerBehaviour } from './Tracker';
+import { Tracker, TrackerBehaviour } from './Tracker.js';
 import { Unsubscribe } from 'shocked-types';
 
 function compat(handler: (req: HttpRequest, res: HttpResponse) => void) {
