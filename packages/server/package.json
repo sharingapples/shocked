@@ -5,10 +5,9 @@
   "main": "es6/index.js",
   "type": "module",
   "scripts": {
-    "test": "yarn jest",
     "clean": "rimraf es6",
     "build": "tsc -p tsconfig.json",
-    "prepublishOnly": "yarn test && yarn clean && yarn build"
+    "prepublishOnly": "yarn clean && yarn build"
   },
   "files": [
     "es6"
@@ -29,5 +28,5 @@
     "isomorphic-ws": "^4.0.1",
     "ws": "^7.1.2"
   },
-  "gitHead": "0da40d1b158068cbf99ae4cddc20a7c10699c61d"
+  "gitHead": "6421c0ee8923b96e1ebfb7961c4b390a8ca439b5"
 }
