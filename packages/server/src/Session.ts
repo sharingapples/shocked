@@ -8,18 +8,18 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
   readonly user: U;
   readonly params: P;
   private readonly tracker: Tracker<U, P>;
-  private socket: WebSocket<UserData> | null;
+  private socket: WebSocket | null;
   private readonly messageQueue: string[];
 
   private readonly subscriptions: Record<string, Unsubscribe> = {};
 
-  constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket<UserData>) {
+  constructor(tracker: Tracker<U, P>, user: U, socket: WebSocket) {
     super();
     this.user = user;
     this.tracker = tracker;
     this.socket = socket;
     this.messageQueue = [];
-    this.params = socket.getUserData().params;
+    this.params = socket.params;
   }
 
   close(clearIdent?: boolean) {
@@ -37,7 +37,7 @@ export default class Session<U, P> extends EventEmitter implements SessionInterf
     }, 1);
   }
 
-  drain(socket: WebSocket<UserData>) {
+  drain(socket: WebSocket) {
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift() as string;
       if (!socket.send(message)) {
