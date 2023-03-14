@@ -18,7 +18,7 @@ export type UserData = {
 };
 
 
-export class Tracker<U, P> implements WebSocketBehavior<UserData> {
+export class Tracker<U, P> implements WebSocketBehavior {
   private readonly behaviour: TrackerBehaviour<U, P>;
   private readonly sessions: { [id: string]: Session<U, P> };
 
@@ -33,8 +33,8 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
     this.sessions = {};
   }
 
-  private getSession(ws: WebSocket<UserData>) {
-    const sessionId = ws.getUserData().sessionId;
+  private getSession(ws: WebSocket) {
+    const sessionId = ws.sessionId;
     if (!sessionId) return null;
     const session = this.sessions[sessionId];
     return session;
@@ -58,14 +58,15 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
   }
 
   // Websocket drain event
-  drain = (ws: WebSocket<UserData>) => {
+  drain = (ws: WebSocket) => {
+    
     const session = this.getSession(ws);
     if (session) session.drain(ws);
   }
 
   // Websocket close event
-  close = (ws: WebSocket<UserData>, code: number) => {
-    const sessionId = ws.getUserData().sessionId;
+  close = (ws: WebSocket, code: number) => {
+    const sessionId = ws.sessionId;
     const session = this.sessions[sessionId];
     if (session) {
       delete this.sessions[sessionId];
@@ -73,7 +74,7 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
     }
   }
 
-  message = async (ws: WebSocket<UserData>, msg: ArrayBuffer) => {
+  message = async (ws: WebSocket, msg: ArrayBuffer) => {
     try {
       const payload = JSON.parse(Buffer.from(msg).toString());
       const type = payload[0];
@@ -83,7 +84,7 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
         let user: U;
         try {
           // identify the session user
-          user = await this.behaviour.onIdent(payload[1], ws.getUserData().params);
+          user = await this.behaviour.onIdent(payload[1], ws.params);
         } catch (err) {
           // Send a 'clearIdent' error
           ws.end(CLEAR_IDENT, err instanceof Error ? err.message : 'Unknown err');
@@ -95,7 +96,7 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
         const session = new Session(this, user, ws);
 
         this.sessions[sessionId] = session;
-        ws.getUserData().sessionId = sessionId;
+        ws.sessionId = sessionId;
 
         // Send the identity
         session.send([IDENT, sessionId]);
@@ -111,7 +112,7 @@ export class Tracker<U, P> implements WebSocketBehavior<UserData> {
       }
 
       // All other message must be targetted towards a session
-      const sessionId = ws.getUserData().sessionId;
+      const sessionId = ws.sessionId;
       const session = this.sessions[sessionId];
       if (!session) {
         throw new Error('Session not found');
