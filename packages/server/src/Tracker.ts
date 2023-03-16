@@ -1,4 +1,4 @@
-import { WebSocketBehavior, WebSocket, HttpRequest, HttpResponse, us_socket_context_t } from 'uWebSockets.js';
+import { WebSocketBehavior, WebSocket, HttpRequest, HttpResponse, us_socket_context_t } from "uWebSockets.js";
 import { ServerApi } from 'shocked-types';
 import { IDENT, API, API_RESPONSE, CLEAR_IDENT } from 'shocked-common';
 import { nanoid } from 'nanoid';

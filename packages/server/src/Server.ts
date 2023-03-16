@@ -1,6 +1,9 @@
-import { App, TemplatedApp, us_listen_socket_close, HttpRequest, HttpResponse } from 'uWebSockets.js';
+import { HttpRequest, HttpResponse, TemplatedApp } from 'uWebSockets.js';
+import uws from 'uWebSockets.js';
 import { Tracker, TrackerBehaviour } from './Tracker.js';
 import { Unsubscribe } from 'shocked-types';
+
+const { App, us_listen_socket_close } = uws;
 
 function compat(handler: (req: HttpRequest, res: HttpResponse) => void) {
   return (res: HttpResponse, req: HttpRequest) => {
