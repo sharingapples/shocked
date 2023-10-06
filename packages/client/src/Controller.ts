@@ -134,6 +134,7 @@ export class Controller {
             console.warn(`Got response for unkown api ${id}`);
             return;
           }
+          delete this.activeApis[id];  // remove from activeAPIs map after getting response.
 
           const error = res[2] as boolean;
           const result = res[3];
