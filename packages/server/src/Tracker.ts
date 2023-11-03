@@ -131,7 +131,11 @@ export class Tracker<U, P> implements WebSocketBehavior {
       console.error(err);
 
       // Looks like we got ourselves some problem dealing with the socket
-      ws.close();
+      try {
+        ws.close();
+      } catch (err) {
+        
+      }
     }
   }
 }
