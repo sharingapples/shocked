@@ -134,7 +134,7 @@ export class Tracker<U, P> implements WebSocketBehavior {
       try {
         ws.close();
       } catch (err) {
-        
+        console.error(err);
       }
     }
   }
