@@ -1,13 +1,13 @@
 {
   "name": "@demo/server",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "main": "src/index.ts",
   "type": "module",
   "dependencies": {
     "redis": "^2.8.0",
-    "shocked-local-broker": "^3.0.0",
-    "shocked-redis-broker": "^3.0.0",
-    "shocked-server": "^3.0.0"
+    "shocked-local-broker": "^4.0.1",
+    "shocked-redis-broker": "^4.0.1",
+    "shocked-server": "^4.0.2"
   },
   "scripts": {
     "start": "ts-node-dev --respawn --watch '../../packages/server/src' --transpileOnly src/index.ts",
