@@ -7278,9 +7278,9 @@ json5@2.x, json5@^2.1.0:
     minimist "^1.2.0"
 
 json5@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/json5/-/json5-1.0.1.tgz#779fb0018604fa854eacbf6252180d83543e3dbe"
-  integrity sha512-aKS4WQjPenRxiQsC93MNfjx+nbF4PAdYzmd/1JIj8HYzqfbu86beTuNgXDzPknWk0n0uARlyewZo4s++ES36Ow==
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/json5/-/json5-1.0.2.tgz#63d98d60f21b313b77c4d6da18bfa69d80e1d593"
+  integrity sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==
   dependencies:
     minimist "^1.2.0"
 
@@ -7896,9 +7896,9 @@ minimist@0.0.8:
   integrity sha1-hX/Kv8M5fSYluCKCYuhqp6ARsF0=
 
 minimist@^1.1.1, minimist@^1.1.3, minimist@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
-  integrity sha1-o1AIsg9BOD7sH7kU9M1d95omQoQ=
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.7.tgz#daa1c4d91f507390437c6a8bc01078e7000c4d18"
+  integrity sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==
 
 minimist@~0.0.1:
   version "0.0.10"
@@ -10776,6 +10776,49 @@ shellwords@^0.1.1:
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha512-vFwSUfQvqybiICwZY5+DAWIPLKsWO31Q91JSKl3UYv+K5c2QRPzn0qzec6QPu1Qc9eHYItiP3NdJqNVqetYAww==
 
+shocked-common@^3.0.10:
+  version "3.0.10"
+  resolved "https://registry.yarnpkg.com/shocked-common/-/shocked-common-3.0.10.tgz#97fe3f9092a46db4ceda2528d87897af6eae7289"
+  integrity sha512-GU4HKr2/Zk8vxozOZNCn7uj6XrqFPzBx5ep1G9YeAAUHCw6XUGLQE5vkp+iRiyBnaBQuWjv+7ZLx8g6rtwvEwQ==
+
+shocked-local-broker@^3.0.0:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-local-broker/-/shocked-local-broker-3.0.4.tgz#135cf7d6124ba256fca03dfd8c60927e6fc925a4"
+  integrity sha512-btGIvqGzpXq/lmZm/nvULC+45GKAliYvNQjxJv3tKl+tseLVegVCIoRhfu/LC36Tg848qtx27b4GBqjxEMAABQ==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-redis-broker@^3.0.0:
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/shocked-redis-broker/-/shocked-redis-broker-3.0.5.tgz#47ce13cabeef36ef24c2a7170a0cd45d991e2ed6"
+  integrity sha512-C3YbIw+RGewFm7d1oIGnWsmbYEfeOEJaNsJ4115MsYd4u6qApZXcHQoXvLKCopdzjG0o/WkQMa1YCTtaT3UoeA==
+  dependencies:
+    shocked-types "^3.0.4"
+
+shocked-server@^3.0.0:
+  version "3.0.16"
+  resolved "https://registry.yarnpkg.com/shocked-server/-/shocked-server-3.0.16.tgz#1d69aee4917a6967568279646b4275fa12bed645"
+  integrity sha512-LLFDjXwaD1gmmxcfpF25BkI5LJZhw0zQ2rHOPUMnAL6OVzU6SbHiiyLD6//ICVX5XfIzGwViIJ+LsGW5YZ89XQ==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+    uWebSockets.js "github:uNetworking/uWebSockets.js#v15.11.0"
+
+shocked-types@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/shocked-types/-/shocked-types-3.0.4.tgz#d831cbba024606e46251c59753eba7c56c31932b"
+  integrity sha512-KTo61jzv1ezdd7j1rDFkxrt+jCRiBbyBO897MVWqCfytR2es6lhYOfWX5QZHK5WC9TDpkHfcTr6oJFjHSZNdYg==
+
+shocked@^3.0.0:
+  version "3.0.19"
+  resolved "https://registry.yarnpkg.com/shocked/-/shocked-3.0.19.tgz#0a05c28c889527916e7579d7bc9541d8d8731d2d"
+  integrity sha512-COd8tbbXFThMMsgAs3V+Y23shfUG8ropTVIHpEsdX29SNxO6fl2IQ7ryh7bGJcQsYSOX19T8gcPVy4zWlr7Vxw==
+  dependencies:
+    nanoid "^2.0.1"
+    shocked-common "^3.0.10"
+    shocked-types "^3.0.4"
+
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
@@ -11679,6 +11722,11 @@ typescript@3.6.3, typescript@^3.6.3:
   version "3.6.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
   integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
+
+"uWebSockets.js@github:uNetworking/uWebSockets.js#v15.11.0":
+  version "15.11.0"
+  uid e7552889a50a7ffa654c41c99a9bad46dd0024c5
+  resolved "https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/e7552889a50a7ffa654c41c99a9bad46dd0024c5"
 
 uWebSockets.js@uNetworking/uWebSockets.js#v20.10.0:
   version "20.10.0"
